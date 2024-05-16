@@ -32,3 +32,4 @@ H:/Unreal[[:space:]]Projects/MOBA/Content/KiteDemo/Environments/Rocks/Mountain_R
 H:/Unreal[[:space:]]Projects/MOBA/Content/KiteDemo/Environments/Rocks/Mountain_RockFace_002/T_MountainRock_Closed_N.uasset filter=lfs diff=lfs merge=lfs -text
 H:/Unreal[[:space:]]Projects/MOBA/Content/ParagonProps/Agora/Rocks/Textures/T_Scree002_N.uasset filter=lfs diff=lfs merge=lfs -text
 H:/Unreal[[:space:]]Projects/MOBA/Content/KiteDemo/Environments/Rocks/Scree002/T_Scree002_N.uasset filter=lfs diff=lfs merge=lfs -text
+/Content/ParagonGrux/Characters/Global/Eyes/Textures/EpicQuadPanorama_CC.uasset filter=lfs diff=lfs merge=lfs -text
