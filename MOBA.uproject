@@ -5,7 +5,7 @@
 	"Description": "",
 	"Modules": [
 		{
-			"Name": "MOBA",
+			"Name": "NexusTriumphant",
 			"Type": "Runtime",
 			"LoadingPhase": "Default",
 			"AdditionalDependencies": [
@@ -22,7 +22,15 @@
 			]
 		},
 		{
+			"Name": "TargetingSystem",
+			"Enabled": true
+		},
+		{
 			"Name": "GameplayAbilities",
+			"Enabled": true
+		},
+		{
+			"Name": "EnhancedInput",
 			"Enabled": true
 		}
 	]
