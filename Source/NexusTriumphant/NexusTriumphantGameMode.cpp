@@ -2,7 +2,7 @@
 
 #include "NexusTriumphantGameMode.h"
 #include "Characters/Base/BasePlayerController.h"
-#include "Characters/Base/BaseCharacter.h"
+#include "Characters/Base/BaseCharacterVisuals.h"
 #include "UObject/ConstructorHelpers.h"
 
 ANexusTriumphantGameMode::ANexusTriumphantGameMode()

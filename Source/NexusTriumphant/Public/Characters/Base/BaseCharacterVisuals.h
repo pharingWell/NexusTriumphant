@@ -10,7 +10,7 @@
 #include "Abilities/AbilitySet.h"
 #include "Characters/Attributes/StandardAttributeSet.h"
 #include "GameFramework/Character.h"
-#include "BaseCharacter.generated.h"
+#include "BaseCharacterVisuals.generated.h"
 
 class USphereComponent;
 class UInputMappingContext;
@@ -21,12 +21,12 @@ class UAbilitySet;
 struct FGameplayAbilitySpecHandle;
 
 UCLASS(Blueprintable)
-class ANexusTriumphantCharacter : public ACharacter, public IAbilitySystemInterface
+class ABaseCharacterVisuals : public ACharacter, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 
 public:
-	ANexusTriumphantCharacter(const FObjectInitializer&);
+	ABaseCharacterVisuals(const FObjectInitializer&);
 
 	// Called every frame.
 	virtual void Tick(float DeltaSeconds) override;

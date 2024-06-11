@@ -4,16 +4,16 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
-#include "BaseCharacterContainer.generated.h"
+#include "BaseCharacterCore.generated.h"
 
 UCLASS()
-class NEXUSTRIUMPHANT_API ACharacterContainer : public APawn
+class NEXUSTRIUMPHANT_API ABaseCharacterCore : public APawn 
 {
 	GENERATED_BODY()
 
 public:
 	// Sets default values for this pawn's properties
-	ACharacterContainer();
+	ABaseCharacterCore();
 
 protected:
 	// Called when the game starts or when spawned

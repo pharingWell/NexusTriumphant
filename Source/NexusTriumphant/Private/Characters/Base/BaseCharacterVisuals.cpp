@@ -1,9 +1,8 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
-#include "Characters/Base/BaseCharacter.h"
+#include "Characters/Base/BaseCharacterVisuals.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Camera/CameraComponent.h"
-#include "Components/DecalComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
@@ -14,8 +13,9 @@
 #include "Abilities/AbilitySet.h"
 #include "Characters/Attributes/StandardAttributeSet.h"
 #include "Abilities/AbilityHelpers.h"
+#include "Characters/Base/BaseCharacterVisuals.h"
 
-ANexusTriumphantCharacter::ANexusTriumphantCharacter(const FObjectInitializer& objectInitializer) : Super(objectInitializer)
+ABaseCharacterVisuals::ABaseCharacterVisuals(const FObjectInitializer& objectInitializer) : Super(objectInitializer)
 {
 	
 	// Set size for player capsule
@@ -54,12 +54,12 @@ ANexusTriumphantCharacter::ANexusTriumphantCharacter(const FObjectInitializer& o
 	StandardAttributes = CreateDefaultSubobject<UStandardAttributeSet>(TEXT("StandardAttributeSet"));
 }
 
-void ANexusTriumphantCharacter::Tick(float DeltaSeconds)
+void ABaseCharacterVisuals::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
 }
 
-void ANexusTriumphantCharacter::BeginPlay()
+void ABaseCharacterVisuals::BeginPlay()
 {
 	Super::BeginPlay();
 	if(HasAuthority())
@@ -68,7 +68,7 @@ void ANexusTriumphantCharacter::BeginPlay()
 	}
 }
 
-void ANexusTriumphantCharacter::SetupInitialAbilitiesAndEffects()
+void ABaseCharacterVisuals::SetupInitialAbilitiesAndEffects()
 {
 	if(IsValid(AbilitySystemComponent) == false || IsValid(StandardAttributes) == false)
 	{
@@ -104,7 +104,7 @@ void ANexusTriumphantCharacter::SetupInitialAbilitiesAndEffects()
 	.AddUObject(this, &ThisClass::OnHealthAttributeChanged);
 }
 
-void ANexusTriumphantCharacter::OnHealthAttributeChanged(const FOnAttributeChangeData& OnAttributeChangeData) const
+void ABaseCharacterVisuals::OnHealthAttributeChanged(const FOnAttributeChangeData& OnAttributeChangeData) const
 {
 	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::White, TEXT("Health updated"));
 	if(FMath::IsNearlyZero(OnAttributeChangeData.NewValue) && OnAttributeChangeData.OldValue > 0)

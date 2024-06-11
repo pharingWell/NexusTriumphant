@@ -1,31 +1,31 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Characters/Base/BaseCharacterContainer.h"
+#include "Characters/Base/BaseCharacterCore.h"
 
 
 // Sets default values
-ACharacterContainer::ACharacterContainer()
+ABaseCharacterCore::ABaseCharacterCore()
 {
 	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 }
 
 // Called when the game starts or when spawned
-void ACharacterContainer::BeginPlay()
+void ABaseCharacterCore::BeginPlay()
 {
 	Super::BeginPlay();
 	
 }
 
 // Called every frame
-void ACharacterContainer::Tick(float DeltaTime)
+void ABaseCharacterCore::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 }
 
 // Called to bind functionality to input
-void ACharacterContainer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+void ABaseCharacterCore::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 }
