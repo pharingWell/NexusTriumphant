@@ -1,14 +1,14 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
-#include "MOBAGameMode.h"
-#include "MOBAPlayerController.h"
-#include "MOBACharacter.h"
+#include "NexusTriumphantGameMode.h"
+#include "Characters/Base/BasePlayerController.h"
+#include "Characters/Base/BaseCharacter.h"
 #include "UObject/ConstructorHelpers.h"
 
-AMOBAGameMode::AMOBAGameMode()
+ANexusTriumphantGameMode::ANexusTriumphantGameMode()
 {
 	// use our custom PlayerController class
-	PlayerControllerClass = AMOBAPlayerController::StaticClass();
+	PlayerControllerClass = ANexusTriumphantPlayerController::StaticClass();
 
 	// set default pawn class to our Blueprinted character
 	static ConstructorHelpers::FClassFinder<APawn> PlayerPawnBPClass(TEXT("/Game/TopDown/Blueprints/BP_TopDownCharacter"));

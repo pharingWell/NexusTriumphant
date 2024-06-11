@@ -2,9 +2,9 @@
 
 using UnrealBuildTool;
 
-public class MOBA : ModuleRules
+public class NexusTriumphant : ModuleRules
 {
-	public MOBA(ReadOnlyTargetRules Target) : base(Target)
+	public NexusTriumphant(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 

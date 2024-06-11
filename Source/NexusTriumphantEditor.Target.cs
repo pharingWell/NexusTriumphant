@@ -3,13 +3,13 @@
 using UnrealBuildTool;
 using System.Collections.Generic;
 
-public class MOBAEditorTarget : TargetRules
+public class NexusTriumphantEditorTarget : TargetRules
 {
-	public MOBAEditorTarget(TargetInfo Target) : base(Target)
+	public NexusTriumphantEditorTarget(TargetInfo Target) : base(Target)
 	{
 		Type = TargetType.Editor;
 		DefaultBuildSettings = BuildSettingsVersion.V5;
 		IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_4;
-		ExtraModuleNames.Add("MOBA");
+		ExtraModuleNames.Add("NexusTriumphant");
 	}
 }

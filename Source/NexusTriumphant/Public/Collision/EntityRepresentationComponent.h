@@ -8,7 +8,7 @@
 
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class MOBA_API UEntityRepresentationComponent : public UActorComponent
+class NEXUSTRIUMPHANT_API UEntityRepresentationComponent : public UActorComponent
 {
 	GENERATED_BODY()
 

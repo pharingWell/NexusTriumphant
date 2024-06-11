@@ -15,12 +15,12 @@ class UInputAction;
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
 UCLASS()
-class AMOBAPlayerController : public APlayerController
+class ANexusTriumphantPlayerController : public APlayerController
 {
 	GENERATED_BODY()
 
 public:
-	AMOBAPlayerController();
+	ANexusTriumphantPlayerController();
 
 	/** Time Threshold to know if it was a short press */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)

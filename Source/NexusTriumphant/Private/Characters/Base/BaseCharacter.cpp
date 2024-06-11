@@ -15,7 +15,7 @@
 #include "Characters/Attributes/StandardAttributeSet.h"
 #include "Abilities/AbilityHelpers.h"
 
-AMOBACharacter::AMOBACharacter(const FObjectInitializer& objectInitializer) : Super(objectInitializer)
+ANexusTriumphantCharacter::ANexusTriumphantCharacter(const FObjectInitializer& objectInitializer) : Super(objectInitializer)
 {
 	
 	// Set size for player capsule
@@ -54,12 +54,12 @@ AMOBACharacter::AMOBACharacter(const FObjectInitializer& objectInitializer) : Su
 	StandardAttributes = CreateDefaultSubobject<UStandardAttributeSet>(TEXT("StandardAttributeSet"));
 }
 
-void AMOBACharacter::Tick(float DeltaSeconds)
+void ANexusTriumphantCharacter::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
 }
 
-void AMOBACharacter::BeginPlay()
+void ANexusTriumphantCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	if(HasAuthority())
@@ -68,7 +68,7 @@ void AMOBACharacter::BeginPlay()
 	}
 }
 
-void AMOBACharacter::SetupInitialAbilitiesAndEffects()
+void ANexusTriumphantCharacter::SetupInitialAbilitiesAndEffects()
 {
 	if(IsValid(AbilitySystemComponent) == false || IsValid(StandardAttributes) == false)
 	{
@@ -104,7 +104,7 @@ void AMOBACharacter::SetupInitialAbilitiesAndEffects()
 	.AddUObject(this, &ThisClass::OnHealthAttributeChanged);
 }
 
-void AMOBACharacter::OnHealthAttributeChanged(const FOnAttributeChangeData& OnAttributeChangeData) const
+void ANexusTriumphantCharacter::OnHealthAttributeChanged(const FOnAttributeChangeData& OnAttributeChangeData) const
 {
 	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::White, TEXT("Health updated"));
 	if(FMath::IsNearlyZero(OnAttributeChangeData.NewValue) && OnAttributeChangeData.OldValue > 0)

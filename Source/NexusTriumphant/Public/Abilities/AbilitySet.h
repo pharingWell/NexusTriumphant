@@ -65,7 +65,7 @@ public:
  * https://ukustra.medium.com/how-to-easily-bind-gameplay-ability-system-to-enhanced-input-b45ece2ca02b
  */
 UCLASS()
-class MOBA_API UAbilitySet : public UDataAsset
+class NEXUSTRIUMPHANT_API UAbilitySet : public UDataAsset
 {
 	GENERATED_BODY()
 

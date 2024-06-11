@@ -4,15 +4,15 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
-#include "MOBAGameMode.generated.h"
+#include "NexusTriumphantGameMode.generated.h"
 
 UCLASS(minimalapi)
-class AMOBAGameMode : public AGameModeBase
+class ANexusTriumphantGameMode : public AGameModeBase
 {
 	GENERATED_BODY()
 
 public:
-	AMOBAGameMode();
+	ANexusTriumphantGameMode();
 };
 
 

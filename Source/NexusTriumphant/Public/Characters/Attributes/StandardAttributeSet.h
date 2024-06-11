@@ -13,7 +13,7 @@
  * 
  */
 UCLASS()
-class MOBA_API UStandardAttributeSet : public UAttributeSet
+class NEXUSTRIUMPHANT_API UStandardAttributeSet : public UAttributeSet
 {
 	GENERATED_BODY()
 

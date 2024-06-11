@@ -7,7 +7,7 @@
 #include "BaseCharacterContainer.generated.h"
 
 UCLASS()
-class MOBA_API ACharacterContainer : public APawn
+class NEXUSTRIUMPHANT_API ACharacterContainer : public APawn
 {
 	GENERATED_BODY()
 
