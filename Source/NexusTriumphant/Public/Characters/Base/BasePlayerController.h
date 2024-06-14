@@ -12,15 +12,13 @@ class UNiagaraSystem;
 class UInputMappingContext;
 class UInputAction;
 
-DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
-
 UCLASS()
-class ANexusTriumphantPlayerController : public APlayerController
+class ABasePlayerController : public APlayerController
 {
 	GENERATED_BODY()
 
 public:
-	ANexusTriumphantPlayerController();
+	ABasePlayerController();
 
 	/** Time Threshold to know if it was a short press */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)

@@ -5,16 +5,15 @@
 #include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "NiagaraSystem.h"
 #include "NiagaraFunctionLibrary.h"
-#include "Characters/Base/BaseCharacterVisuals.h"
+#include "Characters/Base/BaseCharacter.h"
 #include "Engine/World.h"
 #include "EnhancedInputComponent.h"
 #include "InputActionValue.h"
 #include "EnhancedInputSubsystems.h"
 #include "Engine/LocalPlayer.h"
+#include "NexusTriumphant/TP_TopDown/TP_TopDownPlayerController.h"
 
-DEFINE_LOG_CATEGORY(LogTemplateCharacter);
-
-ANexusTriumphantPlayerController::ANexusTriumphantPlayerController()
+ABasePlayerController::ABasePlayerController()
 {
 	bShowMouseCursor = true;
 	DefaultMouseCursor = EMouseCursor::Default;
@@ -22,19 +21,19 @@ ANexusTriumphantPlayerController::ANexusTriumphantPlayerController()
 	FollowTime = 0.f;
 }
 
-void ANexusTriumphantPlayerController::BeginPlay()
+void ABasePlayerController::BeginPlay()
 {
 	// Call the base class  
 	Super::BeginPlay();
 }
 
-void ANexusTriumphantPlayerController::SetupInputComponent()
+void ABasePlayerController::SetupInputComponent()
 {
 	// set up gameplay key bindings
 	Super::SetupInputComponent();
 
 	// Add Input Mapping Context
-	if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
+	/*if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
 	{
 		Subsystem->AddMappingContext(DefaultMappingContext, 0);
 	}
@@ -43,30 +42,30 @@ void ANexusTriumphantPlayerController::SetupInputComponent()
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent))
 	{
 		// Setup mouse input events
-		EnhancedInputComponent->BindAction(SetDestinationClickAction, ETriggerEvent::Started, this, &ANexusTriumphantPlayerController::OnInputStarted);
-		EnhancedInputComponent->BindAction(SetDestinationClickAction, ETriggerEvent::Triggered, this, &ANexusTriumphantPlayerController::OnSetDestinationTriggered);
-		EnhancedInputComponent->BindAction(SetDestinationClickAction, ETriggerEvent::Completed, this, &ANexusTriumphantPlayerController::OnSetDestinationReleased);
-		EnhancedInputComponent->BindAction(SetDestinationClickAction, ETriggerEvent::Canceled, this, &ANexusTriumphantPlayerController::OnSetDestinationReleased);
+		EnhancedInputComponent->BindAction(SetDestinationClickAction, ETriggerEvent::Started, this, &ABasePlayerController::OnInputStarted);
+		EnhancedInputComponent->BindAction(SetDestinationClickAction, ETriggerEvent::Triggered, this, &ABasePlayerController::OnSetDestinationTriggered);
+		EnhancedInputComponent->BindAction(SetDestinationClickAction, ETriggerEvent::Completed, this, &ABasePlayerController::OnSetDestinationReleased);
+		EnhancedInputComponent->BindAction(SetDestinationClickAction, ETriggerEvent::Canceled, this, &ABasePlayerController::OnSetDestinationReleased);
 
 		// Setup touch input events
-		EnhancedInputComponent->BindAction(SetDestinationTouchAction, ETriggerEvent::Started, this, &ANexusTriumphantPlayerController::OnInputStarted);
-		EnhancedInputComponent->BindAction(SetDestinationTouchAction, ETriggerEvent::Triggered, this, &ANexusTriumphantPlayerController::OnTouchTriggered);
-		EnhancedInputComponent->BindAction(SetDestinationTouchAction, ETriggerEvent::Completed, this, &ANexusTriumphantPlayerController::OnTouchReleased);
-		EnhancedInputComponent->BindAction(SetDestinationTouchAction, ETriggerEvent::Canceled, this, &ANexusTriumphantPlayerController::OnTouchReleased);
+		EnhancedInputComponent->BindAction(SetDestinationTouchAction, ETriggerEvent::Started, this, &ABasePlayerController::OnInputStarted);
+		EnhancedInputComponent->BindAction(SetDestinationTouchAction, ETriggerEvent::Triggered, this, &ABasePlayerController::OnTouchTriggered);
+		EnhancedInputComponent->BindAction(SetDestinationTouchAction, ETriggerEvent::Completed, this, &ABasePlayerController::OnTouchReleased);
+		EnhancedInputComponent->BindAction(SetDestinationTouchAction, ETriggerEvent::Canceled, this, &ABasePlayerController::OnTouchReleased);
 	}
 	else
 	{
 		UE_LOG(LogTemplateCharacter, Error, TEXT("'%s' Failed to find an Enhanced Input Component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
-	}
+	}*/
 }
 
-void ANexusTriumphantPlayerController::OnInputStarted()
+void ABasePlayerController::OnInputStarted()
 {
 	StopMovement();
 }
 
 // Triggered every frame when the input is held down
-void ANexusTriumphantPlayerController::OnSetDestinationTriggered()
+void ABasePlayerController::OnSetDestinationTriggered()
 {
 	// We flag that the input is being pressed
 	FollowTime += GetWorld()->GetDeltaSeconds();
@@ -98,7 +97,7 @@ if (ControlledPawn != nullptr)
 }
 }
 
-void ANexusTriumphantPlayerController::OnSetDestinationReleased()
+void ABasePlayerController::OnSetDestinationReleased()
 	{
 		// If it was a short press
 		if (FollowTime <= ShortPressThreshold)
@@ -112,13 +111,13 @@ void ANexusTriumphantPlayerController::OnSetDestinationReleased()
 	}
 
 // Triggered every frame when the input is held down
-void ANexusTriumphantPlayerController::OnTouchTriggered()
+void ABasePlayerController::OnTouchTriggered()
 	{
 		bIsTouch = true;
 		OnSetDestinationTriggered();
 	}
 
-void ANexusTriumphantPlayerController::OnTouchReleased()
+void ABasePlayerController::OnTouchReleased()
 	{
 		bIsTouch = false;
 		OnSetDestinationReleased();
