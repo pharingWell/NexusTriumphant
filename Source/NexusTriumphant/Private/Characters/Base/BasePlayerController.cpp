@@ -11,7 +11,8 @@
 #include "InputActionValue.h"
 #include "EnhancedInputSubsystems.h"
 #include "Engine/LocalPlayer.h"
-#include "NexusTriumphant/TP_TopDown/TP_TopDownPlayerController.h"
+
+DEFINE_LOG_CATEGORY(LogBaseCharacter);
 
 ABasePlayerController::ABasePlayerController()
 {
@@ -33,7 +34,7 @@ void ABasePlayerController::SetupInputComponent()
 	Super::SetupInputComponent();
 
 	// Add Input Mapping Context
-	/*if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
+	if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
 	{
 		Subsystem->AddMappingContext(DefaultMappingContext, 0);
 	}
@@ -55,8 +56,8 @@ void ABasePlayerController::SetupInputComponent()
 	}
 	else
 	{
-		UE_LOG(LogTemplateCharacter, Error, TEXT("'%s' Failed to find an Enhanced Input Component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
-	}*/
+		UE_LOG(LogBaseCharacter, Error, TEXT("'%s' Failed to find an Enhanced Input Component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
+	}
 }
 
 void ABasePlayerController::OnInputStarted()
@@ -82,19 +83,19 @@ void ABasePlayerController::OnSetDestinationTriggered()
 		bHitSuccessful = GetHitResultUnderCursor(ECollisionChannel::ECC_Visibility, true, Hit);
 	}
 
-// If we hit a surface, cache the location
-if (bHitSuccessful)
-{
-	CachedDestination = Hit.Location;
-}
-	
-// Move towards mouse pointer or touch
-APawn* ControlledPawn = GetPawn();
-if (ControlledPawn != nullptr)
-{
-	FVector WorldDirection = (CachedDestination - ControlledPawn->GetActorLocation()).GetSafeNormal();
-	ControlledPawn->AddMovementInput(WorldDirection, 1.0, false);
-}
+	// If we hit a surface, cache the location
+	if (bHitSuccessful)
+	{
+		CachedDestination = Hit.Location;
+	}
+		
+	// Move towards mouse pointer or touch
+	APawn* ControlledPawn = GetPawn();
+	if (ControlledPawn != nullptr)
+	{
+		FVector WorldDirection = (CachedDestination - ControlledPawn->GetActorLocation()).GetSafeNormal();
+		ControlledPawn->AddMovementInput(WorldDirection, 1.0, false);
+	}
 }
 
 void ABasePlayerController::OnSetDestinationReleased()

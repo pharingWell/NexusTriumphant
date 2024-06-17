@@ -12,6 +12,8 @@ class UNiagaraSystem;
 class UInputMappingContext;
 class UInputAction;
 
+DECLARE_LOG_CATEGORY_EXTERN(LogBaseCharacter, Warning, All);
+
 UCLASS()
 class ABasePlayerController : public APlayerController
 {

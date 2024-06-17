@@ -7,12 +7,13 @@
 #include "BasePlayerController.h"
 #include "UObject/ObjectMacros.h"
 #include "InputMappingContext.h"
+#include "Collision/EntityCollisionComponent.h"
 #include "Abilities/AbilitySet.h"
 #include "Characters/Attributes/StandardAttributeSet.h"
 #include "GameFramework/Character.h"
 #include "BaseCharacter.generated.h"
 
-class USphereComponent;
+class UEntityCollisionComponent;
 class UInputMappingContext;
 class UAbilitySystemComponent;
 class UStandardAttributeSet;
@@ -32,6 +33,7 @@ public:
 	virtual void Tick(float DeltaSeconds) override;
 	void SetupInitialAbilitiesAndEffects();
 	virtual void BeginPlay() override;
+	virtual void PostInitializeComponents() override;
 	
 	/** Returns TopDownCameraComponent sub-object **/
 	FORCEINLINE class UCameraComponent* GetTopDownCameraComponent() const { return TopDownCameraComponent; }
@@ -42,11 +44,11 @@ public:
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystemComponent; }
 	
 protected:
-	UPROPERTY(Category=Character, VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = "true"))
-	USphereComponent* SphereComponent;
+	UPROPERTY(Category=Character, EditDefaultsOnly, BlueprintReadOnly, meta=(AllowPrivateAccess = "true"))
+	TObjectPtr<UEntityCollisionComponent> CollisionComponent;
 	
 	/** MappingContext for player input. **/
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "EnhancedInput")
+	UPROPERTY(VisibleAnywhere, Category = "EnhancedInput")
 	UInputMappingContext* InputMapping;
 
 	/** Ability System Component, Attributes, Effects and Abilities for setup **/
@@ -63,7 +65,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="Abilities")
 	UAbilitySet* InitialAbilitySet { nullptr };
 
-	UPROPERTY(Transient)
+	UPROPERTY(EditDefaultsOnly, Category="Abilities")
 	TArray<FGameplayAbilitySpecHandle> InitiallyGrantedAbilitySpecHandles;
 
 	void OnHealthAttributeChanged(const FOnAttributeChangeData& OnAttributeChangeData) const;
