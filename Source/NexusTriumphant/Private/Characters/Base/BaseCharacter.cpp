@@ -7,54 +7,70 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Components/SphereComponent.h"
 #include "Materials/Material.h"
 #include "Engine/World.h"
 #include "AbilitySystemComponent.h"
 #include "Abilities/AbilitySet.h"
 #include "Characters/Attributes/StandardAttributeSet.h"
 #include "Abilities/AbilityHelpers.h"
+
 #include "Characters/Base/BaseCharacter.h"
 #include "Kismet/KismetSystemLibrary.h"
 
+// bitmaskable
+enum FBaseCharacterVisualizeMode
+{
+	DISABLED = 0b0,
+	COLLISION_2D = 0b1,
+	OTHER = 0b10,
+};
+
+static FBaseCharacterVisualizeMode DebugVisualize;
 
 ABaseCharacter::ABaseCharacter(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
-
-	USceneComponent* Empty = CreateDefaultSubobject<USceneComponent>(TEXT("Empty"));
-	RootComponent = Empty;
-	GetCapsuleComponent()->AttachToComponent(Empty,
-											 FAttachmentTransformRules(
-												 EAttachmentRule::KeepRelative,
-												 EAttachmentRule::KeepRelative,
-												 EAttachmentRule::KeepRelative, false)
-	);
-
-
+	UCapsuleComponent* CapsuleComponentRemade = GetCapsuleComponent();
+	// CapsuleComponentRemade->InitCapsuleSize(34.0f, 88.0f);
+	// CapsuleComponentRemade->SetCollisionProfileName(UCollisionProfile::Pawn_ProfileName);
+	// CapsuleComponentRemade->CanCharacterStepUpOn = ECB_No;
+	// CapsuleComponentRemade->SetShouldUpdatePhysicsVolume(true);
+	// CapsuleComponentRemade->SetCanEverAffectNavigation(false);
+	// CapsuleComponentRemade->bDynamicObstacle = true;
+	CapsuleComponentRemade->InitCapsuleSize(42.f, 96.0f);
 	
 	// Set size for player capsule
-	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
-	float HeightOffset = GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
+	float HeightOffset = CapsuleComponentRemade->GetScaledCapsuleHalfHeight();
+	CapsuleComponentRemade->SetRelativeLocation(FVector3d(0, 0, HeightOffset));
+	//CapsuleComponentRemade->SetupAttachment(Empty);
+
+	// Create Entity Collision Component
+	CollisionComponent = CreateDefaultSubobject<UEntityCollisionComponent>(TEXT("EntityCollisionComponent"));
+	check(IsValid(CollisionComponent))
+	CollisionComponent->SetupCapsule(42.f, HeightOffset);
+	CollisionComponent->SetupAttachment(CapsuleComponentRemade);
+
+	// Configure character movement
+	GetCharacterMovement()->bOrientRotationToMovement = true; // Rotate character to moving direction
+	GetCharacterMovement()->RotationRate = FRotator(0.f, 640.f, 0.f);
+	GetCharacterMovement()->SetPlaneConstraintNormal(FVector(0.f, 0.f, 1.f));
+	GetCharacterMovement()->bConstrainToPlane = true;
+	GetCharacterMovement()->bSnapToPlaneAtStart = true;
 	
 	// Don't rotate character to camera direction
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
-
-	// Configure character movement
-	GetCharacterMovement()->bOrientRotationToMovement = true; // Rotate character to moving direction
-	GetCharacterMovement()->RotationRate = FRotator(0.f, 640.f, 0.f);
-	GetCharacterMovement()->SetPlaneConstraintNormal(FVector(0.f, 0.f, 0.f));
-	GetCharacterMovement()->bConstrainToPlane = true;
-	GetCharacterMovement()->bSnapToPlaneAtStart = true;
 	
 	// Create a camera boom...
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
-	CameraBoom->SetupAttachment(RootComponent);
+	CameraBoom->SetupAttachment(CapsuleComponentRemade);
 	CameraBoom->SetUsingAbsoluteRotation(true); // Don't want arm to rotate when character does
 	CameraBoom->TargetArmLength = 800.f;
 	CameraBoom->SetRelativeRotation(FRotator(-60.f, 0.f, 0.f));
 	CameraBoom->bDoCollisionTest = false; // Don't want to pull camera in when it collides with level
 
+	
 	// Create a camera...
 	TopDownCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("TopDownCamera"));
 	TopDownCameraComponent->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
@@ -65,21 +81,10 @@ ABaseCharacter::ABaseCharacter(const FObjectInitializer& ObjectInitializer) : Su
 	PrimaryActorTick.bStartWithTickEnabled = true;
 
 	// Create a collider to deal with 2d collisions
-	CollisionComponent = CreateDefaultSubobject<UEntityCollisionComponent>(TEXT("EntityCollisionComponent"));
-	CollisionComponent->SetupCapsule(GetCapsuleComponent()->GetUnscaledCapsuleRadius());
-
 	// Move components around so the mesh and capsule are in the correct locations
-	CollisionComponent->SetRelativeLocation(FVector3d(0, 0, -HeightOffset/4));
-	CollisionComponent->AttachToComponent(Empty,
-							 FAttachmentTransformRules(
-								 EAttachmentRule::KeepRelative,
-								 EAttachmentRule::KeepRelative,
-								 EAttachmentRule::KeepRelative, false)
-	);
-	GetCapsuleComponent()->SetRelativeLocation(FVector3d(0, 0, HeightOffset));
 	GetMesh()->SetRelativeLocation(FVector3d(0, 0, -HeightOffset));
-	GetMesh()->SetRelativeRotation(FQuat(0, 0, -PI / 4,PI / 4)); //-90 Z turnwell
-
+	GetMesh()->SetRelativeRotation(FQuat(0, 0, -PI / 4,PI / 4)); //-90 Z turn
+	
 	// Ability system items
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 	InitialAbilitySet = CreateDefaultSubobject<UAbilitySet>(TEXT("InitialAbilitySet"));
@@ -94,6 +99,22 @@ void ABaseCharacter::PostInitializeComponents()
 void ABaseCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
+	if(DebugVisualize)
+	{
+		#define START_BITMASK_SWITCH(x) for (uint64_t bit = 1; x >= bit; bit *= 2) if (x & bit) switch (bit)
+		START_BITMASK_SWITCH(DebugVisualize)
+		{
+			case 0b1:
+				//CollisionComponent->bDebugDisplayRadius = true;
+				break;
+			case 0b10:
+				
+				break;
+			default:
+				//CollisionComponent->bDebugDisplayRadius = false;
+				break;
+		}
+	}
 }
 
 void ABaseCharacter::BeginPlay()
@@ -103,6 +124,8 @@ void ABaseCharacter::BeginPlay()
 	{
 		SetupInitialAbilitiesAndEffects();
 	}
+	
+	GetCharacterMovement()->SetPlaneConstraintOrigin(GetActorLocation());
 }
 
 void ABaseCharacter::SetupInitialAbilitiesAndEffects()

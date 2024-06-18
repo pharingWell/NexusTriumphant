@@ -44,8 +44,8 @@ public:
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystemComponent; }
 	
 protected:
-	UPROPERTY(Category=Character, EditDefaultsOnly, BlueprintReadOnly, meta=(AllowPrivateAccess = "true"))
-	TObjectPtr<UEntityCollisionComponent> CollisionComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
+	UEntityCollisionComponent* CollisionComponent;
 	
 	/** MappingContext for player input. **/
 	UPROPERTY(VisibleAnywhere, Category = "EnhancedInput")

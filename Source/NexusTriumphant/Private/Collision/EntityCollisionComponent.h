@@ -8,7 +8,7 @@
 
 UCLASS(ClassGroup=Shapes, meta=(BlueprintSpawnableComponent))
 
-#define ECC_HALFHEIGHT 85.f
+#define ECC_HALFHEIGHT 300.f
 
 class NEXUSTRIUMPHANT_API UEntityCollisionComponent : public UCapsuleComponent
 {
@@ -18,9 +18,11 @@ public:
 	// Sets default values for this component's properties
 	UEntityCollisionComponent();
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
-	void SetupCapsule(float Radius, bool bUpdateOverlaps=true);
+	void SetupCapsule(float Radius, float HeightOffset, bool bUpdateOverlaps=true);
 	void SetCapsuleRadius(float Radius, bool bUpdateOverlaps=true); //intentionally hides function
 	void SetEntityRadius(float Radius, bool bUpdateOverlaps=true);
+	UPROPERTY(EditDefaultsOnly, Category="Entity")
+	bool bDebugDisplayRadius;
 	
 protected:
 	// Called when the game starts
@@ -29,7 +31,7 @@ protected:
 	/** Determines the size of the entity's collision with 2d space */
 	UPROPERTY(EditDefaultsOnly, Category="Entity")
 	float EntityRadius;
-
+	float HeightOffset;
 public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
