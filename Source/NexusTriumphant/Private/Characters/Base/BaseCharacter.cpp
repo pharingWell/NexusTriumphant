@@ -1,48 +1,24 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
+
 #include "Characters/Base/BaseCharacter.h"
-#include "UObject/ConstructorHelpers.h"
-#include "Camera/CameraComponent.h"
-#include "Components/CapsuleComponent.h"
+#include "Net/UnrealNetwork.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "GameFramework/PlayerController.h"
-#include "GameFramework/SpringArmComponent.h"
-#include "Components/SphereComponent.h"
-#include "Materials/Material.h"
-#include "Engine/World.h"
-#include "AbilitySystemComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "Abilities/AbilitySet.h"
 #include "Characters/Attributes/StandardAttributeSet.h"
 #include "Abilities/AbilityHelpers.h"
 
-#include "Characters/Base/BaseCharacter.h"
-#include "Kismet/KismetSystemLibrary.h"
 
-// bitmaskable
-enum FBaseCharacterVisualizeMode
-{
-	DISABLED = 0b0,
-	COLLISION_2D = 0b1,
-	OTHER = 0b10,
-};
-
-static FBaseCharacterVisualizeMode DebugVisualize;
-
+ 
 ABaseCharacter::ABaseCharacter(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
 	UCapsuleComponent* CapsuleComponentRemade = GetCapsuleComponent();
-	// CapsuleComponentRemade->InitCapsuleSize(34.0f, 88.0f);
-	// CapsuleComponentRemade->SetCollisionProfileName(UCollisionProfile::Pawn_ProfileName);
-	// CapsuleComponentRemade->CanCharacterStepUpOn = ECB_No;
-	// CapsuleComponentRemade->SetShouldUpdatePhysicsVolume(true);
-	// CapsuleComponentRemade->SetCanEverAffectNavigation(false);
-	// CapsuleComponentRemade->bDynamicObstacle = true;
 	CapsuleComponentRemade->InitCapsuleSize(42.f, 96.0f);
 	
 	// Set size for player capsule
 	float HeightOffset = CapsuleComponentRemade->GetScaledCapsuleHalfHeight();
 	CapsuleComponentRemade->SetRelativeLocation(FVector3d(0, 0, HeightOffset));
-	//CapsuleComponentRemade->SetupAttachment(Empty);
 
 	// Create Entity Collision Component
 	CollisionComponent = CreateDefaultSubobject<UEntityCollisionComponent>(TEXT("EntityCollisionComponent"));
@@ -91,32 +67,6 @@ ABaseCharacter::ABaseCharacter(const FObjectInitializer& ObjectInitializer) : Su
 	StandardAttributes = CreateDefaultSubobject<UStandardAttributeSet>(TEXT("StandardAttributeSet"));
 }
 
-void ABaseCharacter::PostInitializeComponents()
-{
-	Super::PostInitializeComponents();
-}
-
-void ABaseCharacter::Tick(float DeltaSeconds)
-{
-	Super::Tick(DeltaSeconds);
-	if(DebugVisualize)
-	{
-		#define START_BITMASK_SWITCH(x) for (uint64_t bit = 1; x >= bit; bit *= 2) if (x & bit) switch (bit)
-		START_BITMASK_SWITCH(DebugVisualize)
-		{
-			case 0b1:
-				//CollisionComponent->bDebugDisplayRadius = true;
-				break;
-			case 0b10:
-				
-				break;
-			default:
-				//CollisionComponent->bDebugDisplayRadius = false;
-				break;
-		}
-	}
-}
-
 void ABaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
@@ -126,6 +76,56 @@ void ABaseCharacter::BeginPlay()
 	}
 	
 	GetCharacterMovement()->SetPlaneConstraintOrigin(GetActorLocation());
+	if(CollisionComponent->bDebugDisplayRadius)
+	{
+		DebugVisualizeMode |= EBaseCharacterVisualizeMode::Collision2D;
+	}
+}
+
+void ABaseCharacter::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+	UE_LOG(LogBaseCharacter, Display, L"%d", DebugVisualizeMode);
+	if(DebugVisualizeMode != 0x0)
+	{
+		typedef int32 modeType;
+		modeType x = StaticCast<modeType>(DebugVisualizeMode);
+		for (modeType bit = 1; x >= bit; bit *= 2) if (x & bit) switch (StaticCast<EBaseCharacterVisualizeMode>(bit))
+		{
+		case EBaseCharacterVisualizeMode::Collision2D:
+			CollisionComponent->bDebugDisplayRadius = true;
+			break;
+		default:
+			break;
+		}
+	}else
+	{
+		CollisionComponent->bDebugDisplayRadius = false;
+		UE_LOG(LogBaseCharacter, Display, L"False");
+	}
+}
+
+ void ABaseCharacter::DebugToggleVisualizations(const FString modeString)
+{
+
+	for (const auto VisualizeMode : TEnumRange<EBaseCharacterVisualizeMode>())
+	{
+		if(UEnum::GetDisplayValueAsText<EBaseCharacterVisualizeMode>(VisualizeMode).ToString()
+			== modeString)
+		{
+			auto temp = DebugVisualizeMode;
+			DebugVisualizeMode ^= VisualizeMode;
+			break;
+		}
+		
+	}
+	
+}
+
+void ABaseCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty> & OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(ABaseCharacter, StandardAttributes);
 }
 
 void ABaseCharacter::SetupInitialAbilitiesAndEffects()

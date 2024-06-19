@@ -12,7 +12,7 @@ class UNiagaraSystem;
 class UInputMappingContext;
 class UInputAction;
 
-DECLARE_LOG_CATEGORY_EXTERN(LogBaseCharacter, Warning, All);
+DECLARE_LOG_CATEGORY_EXTERN(LogBaseCharacter, Verbose, All);
 
 UCLASS()
 class ABasePlayerController : public APlayerController
@@ -41,6 +41,8 @@ public:
 	/** Jump Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
 	UInputAction* SetDestinationTouchAction;
+
+
 
 protected:
 	/** True if the controlled character should navigate to the mouse cursor. */

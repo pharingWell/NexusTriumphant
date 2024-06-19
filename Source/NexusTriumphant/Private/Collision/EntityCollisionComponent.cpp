@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "EntityCollisionComponent.h"
+#include "Collision/EntityCollisionComponent.h"
 
 #include "Characters/Base/BasePlayerController.h"
 
@@ -63,8 +63,7 @@ void UEntityCollisionComponent::BeginPlay()
 void UEntityCollisionComponent::TickComponent(float DeltaTime, ELevelTick TickType,
                                               FActorComponentTickFunction* ThisTickFunction)
 {
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-	if(bDebugDisplayRadius)
+	if(this->bDebugDisplayRadius)
 	{
 		DrawCircle(GetWorld(), GetComponentLocation() - FVector(0,0,HeightOffset),
 			FVector(1.f, 0.f, 0.f),
