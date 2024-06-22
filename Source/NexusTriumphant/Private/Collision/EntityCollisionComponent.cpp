@@ -3,7 +3,7 @@
 
 #include "Collision/EntityCollisionComponent.h"
 
-#include "Characters/Base/BasePlayerController.h"
+#include "Entities/Base/BaseEntity.h"
 
 
 // Sets default values for this component's properties
@@ -22,11 +22,18 @@ void UEntityCollisionComponent::PostEditChangeProperty(FPropertyChangedEvent& Pr
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 	if(PropertyChangedEvent.GetPropertyName() != "")
 	{
-		//UE_LOG(LogBaseCharacter, Warning, TEXT("[%s] %s"), ToCStr(this->GetFullName()),  ToCStr(PropertyChangedEvent.GetPropertyName().ToString()));
+		//UE_LOG(LogBaseEntity, Warning, TEXT("[%s] %s"), ToCStr(this->GetFullName()),  ToCStr(PropertyChangedEvent.GetPropertyName().ToString()));
 		if(PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_STRING_CHECKED(UEntityCollisionComponent, EntityRadius)  
 		|| PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_STRING_CHECKED(UEntityCollisionComponent, CapsuleRadius)  
 		){
 			Super::SetCapsuleRadius(EntityRadius);
+			if(GetOwner()->IsA(ABaseEntity::StaticClass()))
+			{
+				if(ABaseEntity* OwningEntity = Cast<ABaseEntity>(GetOwner()))
+				{
+					OwningEntity->SetCapsuleRadius(EntityRadius);
+				}
+			}
 		}
 	}
 }

@@ -1,9 +1,10 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Characters/Attributes/StandardAttributeSet.h"
+#include "Entities/Attributes/StandardAttributeSet.h"
 
 #include "GameplayEffectExtension.h"
+
 
 void UStandardAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
 {

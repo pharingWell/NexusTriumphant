@@ -1,8 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "NexusTriumphantGameMode.h"
-#include "Characters/Base/BasePlayerController.h"
-#include "Characters/Base/BaseCharacter.h"
+#include "Public/Entities/Base/BasePlayerController.h"
 #include "Abilities/AbilityHelpers.h"
 #include "UObject/ConstructorHelpers.h"
 
@@ -12,7 +11,7 @@ ANexusTriumphantGameMode::ANexusTriumphantGameMode()
 	PlayerControllerClass = ABasePlayerController::StaticClass();
 
 	// set default pawn class to our Blueprinted character
-	static ConstructorHelpers::FClassFinder<APawn> PlayerPawnBPClass(TEXT("/Game/NexusTriumphant/Entities/Blueprints/BP_BaseCharacter"));
+	static ConstructorHelpers::FClassFinder<APawn> PlayerPawnBPClass(TEXT("/Game/NexusTriumphant/Entities/Blueprints/BP_PlayerCharacter"));
 	if (PlayerPawnBPClass.Class != nullptr)
 	{
 		//UE_LOG_ABILITY_CAUTION("Default Pawn used", this);

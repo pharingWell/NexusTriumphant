@@ -1,18 +1,17 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
-#include "Characters/Base/BasePlayerController.h"
+#include "../../../Public/Entities/Base/BaseEntity.h"
 #include "GameFramework/Pawn.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "NiagaraSystem.h"
 #include "NiagaraFunctionLibrary.h"
-#include "Characters/Base/BaseCharacter.h"
 #include "Engine/World.h"
 #include "EnhancedInputComponent.h"
 #include "InputActionValue.h"
 #include "EnhancedInputSubsystems.h"
 #include "Engine/LocalPlayer.h"
 
-DEFINE_LOG_CATEGORY(LogBaseCharacter);
+DEFINE_LOG_CATEGORY(LogBaseEntity);
 
 ABasePlayerController::ABasePlayerController()
 {
@@ -58,7 +57,7 @@ void ABasePlayerController::SetupInputComponent()
 	}
 	else
 	{
-		UE_LOG(LogBaseCharacter, Error, TEXT("'%s' Failed to find an Enhanced Input Component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
+		UE_LOG(LogBaseEntity, Error, TEXT("'%s' Failed to find an Enhanced Input Component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
 	}
 }
 

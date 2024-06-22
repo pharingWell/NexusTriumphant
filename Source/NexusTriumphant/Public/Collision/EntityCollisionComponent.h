@@ -13,27 +13,39 @@ UCLASS(ClassGroup=Shapes, meta=(BlueprintSpawnableComponent))
 class NEXUSTRIUMPHANT_API UEntityCollisionComponent : public UCapsuleComponent
 {
 	GENERATED_BODY()
+
+/** VARIABLES **/
 	
 public:
-	// Sets default values for this component's properties
-	UEntityCollisionComponent();
-	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
-	void SetupCapsule(float Radius, float HeightOffset, bool bUpdateOverlaps=true);
-	void SetCapsuleRadius(float Radius, bool bUpdateOverlaps=true); //intentionally hides function
-	void SetEntityRadius(float Radius, bool bUpdateOverlaps=true);
 	UPROPERTY(EditDefaultsOnly, Category="Entity")
 	bool bDebugDisplayRadius;
-	
-protected:
-	// Called when the game starts
-	virtual void BeginPlay() override;
 
+protected:
 	/** Determines the size of the entity's collision with 2d space */
 	UPROPERTY(EditDefaultsOnly, Category="Entity")
 	float EntityRadius;
 	float HeightOffset;
+
+/** FUNCTIONS **/
+	
 public:
+	// Sets default values for this component's properties
+	UEntityCollisionComponent();
+	
+	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+	
+	void SetupCapsule(float Radius, float HeightOffset, bool bUpdateOverlaps=true);
+	
+	void SetCapsuleRadius(float Radius, bool bUpdateOverlaps=true); //intentionally hides function
+	
+	void SetEntityRadius(float Radius, bool bUpdateOverlaps=true);
+	
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
-	                           FActorComponentTickFunction* ThisTickFunction) override;
+							   FActorComponentTickFunction* ThisTickFunction) override;
+	
+protected:
+	// Called when the game starts
+	virtual void BeginPlay() override;
+	
 };

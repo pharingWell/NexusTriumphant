@@ -12,7 +12,7 @@ class UNiagaraSystem;
 class UInputMappingContext;
 class UInputAction;
 
-DECLARE_LOG_CATEGORY_EXTERN(LogBaseCharacter, Verbose, All);
+DECLARE_LOG_CATEGORY_EXTERN(LogBaseEntity, Verbose, All);
 
 UCLASS()
 class ABasePlayerController : public APlayerController
