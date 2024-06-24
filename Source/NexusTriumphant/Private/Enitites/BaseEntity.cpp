@@ -1,31 +1,31 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 
-
+#include "Entities/BaseEntity.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/CapsuleComponent.h"
-#include "Entities/Base/BaseEntity.h"
+
 
 
  
 ABaseEntity::ABaseEntity(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
-	GetCapsuleComponent()->InitCapsuleSize(42.f, HeightOffset);
+	GetCapsuleComponent()->InitCapsuleSize(EntityRadius, HeightOffset);
 
 
 	// Create Entity Collision Component
 	CollisionComponent = CreateDefaultSubobject<UEntityCollisionComponent>(TEXT("EntityCollisionComponent"));
 	check(IsValid(CollisionComponent))
-	CollisionComponent->SetupCapsule(42.f, HeightOffset);
+	CollisionComponent->SetupCapsule(EntityRadius, HeightOffset);
 	CollisionComponent->SetupAttachment(GetCapsuleComponent());
 
 	// Configure character movement
 	GetCharacterMovement()->bOrientRotationToMovement = true; // Rotate character to moving direction
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 640.f, 0.f);
-	GetCharacterMovement()->SetPlaneConstraintNormal(FVector(0.f, 0.f, 1.f));
-	GetCharacterMovement()->SetPlaneConstraintOrigin(FVector(0.f, 0.f, HeightOffset));
-	GetCharacterMovement()->bConstrainToPlane = true;
-	GetCharacterMovement()->bSnapToPlaneAtStart = true;
+	//GetCharacterMovement()->SetPlaneConstraintNormal(FVector(0.f, 0.f, 1.f));
+	//GetCharacterMovement()->SetPlaneConstraintOrigin(FVector(0.f, 0.f, HeightOffset));
+	//GetCharacterMovement()->bConstrainToPlane = true;
+	//GetCharacterMovement()->bSnapToPlaneAtStart = true;
 	
 	// Don't rotate character to camera direction
 	bUseControllerRotationPitch = false;

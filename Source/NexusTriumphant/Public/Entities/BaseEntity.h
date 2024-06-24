@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "BasePlayerController.h"
 #include "UObject/ObjectMacros.h"
 #include "UObject/Class.h"
 #include "Collision/EntityCollisionComponent.h"

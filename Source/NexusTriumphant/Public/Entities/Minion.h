@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "../Entities/Base/BaseEntity.h"
+#include "Entities/BaseEntity.h"
 #include "Minion.generated.h"
 
 UCLASS()

@@ -3,7 +3,7 @@
 
 #include "Entities/PlayerCharacter.h"
 
-#include "Entities/Base/BaseEntity.h"
+#include "Entities/BaseEntity.h"
 #include "Net/UnrealNetwork.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/CapsuleComponent.h"

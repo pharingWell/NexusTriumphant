@@ -1,7 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "NexusTriumphantGameMode.h"
-#include "Public/Entities/Base/BasePlayerController.h"
+#include "Public/Entities/Controllers/BasePlayerController.h"
 #include "Abilities/AbilityHelpers.h"
 #include "UObject/ConstructorHelpers.h"
 
