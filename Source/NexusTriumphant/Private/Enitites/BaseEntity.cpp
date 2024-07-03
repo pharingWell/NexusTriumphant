@@ -22,15 +22,11 @@ ABaseEntity::ABaseEntity(const FObjectInitializer& ObjectInitializer) : Super(Ob
 	// Configure character movement
 	GetCharacterMovement()->bOrientRotationToMovement = true; // Rotate character to moving direction
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 640.f, 0.f);
+	//GetCharacterMovement()->
 	//GetCharacterMovement()->SetPlaneConstraintNormal(FVector(0.f, 0.f, 1.f));
 	//GetCharacterMovement()->SetPlaneConstraintOrigin(FVector(0.f, 0.f, HeightOffset));
 	//GetCharacterMovement()->bConstrainToPlane = true;
 	//GetCharacterMovement()->bSnapToPlaneAtStart = true;
-	
-	// Don't rotate character to camera direction
-	bUseControllerRotationPitch = false;
-	bUseControllerRotationYaw = false;
-	bUseControllerRotationRoll = false;
 	
 	// Activate ticking in order to update the cursor every frame.
 	PrimaryActorTick.bCanEverTick = true;
