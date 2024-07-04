@@ -45,12 +45,13 @@ protected:
 	UEntityCollisionComponent* CollisionComponent;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Entity")
-	float EntityRadius = 42.f;
+	float EntityRadius;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Entity")
-	float HeightOffset = 96.f;
+	float EntityHalfHeight;
 
 public:
-	ABaseEntity(const FObjectInitializer&);
+	ABaseEntity(const FObjectInitializer& ObjectInitializer);
+	virtual void PreRegisterAllComponents() override;
 
 	// Called every frame.
 	virtual void Tick(float DeltaSeconds) override;
@@ -59,7 +60,11 @@ public:
 	
 	UFUNCTION(Exec, Category="Commands")
 	void DebugVisualizationsToggle(const FString modeString);
-	
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Transform")
+	FVector GetRootLocationOffset();
+	FVector GetRootLocationOffset(const FVector& InVector) const;
+
 	void DebugVisualizationsDisable() const;
 	void SetCapsuleRadius(float InRadius);
 	

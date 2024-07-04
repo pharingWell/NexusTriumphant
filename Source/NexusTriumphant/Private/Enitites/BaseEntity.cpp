@@ -8,23 +8,37 @@
 
 
  
-ABaseEntity::ABaseEntity(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
+ABaseEntity::ABaseEntity(const FObjectInitializer& ObjectInitializer): Super(ObjectInitializer)
 {
-	GetCapsuleComponent()->InitCapsuleSize(EntityRadius, HeightOffset);
+	CollisionComponent = CreateDefaultSubobject<UEntityCollisionComponent>(TEXT("EntityCollisionComponent"));
+	EntityRadius = 50.f;
+	EntityHalfHeight = 100.f;
+	GetMesh()->SetRelativeLocation(FVector(0,0,-EntityHalfHeight));
+	GetMesh()->SetRelativeRotation(FQuat(0, 0, -PI / 4,PI / 4)); //-90 Z turn
+}
 
+void ABaseEntity::PreRegisterAllComponents()
+{
+	Super::PreInitializeComponents();
+	GetCapsuleComponent()->InitCapsuleSize(EntityRadius, EntityHalfHeight);
+	GetCapsuleComponent()->UPrimitiveComponent::SetCollisionProfileName("Entity");
+	//GetCapsuleComponent()->SetRelativeLocation(FVector(0,0,EntityHalfHeight));
+	GetCapsuleComponent()->SetGenerateOverlapEvents(true);
 
 	// Create Entity Collision Component
-	CollisionComponent = CreateDefaultSubobject<UEntityCollisionComponent>(TEXT("EntityCollisionComponent"));
+	
 	check(IsValid(CollisionComponent))
-	CollisionComponent->SetupCapsule(EntityRadius, HeightOffset);
+	CollisionComponent->SetupCapsule(EntityRadius, EntityHalfHeight);
 	CollisionComponent->SetupAttachment(GetCapsuleComponent());
+
+
 
 	// Configure character movement
 	GetCharacterMovement()->bOrientRotationToMovement = true; // Rotate character to moving direction
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 640.f, 0.f);
 	//GetCharacterMovement()->
 	//GetCharacterMovement()->SetPlaneConstraintNormal(FVector(0.f, 0.f, 1.f));
-	//GetCharacterMovement()->SetPlaneConstraintOrigin(FVector(0.f, 0.f, HeightOffset));
+	//GetCharacterMovement()->SetPlaneConstraintOrigin(FVector(0.f, 0.f, EntityHalfHeight));
 	//GetCharacterMovement()->bConstrainToPlane = true;
 	//GetCharacterMovement()->bSnapToPlaneAtStart = true;
 	
@@ -33,8 +47,6 @@ ABaseEntity::ABaseEntity(const FObjectInitializer& ObjectInitializer) : Super(Ob
 
 	// Create a collider to deal with 2d collisions
 	// Move components around so the mesh and capsule are in the correct locations
-	GetMesh()->SetRelativeLocation(FVector3d(0, 0, -HeightOffset));
-	GetMesh()->SetRelativeRotation(FQuat(0, 0, -PI / 4,PI / 4)); //-90 Z turn
 
 }
 
@@ -49,12 +61,12 @@ void ABaseEntity::BeginPlay()
 void ABaseEntity::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
-	if(PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_STRING_CHECKED(ABaseEntity, HeightOffset))
+	if(PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_STRING_CHECKED(ABaseEntity, EntityHalfHeight))
 	{
-		GetCapsuleComponent()->InitCapsuleSize(EntityRadius, HeightOffset);
-		CollisionComponent->SetupCapsule(EntityRadius, HeightOffset);
-		GetCharacterMovement()->SetPlaneConstraintOrigin(FVector(0.f, 0.f, HeightOffset));
-		GetMesh()->SetRelativeLocation(FVector3d(0, 0, -HeightOffset));
+		GetCapsuleComponent()->InitCapsuleSize(EntityRadius, EntityHalfHeight);
+		CollisionComponent->SetupCapsule(EntityRadius, EntityHalfHeight);
+		GetCharacterMovement()->SetPlaneConstraintOrigin(FVector(0.f, 0.f, EntityHalfHeight));
+		GetMesh()->SetRelativeLocation(FVector3d(0, 0, -EntityHalfHeight));
 	}
 }
 
@@ -94,6 +106,17 @@ void ABaseEntity::DebugVisualizationsToggle(const FString modeString)
 			break;
 		}
 	}
+}
+
+//for spawning entities on the ground
+FVector ABaseEntity::GetRootLocationOffset()
+{
+	return FVector::UpVector * GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
+}
+
+FVector ABaseEntity::GetRootLocationOffset(const FVector& InVector) const
+{
+	return InVector + FVector::UpVector * GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
 }
 
 void ABaseEntity::DebugVisualizationsDisable() const

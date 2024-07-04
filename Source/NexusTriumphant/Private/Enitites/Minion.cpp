@@ -8,6 +8,13 @@
 // Sets default values
 AMinion::AMinion(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
+	EntityRadius = 5.f;
+	EntityHalfHeight = 55.f;
+}
+
+void AMinion::PreRegisterAllComponents()
+{
+	Super::PreRegisterAllComponents();
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 }

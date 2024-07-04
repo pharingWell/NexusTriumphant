@@ -14,6 +14,7 @@ class NEXUSTRIUMPHANT_API AMinion : public ABaseEntity
 public:
 	// Sets default values for this character's properties
 	AMinion(const FObjectInitializer& ObjectInitializer);
+	virtual void PreRegisterAllComponents() override;
 
 protected:
 	// Called when the game starts or when spawned
