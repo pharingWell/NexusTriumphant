@@ -8,7 +8,7 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemInterface.h"
 #include "Entities/Player/NPlayerCharacter.h"
-#include "ExecuteActionComponent.generated.h"
+#include "NExecuteActionComponent.generated.h"
 
 
 struct FGameplayAbilitySpecHandle;
@@ -21,7 +21,7 @@ class ANPlayerCharacter;
 static FGameplayAbilitySpecHandle INVALID_GA_SPEC_HANDLE;
 
 UCLASS()
-class NEXUSTRIUMPHANT_API UExecuteActionComponent : public USceneComponent, public IAbilitySystemInterface 
+class NEXUSTRIUMPHANT_API UNExecuteActionComponent : public UActorComponent, public IAbilitySystemInterface 
 {
 	GENERATED_BODY()
 	
@@ -37,8 +37,9 @@ protected:
 
 	
 public:
-	UExecuteActionComponent(const FObjectInitializer& ObjectInitializer);
-	
+	UNExecuteActionComponent(const FObjectInitializer& ObjectInitializer);
+	virtual void InitializeComponent() override;
+
 	void ExecuteAction(FGameplayAbilitySpecHandle& Action);
 	void CancelCurrentAction();
 	UFUNCTION(BlueprintCallable, Category="Gameplay Ability System")

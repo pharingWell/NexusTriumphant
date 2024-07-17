@@ -25,7 +25,7 @@
 #include "AbilitySystem/Abilities/NAbilityHelpers.h"
 #include "NPlayerCharacter.generated.h"
 
-class UExecuteActionComponent;
+class UNExecuteActionComponent;
 class UNCollisionComponent;
 class UInputMappingContext;
 
@@ -45,7 +45,7 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "EnhancedInput")
 	UInputMappingContext* InputMapping;
 	UPROPERTY(VisibleAnywhere, Category = "ExecuteAction")
-	class UExecuteActionComponent* ExecuteActionComponent;
+	class UNExecuteActionComponent* ExecuteActionComponent;
 	/**
 	 * Begins as null
 	 */

@@ -1,13 +1,19 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "AbilitySystem//ExecuteActionComponent.h"
+#include "AbilitySystem//NExecuteActionComponent.h"
 
 #include "GameplayAbilitySpecHandle.h"
 #include "AbilitySystem/Abilities/NAbilityHelpers.h"
 
-UExecuteActionComponent::UExecuteActionComponent(const FObjectInitializer& ObjectInitializer): Super(ObjectInitializer)
+UNExecuteActionComponent::UNExecuteActionComponent(const FObjectInitializer& ObjectInitializer): Super(ObjectInitializer)
 {
+	
+}
+
+void UNExecuteActionComponent::InitializeComponent()
+{
+	
 	ANPlayerCharacter* Actor = Cast<ANPlayerCharacter>(GetOwner());
 	if(Actor != nullptr)
 	{
@@ -15,22 +21,21 @@ UExecuteActionComponent::UExecuteActionComponent(const FObjectInitializer& Objec
 		if(ANPlayerState* PlayerState = AvatarActor->GetPlayerState<ANPlayerState>())
 		{
 			OwningState = PlayerState;
-			AbilityActorInfo.InitFromActor(OwningState, AvatarActor, UExecuteActionComponent::GetAbilitySystemComponent());
+			AbilityActorInfo.InitFromActor(OwningState, AvatarActor, UNExecuteActionComponent::GetAbilitySystemComponent());
 		}
 	}else
 	{
 		UE_LOG_ABILITY_CAUTION("Fuck", this);
-		//USceneComponent::DestroyComponent();
+		UActorComponent::DestroyComponent();
 	}
-	
 }
 
-void UExecuteActionComponent::ExecuteAction(FGameplayAbilitySpecHandle& Action)
+void UNExecuteActionComponent::ExecuteAction(FGameplayAbilitySpecHandle& Action)
 {
 	ClearQueue();
 }
 
-void UExecuteActionComponent::CancelCurrentAction()
+void UNExecuteActionComponent::CancelCurrentAction()
 {
 	ClearQueue();
 	if(CurrentAction.IsValid())
@@ -39,7 +44,7 @@ void UExecuteActionComponent::CancelCurrentAction()
 	}
 }
 
-void UExecuteActionComponent::EnqueueAction(const FGameplayAbilitySpecHandle& Action)
+void UNExecuteActionComponent::EnqueueAction(const FGameplayAbilitySpecHandle& Action)
 {
 	Queue.Enqueue(Action);
 	if(!bExecutingQueue)
@@ -48,7 +53,7 @@ void UExecuteActionComponent::EnqueueAction(const FGameplayAbilitySpecHandle& Ac
 	}
 }
 
-void UExecuteActionComponent::ClearQueue()
+void UNExecuteActionComponent::ClearQueue()
 {
 }
 
@@ -60,7 +65,7 @@ void UExecuteActionComponent::ClearQueue()
  * Using an action without holding the "Queue Action" key bind, or an ability returns cancelled, the queue clears
  */
 
-void UExecuteActionComponent::ExecuteQueue()
+void UNExecuteActionComponent::ExecuteQueue()
 {
 	if(Queue.IsEmpty() || bExecutingQueue)
 	{

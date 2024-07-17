@@ -3,7 +3,7 @@
 
 #include "Entities/Player/NPlayerCharacter.h"
 
-#include "AbilitySystem/ExecuteActionComponent.h"
+#include "AbilitySystem/NExecuteActionComponent.h"
 #include "Entities/NexusEntity.h"
 #include "Net/UnrealNetwork.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -16,6 +16,8 @@ ANPlayerCharacter::ANPlayerCharacter(const FObjectInitializer& ObjectInitializer
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.bStartWithTickEnabled = true;
+
+	ExecuteActionComponent = CreateDefaultSubobject<UNExecuteActionComponent>(TEXT("ExecuteActionComponent"));
 	
 	// Create a camera boom...
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));

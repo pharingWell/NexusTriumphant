@@ -13,7 +13,7 @@ ANexusTriumphantGameMode::ANexusTriumphantGameMode()
 	PlayerControllerClass = ANPlayerController::StaticClass();
 
 	// set default pawn class to our Blueprinted character
-	static ConstructorHelpers::FClassFinder<APawn> PlayerPawnBPClass(TEXT("/Game/NexusTriumphant/Entities/Blueprints/BP_PlayerCharacter"));
+	static ConstructorHelpers::FClassFinder<APawn> PlayerPawnBPClass(TEXT("/Game/NexusTriumphant/Entities/Player/BP_PlayerCharacter"));
 	if (PlayerPawnBPClass.Class != nullptr)
 	{
 		//UE_LOG_ABILITY_CAUTION("Default Pawn used", this);
@@ -21,7 +21,7 @@ ANexusTriumphantGameMode::ANexusTriumphantGameMode()
 	}
 
 	// set default controller to our Blueprinted controller
-	static ConstructorHelpers::FClassFinder<APlayerController> PlayerControllerBPClass(TEXT("/Game/NexusTriumphant/Entities/Blueprints/BP_BasePlayerController"));
+	static ConstructorHelpers::FClassFinder<APlayerController> PlayerControllerBPClass(TEXT("/Game/NexusTriumphant/Entities/Player/BP_BasePlayerController"));
 	if(PlayerControllerBPClass.Class != NULL)
 	{
 		PlayerControllerClass = PlayerControllerBPClass.Class;
