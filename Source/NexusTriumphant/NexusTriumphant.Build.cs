@@ -8,6 +8,22 @@ public class NexusTriumphant : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "GameplayAbilities", "NavigationSystem", "AIModule", "Niagara", "EnhancedInput" });
+		PublicDependencyModuleNames.AddRange(new string[]
+		{
+			"Core", 
+			"CoreUObject", 
+			"Engine", 
+			"InputCore", 
+			"GameplayAbilities", 
+			"NavigationSystem", 
+			"AIModule", 
+			"Niagara", 
+			"EnhancedInput"
+		});
+		/* PrivateDependencyModuleNames.AddRange(new string[]
+		{
+			
+		});
+		*/
 	}
 }
