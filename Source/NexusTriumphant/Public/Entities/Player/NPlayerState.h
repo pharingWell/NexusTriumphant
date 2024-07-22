@@ -33,7 +33,7 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category="Abilities")
 	UNDA_Champion* ChampionDataAsset;
 	
-	TArray<FGameplayAbilitySpecHandle> GASpecHandles;
+	
 	/*UPROPERTY(Replicated, VisibleAnywhere, Category="Abilities")
 	UNBaseAttributeSet* StandardAttributes{nullptr};
 
@@ -48,8 +48,12 @@ public:
 	TArray<FGameplayAbilitySpecHandle> InitiallyGrantedAbilitySpecHandles;
 	*/
 	/** FUNCTIONS */
+
+	TArray<FGameplayAbilitySpecHandle> SpecHandles;
+	
 private:
-	TArray<FGameplayAbilitySpec> GASpecs;
+	FNChampionActions ChampionActionsStruct;
+
 	
 public:
 	ANPlayerState(const FObjectInitializer& ObjectInitializer);
@@ -66,4 +70,5 @@ public:
 	// {
 	// 	return InitiallyGrantedAbilitySpecHandles;
 	// }
+
 };

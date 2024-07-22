@@ -14,24 +14,7 @@
 
 class UGameplayAbility;
 
-// the amount of items in ENGameplayAbility
-#define ENGA_ENUM_ITEMS 10
-#define ENGA_ADDITIONAL_ABILITIES 4
 
-UENUM()
-enum ENGameplayAbility
-{
-	ATTACK,
-	ABILITY1,
-	ABILITY2,
-	ABILITY3,
-	ABILITYULTIMATE,
-	ABILITYTRAIT,
-	ADDT1,
-	ADDT2,
-	ADDT3,
-	ADDT4,
-};
 
 UCLASS()
 class NEXUSTRIUMPHANT_API UNDA_Champion : public UDataAsset
@@ -41,26 +24,26 @@ class NEXUSTRIUMPHANT_API UNDA_Champion : public UDataAsset
 public:
 	void BeginPlay();
 
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, DisplayName="Attack Gameplay Ability")
 	TSubclassOf<UNGameplayAbility> AttackClass;
 	
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, DisplayName="First Gameplay Ability")
 	TSubclassOf<UNGameplayAbility> Ability1Class;
 
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, DisplayName="Second Gameplay Ability")
 	TSubclassOf<UNGameplayAbility> Ability2Class;
 
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, DisplayName="Third Gameplay Ability")
 	TSubclassOf<UNGameplayAbility> Ability3Class;
 
-	UPROPERTY(EditDefaultsOnly)
-	TSubclassOf<UNGameplayAbility> AbilityUltimateClass;
+	UPROPERTY(EditDefaultsOnly, DisplayName="Ultimate Gameplay Ability")
+	TSubclassOf<UNGameplayAbility> UltimateClass;
 
-	UPROPERTY(EditDefaultsOnly)
-	TSubclassOf<UNGameplayAbility> AbilityTraitClass;
+	UPROPERTY(EditDefaultsOnly, DisplayName="Trait Gameplay Ability")
+	TSubclassOf<UNGameplayAbility> TraitClass;
 
-	UPROPERTY(EditDefaultsOnly)
-	TArray<TSubclassOf<UNGameplayAbility>> GainedAbilitiesClasses;
+	UPROPERTY(EditDefaultsOnly, DisplayName="Additional Gameplay Abilities")
+	TArray<TSubclassOf<UNGameplayAbility>> AdditionalAbilitiesClasses;
 
 	UPROPERTY(EditDefaultsOnly)
 	FGameplayAttribute ChampionStats;

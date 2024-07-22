@@ -3,10 +3,9 @@
 
 #include "AbilitySystem/NDA_Champion.h"
 
-#include "NexusTriumphant/NexusTriumphant.h"
 
-void UNDA_Champion::BeginPlay()
-{
-	
-}
+
+
+
+
 

@@ -1,9 +1,10 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 #include "Entities/Player/NPlayerState.h"
+#include "AbilitySystem/NActionHelper.h"
 #include "AbilitySystem/Abilities/NAbilityHelpers.h"
 #include "Entities/Player/NPlayerCharacter.h"
 #include "Net/UnrealNetwork.h"
-
+#include "NexusTriumphant/NexusTriumphant.h"
 
 
 ANPlayerState::ANPlayerState(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
@@ -11,7 +12,7 @@ ANPlayerState::ANPlayerState(const FObjectInitializer& ObjectInitializer) : Supe
 	// Ability system items
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 	AbilitySystemComponent->SetIsReplicated(true);
-	
+	ChampionDataAsset = CreateDefaultSubobject<UNDA_Champion>("Champion");
 	//InitialAbilitySet = CreateDefaultSubobject<UNAbilitySet>(TEXT("InitialAbilitySet"));
 	//StandardAttributes = CreateDefaultSubobject<UNBaseAttributeSet>(TEXT("StandardAttributeSet"));
 	
@@ -33,38 +34,33 @@ void ANPlayerState::BeginPlay()
 	Super::BeginPlay();
 	if(ChampionDataAsset)
 	{
-		GASpecs.Reserve(ENGA_ENUM_ITEMS);
-		GASpecHandles.Reserve(ENGA_ENUM_ITEMS);
+
 		// creates a gameplay spec for each ability assigned via the champion asset
 		TMap<ENGameplayAbility, TSubclassOf<UNGameplayAbility>> AbilityMap{
 			{ENGameplayAbility::ATTACK, ChampionDataAsset->AttackClass},
 			{ENGameplayAbility::ABILITY1, ChampionDataAsset->Ability1Class},
 			{ENGameplayAbility::ABILITY2, ChampionDataAsset->Ability2Class},
 			{ENGameplayAbility::ABILITY3, ChampionDataAsset->Ability3Class},
-			{ENGameplayAbility::ABILITYULTIMATE, ChampionDataAsset->AbilityUltimateClass},
-			{ENGameplayAbility::ABILITYTRAIT, ChampionDataAsset->AbilityTraitClass},
+			{ENGameplayAbility::ULTIMATE, ChampionDataAsset->UltimateClass},
+			{ENGameplayAbility::TRAIT, ChampionDataAsset->TraitClass},
 		};
-		//ensures that they have a unique input id if I need it later
-		int InputID = 0;
-		for (auto Map : AbilityMap)
+		ChampionActionsStruct.SetActions(AbilityMap);
+		ChampionActionsStruct.GiveAbilities(this, GetAbilitySystemComponent());
+		bool bDidSucceed = false;
+		const TArray<FGameplayAbilitySpecHandle> SpecHandlesTemp = ChampionActionsStruct.GetSpecHandles(bDidSucceed);
+		if(bDidSucceed)
 		{
-			GASpecs[Map.Key] = FGameplayAbilitySpec(Map.Value,1,InputID,this);
-			InputID++;
-		}
-		for (int i = 0; i < ChampionDataAsset->GainedAbilitiesClasses.Num() && i < ENGA_ADDITIONAL_ABILITIES; i++)
+			SpecHandles = SpecHandlesTemp;
+		}else
 		{
-			GASpecs[ENGameplayAbility::ADDT1 + i] = FGameplayAbilitySpec(
-				ChampionDataAsset->GainedAbilitiesClasses[i],1,InputID,this);
-			InputID++;
-		}
-		for (int i = 0; i < GASpecs.Num(); i++)
-		{
-			GASpecHandles[i] = GetAbilitySystemComponent()->GiveAbility(GASpecs[i]);
+			UE_LOG_ABILITY_CAUTION("NDA_Champion spec handles failed to be captured", this);
 		}
 	}else
 	{
 		UE_LOG_ABILITY_CAUTION("NDA_Champion not found at begin play", this);
 	}
+
+	
 	//SetupInitialAbilitiesAndEffects();
 }
 
