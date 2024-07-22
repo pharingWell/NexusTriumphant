@@ -6,6 +6,7 @@
 
 #include "AbilitySystemInterface.h"
 #include "AbilitySystemComponent.h"
+#include "AbilitySystem/NDA_Champion.h"
 #include "AbilitySystem/Abilities/NAbilitySet.h"
 #include "AbilitySystem/Attributes/NBaseAttributeSet.h"
 
@@ -29,25 +30,40 @@ public:
 	UPROPERTY(VisibleAnywhere, Category="Abilities")
 	UAbilitySystemComponent* AbilitySystemComponent{nullptr};
 
-	UPROPERTY(Replicated, VisibleAnywhere, Category="Abilities")
+	UPROPERTY(EditDefaultsOnly, Category="Abilities")
+	UNDA_Champion* ChampionDataAsset;
+	
+	TArray<FGameplayAbilitySpecHandle> GASpecHandles;
+	/*UPROPERTY(Replicated, VisibleAnywhere, Category="Abilities")
 	UNBaseAttributeSet* StandardAttributes{nullptr};
 
+	
 	UPROPERTY(EditDefaultsOnly, Category="Abilities")
-	TSubclassOf<UGameplayEffect> InitialGameplayEffect;
-
+	TSubclassOf<UGameplayEffect> InitialGameplayEffect{nullptr};
+	
 	UPROPERTY(EditDefaultsOnly, Category="Abilities")
 	UNAbilitySet* InitialAbilitySet{nullptr};
-
+	
 	UPROPERTY(EditDefaultsOnly, Category="Abilities")
 	TArray<FGameplayAbilitySpecHandle> InitiallyGrantedAbilitySpecHandles;
-
+	*/
 	/** FUNCTIONS */
+private:
+	TArray<FGameplayAbilitySpec> GASpecs;
 	
 public:
 	ANPlayerState(const FObjectInitializer& ObjectInitializer);
+	virtual void BeginPlay() override;
 	
 	// IAbilitySystemInterface
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystemComponent; }
-	void SetupInitialAbilitiesAndEffects();
-	void OnHealthAttributeChanged(const FOnAttributeChangeData& OnAttributeChangeData) const;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty> & OutLifetimeProps) const override;
+	//void SetupInitialAbilitiesAndEffects();
+	// void OnHealthAttributeChanged(const FOnAttributeChangeData& OnAttributeChangeData) const;
+
+	// UFUNCTION(BlueprintCallable, BlueprintPure)
+	// TArray<FGameplayAbilitySpecHandle> GetInitiallyGrantedAbilitySpecHandles()
+	// {
+	// 	return InitiallyGrantedAbilitySpecHandles;
+	// }
 };

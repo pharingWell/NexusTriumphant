@@ -5,47 +5,67 @@
 
 #include "GameplayAbilitySpecHandle.h"
 #include "AbilitySystem/Abilities/NAbilityHelpers.h"
+#include "Entities/Player/NPlayerController.h"
+#include "NexusTriumphant/NexusTriumphant.h"
 
 UNExecuteActionComponent::UNExecuteActionComponent(const FObjectInitializer& ObjectInitializer): Super(ObjectInitializer)
 {
-	
+	bComponentInitialized = false;
 }
 
 void UNExecuteActionComponent::InitializeComponent()
 {
 	
-	ANPlayerCharacter* Actor = Cast<ANPlayerCharacter>(GetOwner());
-	if(Actor != nullptr)
+	
+	GetAbilitySystemComponent()->OnAbilityEnded.AddUFunction(this, "ActionEnded");
+
+	ANPlayerController* Controller = Cast<ANPlayerController>(GetOwner());
+	if(Controller != nullptr)
 	{
-		AvatarActor = Actor;
-		if(ANPlayerState* PlayerState = AvatarActor->GetPlayerState<ANPlayerState>())
+		ANPlayerCharacter* Actor = Cast<ANPlayerCharacter>(Controller->GetCharacter());
+		if(Actor != nullptr)
 		{
-			OwningState = PlayerState;
-			AbilityActorInfo.InitFromActor(OwningState, AvatarActor, UNExecuteActionComponent::GetAbilitySystemComponent());
+			AvatarActor = Actor;
+			if(ANPlayerState* PlayerState = AvatarActor->GetPlayerState<ANPlayerState>())
+			{
+				OwningState = PlayerState;
+				AbilityActorInfo.InitFromActor(OwningState, AvatarActor, UNExecuteActionComponent::GetAbilitySystemComponent());
+			}else
+			{
+				UE_LOG(LogNexusTriumphant, Warning, TEXT("[NExecuteActionComponent] Incorrect type of player state. Destroying"));
+				UActorComponent::DestroyComponent();
+				return;
+			}
+			bComponentInitialized = true;
+		}else
+		{
+			UE_LOG(LogNexusTriumphant, Warning, TEXT("[NExecuteActionComponent] Incorrect type of owning actor. Destroying"));
+			UActorComponent::DestroyComponent();
+			return;
 		}
-	}else
-	{
-		UE_LOG_ABILITY_CAUTION("Fuck", this);
-		UActorComponent::DestroyComponent();
 	}
 }
 
-void UNExecuteActionComponent::ExecuteAction(FGameplayAbilitySpecHandle& Action)
+void UNExecuteActionComponent::ExecuteAction(const FGameplayAbilitySpecHandle& Action)
 {
+	if(!bComponentInitialized) return;
 	ClearQueue();
+	bool AbilityActivated = GetAbilitySystemComponent()->TryActivateAbility(Action, true);
 }
 
 void UNExecuteActionComponent::CancelCurrentAction()
 {
+	if(!bComponentInitialized) return;
 	ClearQueue();
-	if(CurrentAction.IsValid())
+	if(CurrentActionSpecHandle.IsValid())
 	{
-		GetAbilitySystemComponent()->CancelAbilityHandle(CurrentAction);
+		GetAbilitySystemComponent()->CancelAbilityHandle(CurrentActionSpecHandle);
 	}
 }
 
 void UNExecuteActionComponent::EnqueueAction(const FGameplayAbilitySpecHandle& Action)
 {
+	if(!bComponentInitialized) return;
 	Queue.Enqueue(Action);
 	if(!bExecutingQueue)
 	{
@@ -55,6 +75,9 @@ void UNExecuteActionComponent::EnqueueAction(const FGameplayAbilitySpecHandle& A
 
 void UNExecuteActionComponent::ClearQueue()
 {
+	if(!bComponentInitialized) return;
+	Queue.Empty();
+	bExecutingQueue = false;
 }
 
 /*
@@ -67,28 +90,57 @@ void UNExecuteActionComponent::ClearQueue()
 
 void UNExecuteActionComponent::ExecuteQueue()
 {
+	if(!bComponentInitialized) return;
 	if(Queue.IsEmpty() || bExecutingQueue)
 	{
 		return;
 	}
 	bExecutingQueue = true;
-	while(!Queue.IsEmpty())
-	{
-		FGameplayAbilitySpecHandle SpecHandle;
-		Queue.Dequeue(SpecHandle);
-		if(!SpecHandle.IsValid())
-		{
-			UE_LOG_ABILITY_CAUTION("[Action Queue] Invalid ability spec handle dequeued", this);
-			continue;
-		}
-		bool AbilityActivated = GetAbilitySystemComponent()->TryActivateAbility(SpecHandle, true);
-		if(!AbilityActivated)
-		{
-			ClearQueue();
-			return;
-		}
-		CurrentAction = SpecHandle;
-		
-	}
-	bExecutingQueue = false;
+	ExecuteQueuedAction();
 }
+
+void UNExecuteActionComponent::ExecuteQueuedAction()
+{
+	if(!bComponentInitialized) return;
+	if(Queue.IsEmpty() || !bExecutingQueue)
+	{
+		return;
+	}
+	FGameplayAbilitySpecHandle SpecHandle;
+	Queue.Dequeue(SpecHandle);
+	if(!SpecHandle.IsValid())
+	{
+		UE_LOG_ABILITY_CAUTION("[Action Queue] Invalid ability spec handle dequeued", this);
+		ExecuteQueuedAction();
+	}
+	bool AbilityActivated = GetAbilitySystemComponent()->TryActivateAbility(SpecHandle, true);
+	if(!AbilityActivated)
+	{
+		ClearQueue();
+		return;
+	}
+	CurrentActionSpecHandle = SpecHandle;
+}
+
+void UNExecuteActionComponent::ActionEnded(const FAbilityEndedData& AbilityEndedData)
+{
+	if(!bComponentInitialized) return;
+	if(AbilityEndedData.AbilitySpecHandle == CurrentActionSpecHandle)
+	{
+		if(bExecutingQueue){
+			if(AbilityEndedData.bWasCancelled)
+			{
+				ClearQueue();
+				return;
+			}
+			if(Queue.IsEmpty())
+			{
+				bExecutingQueue = false;
+				return;
+			}
+			ExecuteQueuedAction();
+		}
+	}
+}
+
+

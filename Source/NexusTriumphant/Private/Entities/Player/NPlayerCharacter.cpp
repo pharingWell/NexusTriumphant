@@ -3,7 +3,6 @@
 
 #include "Entities/Player/NPlayerCharacter.h"
 
-#include "AbilitySystem/NExecuteActionComponent.h"
 #include "Entities/NexusEntity.h"
 #include "Net/UnrealNetwork.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -17,7 +16,7 @@ ANPlayerCharacter::ANPlayerCharacter(const FObjectInitializer& ObjectInitializer
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.bStartWithTickEnabled = true;
 
-	ExecuteActionComponent = CreateDefaultSubobject<UNExecuteActionComponent>(TEXT("ExecuteActionComponent"));
+	
 	
 	// Create a camera boom...
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
@@ -46,7 +45,11 @@ ANPlayerCharacter::ANPlayerCharacter(const FObjectInitializer& ObjectInitializer
 void ANPlayerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState)
 {
 	Super::OnPlayerStateChanged(NewPlayerState, OldPlayerState);
-	ExecuteActionComponent->SetPlayerState(GetPlayerState<ANPlayerState>());
+	PlayerState = Cast<ANPlayerState>(NewPlayerState);
+}
+
+void ANPlayerCharacter::OnSetDestinationReleased()
+{
 }
 
 // Called when the game starts or when spawned
@@ -63,10 +66,10 @@ void ANPlayerCharacter::Tick(float DeltaTime)
 }
 
 // Called to bind functionality to input
-void ANPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
-}
+// void ANPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+// {
+// 	Super::SetupPlayerInputComponent(PlayerInputComponent);
+// }
 
 /*
  * from tranek's GASDocumentation

@@ -44,8 +44,7 @@ protected:
 	/** MappingContext for player input. */
 	UPROPERTY(VisibleAnywhere, Category = "EnhancedInput")
 	UInputMappingContext* InputMapping;
-	UPROPERTY(VisibleAnywhere, Category = "ExecuteAction")
-	class UNExecuteActionComponent* ExecuteActionComponent;
+
 	/**
 	 * Begins as null
 	 */
@@ -69,8 +68,6 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	virtual void PossessedBy(AController* NewController) override;
 
 	/** Returns TopDownCameraComponent sub-object **/
@@ -88,14 +85,12 @@ public:
 		return nullptr;
 	}
 
-	virtual void OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState) override;
-
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-	
+	virtual void OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState) override;
 private:
-	
+	void OnSetDestinationReleased();
 
 
 

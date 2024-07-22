@@ -14,31 +14,57 @@
 
 class UGameplayAbility;
 
+// the amount of items in ENGameplayAbility
+#define ENGA_ENUM_ITEMS 10
+#define ENGA_ADDITIONAL_ABILITIES 4
+
+UENUM()
+enum ENGameplayAbility
+{
+	ATTACK,
+	ABILITY1,
+	ABILITY2,
+	ABILITY3,
+	ABILITYULTIMATE,
+	ABILITYTRAIT,
+	ADDT1,
+	ADDT2,
+	ADDT3,
+	ADDT4,
+};
 
 UCLASS()
 class NEXUSTRIUMPHANT_API UNDA_Champion : public UDataAsset
 {
 	GENERATED_BODY()
-
+	
 public:
-	UPROPERTY(EditDefaultsOnly)
-	UNGameplayAbility* Ability1;
+	void BeginPlay();
 
 	UPROPERTY(EditDefaultsOnly)
-	UNGameplayAbility* Ability2;
+	TSubclassOf<UNGameplayAbility> AttackClass;
+	
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UNGameplayAbility> Ability1Class;
 
 	UPROPERTY(EditDefaultsOnly)
-	UNGameplayAbility* Ability3;
+	TSubclassOf<UNGameplayAbility> Ability2Class;
 
 	UPROPERTY(EditDefaultsOnly)
-	UNGameplayAbility* AbilityUltimate;
+	TSubclassOf<UNGameplayAbility> Ability3Class;
 
 	UPROPERTY(EditDefaultsOnly)
-	UNGameplayAbility* AbilityTrait;
+	TSubclassOf<UNGameplayAbility> AbilityUltimateClass;
 
 	UPROPERTY(EditDefaultsOnly)
-	TArray<UNGameplayAbility*> GainedAbilities;
+	TSubclassOf<UNGameplayAbility> AbilityTraitClass;
 
+	UPROPERTY(EditDefaultsOnly)
+	TArray<TSubclassOf<UNGameplayAbility>> GainedAbilitiesClasses;
+
+	UPROPERTY(EditDefaultsOnly)
+	FGameplayAttribute ChampionStats;
+	
 public:
 	
 };

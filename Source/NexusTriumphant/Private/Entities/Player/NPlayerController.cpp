@@ -16,18 +16,22 @@
 
 DEFINE_LOG_CATEGORY(LogBaseEntity);
 
-ANPlayerController::ANPlayerController()
+ANPlayerController::ANPlayerController(const FObjectInitializer& ObjectInitializer): Super(ObjectInitializer)
 {
 	bShowMouseCursor = true;
 	DefaultMouseCursor = EMouseCursor::Default;
 	CachedDestination = FVector::ZeroVector;
 	FollowTime = 0.f;
+
+	ExecuteActionComponent = CreateDefaultSubobject<UNExecuteActionComponent>(TEXT("ExecuteActionComponent"));
 }
+
 
 void ANPlayerController::BeginPlay()
 {
 	// Call the base class  
 	Super::BeginPlay();
+
 }
 
 void ANPlayerController::AcknowledgePossession(APawn* P)
@@ -41,6 +45,7 @@ void ANPlayerController::AcknowledgePossession(APawn* P)
 		{
 			NPlayerState->GetAbilitySystemComponent()->InitAbilityActorInfo(NPlayerState, CharacterBase);
 			CharacterBase->SetPlayerState(NPlayerState);
+			ExecuteActionComponent->SetPlayerState(NPlayerState);
 		}
 		
 	}
@@ -58,21 +63,15 @@ void ANPlayerController::SetupInputComponent()
 	{
 		Subsystem->AddMappingContext(DefaultMappingContext, 0);
 	}
-
+	//GetPlayerState<>()
 	// Set up action bindings
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent))
 	{
 		// Setup mouse input events
-		EnhancedInputComponent->BindAction(SetDestinationClickAction, ETriggerEvent::Started, this, &ANPlayerController::OnInputStarted);
-		EnhancedInputComponent->BindAction(SetDestinationClickAction, ETriggerEvent::Triggered, this, &ANPlayerController::OnSetDestinationTriggered);
-		EnhancedInputComponent->BindAction(SetDestinationClickAction, ETriggerEvent::Completed, this, &ANPlayerController::OnSetDestinationReleased);
-		EnhancedInputComponent->BindAction(SetDestinationClickAction, ETriggerEvent::Canceled, this, &ANPlayerController::OnSetDestinationReleased);
-
-		// Setup touch input events
-		EnhancedInputComponent->BindAction(SetDestinationTouchAction, ETriggerEvent::Started, this, &ANPlayerController::OnInputStarted);
-		EnhancedInputComponent->BindAction(SetDestinationTouchAction, ETriggerEvent::Triggered, this, &ANPlayerController::OnTouchTriggered);
-		EnhancedInputComponent->BindAction(SetDestinationTouchAction, ETriggerEvent::Completed, this, &ANPlayerController::OnTouchReleased);
-		EnhancedInputComponent->BindAction(SetDestinationTouchAction, ETriggerEvent::Canceled, this, &ANPlayerController::OnTouchReleased);
+		EnhancedInputComponent->BindAction(MoveToAction, ETriggerEvent::Started, this, &ANPlayerController::OnInputStarted);
+		EnhancedInputComponent->BindAction(MoveToAction, ETriggerEvent::Triggered, this, &ANPlayerController::OnSetDestinationTriggered);
+		EnhancedInputComponent->BindAction(MoveToAction, ETriggerEvent::Completed, this, &ANPlayerController::OnSetDestinationReleased);
+		EnhancedInputComponent->BindAction(MoveToAction, ETriggerEvent::Canceled, this, &ANPlayerController::OnSetDestinationReleased);
 	}
 	else
 	{
@@ -119,27 +118,14 @@ void ANPlayerController::OnSetDestinationTriggered()
 }
 
 void ANPlayerController::OnSetDestinationReleased()
+{
+	// If it was a short press
+	if (FollowTime <= ShortPressThreshold)
 	{
-		// If it was a short press
-		if (FollowTime <= ShortPressThreshold)
-		{
-			// We move there and spawn some particles
-			UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, CachedDestination);
-			UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, FXCursor, CachedDestination, FRotator::ZeroRotator, FVector(1.f, 1.f, 1.f), true, true, ENCPoolMethod::None, true);
-		}
-
-		FollowTime = 0.f;
+		// We move there and spawn some particles
+		UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, CachedDestination);
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, FXCursor, CachedDestination, FRotator::ZeroRotator, FVector(1.f, 1.f, 1.f), true, true, ENCPoolMethod::None, true);
 	}
 
-// Triggered every frame when the input is held down
-void ANPlayerController::OnTouchTriggered()
-	{
-		bIsTouch = true;
-		OnSetDestinationTriggered();
-	}
-
-void ANPlayerController::OnTouchReleased()
-	{
-		bIsTouch = false;
-		OnSetDestinationReleased();
-	}
+	FollowTime = 0.f;
+}

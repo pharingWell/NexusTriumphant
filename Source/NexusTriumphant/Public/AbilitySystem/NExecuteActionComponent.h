@@ -28,35 +28,47 @@ class NEXUSTRIUMPHANT_API UNExecuteActionComponent : public UActorComponent, pub
 public:
 	
 protected:
-	FGameplayAbilitySpecHandle CurrentAction;
+	FGameplayAbilitySpecHandle CurrentActionSpecHandle;
 	FGameplayAbilityActorInfo AbilityActorInfo;
 	bool bExecutingQueue;
 	TQueue<FGameplayAbilitySpecHandle> Queue;
 	ANPlayerCharacter* AvatarActor;
 	ANPlayerState* OwningState;
 
+private:
+	bool bComponentInitialized;
 	
 public:
 	UNExecuteActionComponent(const FObjectInitializer& ObjectInitializer);
 	virtual void InitializeComponent() override;
-
-	void ExecuteAction(FGameplayAbilitySpecHandle& Action);
+	
+	UFUNCTION(BlueprintCallable, Category="Gameplay Ability System")
+	void ExecuteAction(const FGameplayAbilitySpecHandle& Action);
+	
+	UFUNCTION(BlueprintCallable, Category="Gameplay Ability System")
 	void CancelCurrentAction();
+	
 	UFUNCTION(BlueprintCallable, Category="Gameplay Ability System")
 	void EnqueueAction(const FGameplayAbilitySpecHandle& Action);
+	
 	UFUNCTION(BlueprintCallable, Category="Gameplay Ability System")
 	void ClearQueue();
+
+	UFUNCTION(BlueprintCallable, Category="Gameplay Ability System")
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override
 	{
 		if(IsValid(AvatarActor))
 			return AvatarActor->GetAbilitySystemComponent();
 		return nullptr;
 	}
+	
 	void SetPlayerState(ANPlayerState* NewPlayerState)
 	{
 		OwningState = NewPlayerState;
 	}
 private:
 	void ExecuteQueue();
-
+	void ExecuteQueuedAction();
+	UFUNCTION()
+	void ActionEnded(const FAbilityEndedData& AbilityEndedData);
 };

@@ -12,9 +12,9 @@ ANPlayerState::ANPlayerState(const FObjectInitializer& ObjectInitializer) : Supe
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 	AbilitySystemComponent->SetIsReplicated(true);
 	
-	InitialAbilitySet = CreateDefaultSubobject<UNAbilitySet>(TEXT("InitialAbilitySet"));
-	StandardAttributes = CreateDefaultSubobject<UNBaseAttributeSet>(TEXT("StandardAttributeSet"));
-
+	//InitialAbilitySet = CreateDefaultSubobject<UNAbilitySet>(TEXT("InitialAbilitySet"));
+	//StandardAttributes = CreateDefaultSubobject<UNBaseAttributeSet>(TEXT("StandardAttributeSet"));
+	
 	if (AbilitySystemComponent)
 	{
 		//AbilitySystemComponent->InitAbilityActorInfo(this, PLAYER);
@@ -24,21 +24,63 @@ ANPlayerState::ANPlayerState(const FObjectInitializer& ObjectInitializer) : Supe
 void ANPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty> & OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME(ANPlayerState, StandardAttributes);
+	//DOREPLIFETIME(ANPlayerState, StandardAttributes);
 }
 
 
+void ANPlayerState::BeginPlay()
+{
+	Super::BeginPlay();
+	if(ChampionDataAsset)
+	{
+		GASpecs.Reserve(ENGA_ENUM_ITEMS);
+		GASpecHandles.Reserve(ENGA_ENUM_ITEMS);
+		// creates a gameplay spec for each ability assigned via the champion asset
+		TMap<ENGameplayAbility, TSubclassOf<UNGameplayAbility>> AbilityMap{
+			{ENGameplayAbility::ATTACK, ChampionDataAsset->AttackClass},
+			{ENGameplayAbility::ABILITY1, ChampionDataAsset->Ability1Class},
+			{ENGameplayAbility::ABILITY2, ChampionDataAsset->Ability2Class},
+			{ENGameplayAbility::ABILITY3, ChampionDataAsset->Ability3Class},
+			{ENGameplayAbility::ABILITYULTIMATE, ChampionDataAsset->AbilityUltimateClass},
+			{ENGameplayAbility::ABILITYTRAIT, ChampionDataAsset->AbilityTraitClass},
+		};
+		//ensures that they have a unique input id if I need it later
+		int InputID = 0;
+		for (auto Map : AbilityMap)
+		{
+			GASpecs[Map.Key] = FGameplayAbilitySpec(Map.Value,1,InputID,this);
+			InputID++;
+		}
+		for (int i = 0; i < ChampionDataAsset->GainedAbilitiesClasses.Num() && i < ENGA_ADDITIONAL_ABILITIES; i++)
+		{
+			GASpecs[ENGameplayAbility::ADDT1 + i] = FGameplayAbilitySpec(
+				ChampionDataAsset->GainedAbilitiesClasses[i],1,InputID,this);
+			InputID++;
+		}
+		for (int i = 0; i < GASpecs.Num(); i++)
+		{
+			GASpecHandles[i] = GetAbilitySystemComponent()->GiveAbility(GASpecs[i]);
+		}
+	}else
+	{
+		UE_LOG_ABILITY_CAUTION("NDA_Champion not found at begin play", this);
+	}
+	//SetupInitialAbilitiesAndEffects();
+}
+
+/*
 void ANPlayerState::SetupInitialAbilitiesAndEffects()
 {
 	if (IsValid(AbilitySystemComponent) == false || IsValid(StandardAttributes) == false)
 	{
+		UE_LOG_ABILITY_CAUTION("AbilitySystemComponent or StandardAttributes is invalid", this);
 		return;
 	}
 
 	if (IsValid(InitialAbilitySet))
 	{
 		InitiallyGrantedAbilitySpecHandles.Append(
-			InitialAbilitySet->UNAbilitySet::GrantAbilitiesToAbilitySystem(AbilitySystemComponent));
+			InitialAbilitySet->GrantAbilitiesToAbilitySystem(AbilitySystemComponent));
 	}
 	else
 	{
@@ -59,10 +101,11 @@ void ANPlayerState::SetupInitialAbilitiesAndEffects()
 	}
 
 
-	//AbilitySystemComponent->ApplyGameplayEffectToSelf(CreateDefaultSubobject<UGameplayEffect>())
+	//AbilitySystemComponent->ApplyGameplayEffectToSelf(CreateDefaultSubobject<UGameplayEffect>());
 
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UNBaseAttributeSet::GetHealthAttribute())
 						  .AddUObject(this, &ThisClass::OnHealthAttributeChanged);
+	
 }
 
 void ANPlayerState::OnHealthAttributeChanged(const FOnAttributeChangeData& OnAttributeChangeData) const
@@ -72,4 +115,4 @@ void ANPlayerState::OnHealthAttributeChanged(const FOnAttributeChangeData& OnAtt
 	{
 		
 	}
-}
+}*/
