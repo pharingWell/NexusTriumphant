@@ -52,7 +52,7 @@ public:
 	TArray<FGameplayAbilitySpecHandle> SpecHandles;
 	
 private:
-	FNChampionActions ChampionActionsStruct;
+	FNActionContainer ChampionActionsStruct;
 
 	
 public:

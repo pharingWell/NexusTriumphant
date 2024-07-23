@@ -42,9 +42,18 @@ public:
 	UPROPERTY(EditDefaultsOnly, DisplayName="Trait Gameplay Ability")
 	TSubclassOf<UNGameplayAbility> TraitClass;
 
-	UPROPERTY(EditDefaultsOnly, DisplayName="Additional Gameplay Abilities")
-	TArray<TSubclassOf<UNGameplayAbility>> AdditionalAbilitiesClasses;
+	UPROPERTY(EditDefaultsOnly, DisplayName="First Additional Gameplay Ability")
+	TSubclassOf<UNGameplayAbility> AdditionalAbilities1Class;
 
+	UPROPERTY(EditDefaultsOnly, DisplayName="Second Additional Gameplay Ability")
+	TSubclassOf<UNGameplayAbility> AdditionalAbilities2Class;
+
+	UPROPERTY(EditDefaultsOnly, DisplayName="Third Additional Gameplay Ability")
+	TSubclassOf<UNGameplayAbility> AdditionalAbilities3Class;
+
+	UPROPERTY(EditDefaultsOnly, DisplayName="Fourth Additional Gameplay Ability")
+	TSubclassOf<UNGameplayAbility> AdditionalAbilities4Class;
+	
 	UPROPERTY(EditDefaultsOnly)
 	FGameplayAttribute ChampionStats;
 	

@@ -45,12 +45,11 @@ void ANPlayerState::BeginPlay()
 			{ENGameplayAbility::TRAIT, ChampionDataAsset->TraitClass},
 		};
 		ChampionActionsStruct.SetActions(AbilityMap);
-		ChampionActionsStruct.GiveAbilities(this, GetAbilitySystemComponent());
-		bool bDidSucceed = false;
-		const TArray<FGameplayAbilitySpecHandle> SpecHandlesTemp = ChampionActionsStruct.GetSpecHandles(bDidSucceed);
-		if(bDidSucceed)
+		ChampionActionsStruct.GiveAbilities(GetAbilitySystemComponent());
+		const FNActionContainer FNActions = ChampionActionsStruct.GetActionContainer();
+		if(FNActionContainer::IsValid(FNActions))
 		{
-			SpecHandles = SpecHandlesTemp;
+			SpecHandles = FNActions;
 		}else
 		{
 			UE_LOG_ABILITY_CAUTION("NDA_Champion spec handles failed to be captured", this);
