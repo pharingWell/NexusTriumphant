@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "EnhancedInputComponent.h"
 #include "Templates/SubclassOf.h"
 #include "GameFramework/PlayerController.h"
 #include "AbilitySystem/NExecuteActionComponent.h"
@@ -13,7 +14,7 @@ class UNiagaraSystem;
 class UInputMappingContext;
 class UInputAction;
 
-DECLARE_LOG_CATEGORY_EXTERN(LogBaseEntity, Verbose, All);
+
 
 UCLASS()
 class ANPlayerController : public APlayerController

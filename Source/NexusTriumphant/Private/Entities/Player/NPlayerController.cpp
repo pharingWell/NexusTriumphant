@@ -14,7 +14,6 @@
 #include "Engine/LocalPlayer.h"
 #include "Entities/Player/NPlayerCharacter.h"
 
-DEFINE_LOG_CATEGORY(LogBaseEntity);
 
 ANPlayerController::ANPlayerController(const FObjectInitializer& ObjectInitializer): Super(ObjectInitializer)
 {
@@ -67,6 +66,7 @@ void ANPlayerController::SetupInputComponent()
 	// Set up action bindings
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent))
 	{
+		
 		// Setup mouse input events
 		EnhancedInputComponent->BindAction(MoveToAction, ETriggerEvent::Started, this, &ANPlayerController::OnInputStarted);
 		EnhancedInputComponent->BindAction(MoveToAction, ETriggerEvent::Triggered, this, &ANPlayerController::OnSetDestinationTriggered);

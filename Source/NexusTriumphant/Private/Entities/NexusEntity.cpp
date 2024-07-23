@@ -5,7 +5,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/CapsuleComponent.h"
 
-
+DEFINE_LOG_CATEGORY(LogBaseEntity);
 
  
 ANexusEntity::ANexusEntity(const FObjectInitializer& ObjectInitializer): Super(ObjectInitializer)

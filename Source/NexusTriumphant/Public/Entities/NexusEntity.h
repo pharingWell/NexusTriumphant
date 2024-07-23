@@ -34,6 +34,8 @@ static EBaseEntityVisualizeMode DebugVisualizeMode {EBaseEntityVisualizeMode::Co
 
 DECLARE_MULTICAST_DELEGATE(FDebugVisualizationDelegate)
 static FDebugVisualizationDelegate OnDebugVisualizationDisable;
+DECLARE_LOG_CATEGORY_EXTERN(LogBaseEntity, Verbose, All);
+
 
 UCLASS(Blueprintable)
 class ANexusEntity : public ACharacter

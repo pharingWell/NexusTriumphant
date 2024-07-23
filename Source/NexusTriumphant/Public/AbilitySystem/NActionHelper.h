@@ -7,6 +7,8 @@
 #include "NGameplayAbility.h"
 #include "Abilities/GameplayAbility.h"
 
+DECLARE_LOG_CATEGORY_EXTERN(LogActionSystem, Verbose, All);
+
 class UNGameplayAbility;
 class UAbilitySystemComponent;
 struct FGameplayAbilitySpecHandle;
