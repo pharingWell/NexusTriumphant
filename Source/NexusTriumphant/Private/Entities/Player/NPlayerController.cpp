@@ -25,6 +25,16 @@ ANPlayerController::ANPlayerController(const FObjectInitializer& ObjectInitializ
 	ExecuteActionComponent = CreateDefaultSubobject<UNExecuteActionComponent>(TEXT("ExecuteActionComponent"));
 }
 
+void ANPlayerController::OnConstruction(const FTransform& Transform)
+{
+	Super::OnConstruction(Transform);
+	NPlayerState = StaticCast<ANPlayerState*>(GetPlayerState<ANPlayerState>());
+	if(!NPlayerState)
+	{
+		
+	}
+}
+
 
 void ANPlayerController::BeginPlay()
 {
@@ -128,4 +138,22 @@ void ANPlayerController::OnSetDestinationReleased()
 	}
 
 	FollowTime = 0.f;
+}
+
+
+
+
+void ANPlayerController::OnInputStarted(ENAbilityAction InputUsed)
+{
+		
+}
+
+void ANPlayerController::OnInputTriggered(ENAbilityAction InputUsed)
+{
+	
+}
+
+void ANPlayerController::OnInputFinished(ENAbilityAction InputUsed)
+{
+	
 }

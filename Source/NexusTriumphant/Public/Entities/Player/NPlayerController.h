@@ -95,9 +95,11 @@ private:
 	FVector CachedDestination;
 	bool bIsTouch; // Is it a touch device
 	float FollowTime; // For how long it has been pressed
+	ANPlayerState* NPlayerState;
 	
 public:
 	ANPlayerController(const FObjectInitializer& ObjectInitializer);
+	virtual void OnConstruction(const FTransform & Transform) override;
 	// Called to bind functionality to input
 	
 	
@@ -112,8 +114,12 @@ protected:
 	void OnInputStarted();
 	void OnSetDestinationTriggered();
 	void OnSetDestinationReleased();
-	void OnTouchTriggered();
-	void OnTouchReleased();
+	// UFUNCTION(Blueprintable, Category = "Actions")
+	// void OnInputStarted(ENAbilityAction InputUsed);
+	// UFUNCTION(Blueprintable, Category = "Actions")
+	// void OnInputTriggered(ENAbilityAction InputUsed);
+	// UFUNCTION(Blueprintable, Category = "Actions")
+	// void OnInputFinished(ENAbilityAction InputUsed);
 };
 
 

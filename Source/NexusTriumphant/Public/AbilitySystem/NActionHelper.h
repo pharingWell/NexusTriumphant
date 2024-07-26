@@ -13,7 +13,7 @@ class UAbilitySystemComponent;
 struct FGameplayAbilitySpecHandle;
 
 UENUM()
-enum ENGameplayAbility
+enum ENAbilityAction //Nexus Gameplay Ability Action: What action the play is taking to activate these things
 {
 	ATTACK,
 	ABILITY1,
@@ -23,32 +23,11 @@ enum ENGameplayAbility
 	TRAIT,
 	ADDT1,
 	ADDT2,
-	ADDT3,
-	ADDT4,
 };
 
-// the amount of items in ENGameplayAbility
+// the amount of items in ENAbilityAction
 #define ENGA_ENUM_ITEMS 10
 
-template <class T> struct FNActionBinding
-{
-	FNActionBinding(const UInputAction* const InputAction,
-	                const FEnhancedInputActionHandlerSignature::TMethodPtr<T> InputStartedFunc,
-	                const FEnhancedInputActionHandlerSignature::TMethodPtr<T> InputTriggeredFunc,
-	                const FEnhancedInputActionHandlerSignature::TMethodPtr<T> InputReleasedFunc)
-		: InputAction(InputAction),
-		  InputStartedFunc(InputStartedFunc),
-		  InputTriggeredFunc(InputTriggeredFunc),
-		  InputReleasedFunc(InputReleasedFunc)
-	{
-	}
-	const UInputAction* InputAction;
-	const FEnhancedInputActionHandlerSignature::TMethodPtr<T> InputStartedFunc;
-	const FEnhancedInputActionHandlerSignature::TMethodPtr<T> InputTriggeredFunc;
-	const FEnhancedInputActionHandlerSignature::TMethodPtr<T> InputReleasedFunc;
-};
-
-static FGameplayAbilitySpecHandle Blank = FGameplayAbilitySpecHandle();
 static TArray<FGameplayAbilitySpecHandle> EmptyHandleArray = {};
 
 USTRUCT()
@@ -56,20 +35,18 @@ struct FNActionContainer
 {
 	GENERATED_BODY()
 public:
-	UENUM()
-	enum ENActionContainerValidity
-	{
-		INVALID					=0b0,
-		ABILITIES				=0b1,
-		BINDINGS				=0b10,
-	};
+	// UENUM()
+	// enum ENActionContainerValidity
+	// {
+	// 	INVALID					=0b0,
+	// 	ABILITIES				=0b1,
+	// 	BINDINGS				=0b10,
+	// };
 private:
 	UPROPERTY()
 	UObject* OwningObject;
-	TMap<ENGameplayAbility, TSubclassOf<UNGameplayAbility>> AbilityMap;
-	template <class T>
-		TMap<ENGameplayAbility, FNActionBinding<T>> BindingMap;
-	TMap<ENGameplayAbility, FGameplayAbilitySpecHandle> GASpecHandles;
+	TMap<ENAbilityAction, TSubclassOf<UNGameplayAbility>> AbilityMap;
+	TMap<ENAbilityAction, FGameplayAbilitySpecHandle> GASpecHandles;
 	// while initially this was a bitmask, it proved overkill
 	bool bValidityAbilities = false;
 	bool bValidityBindings = false;
@@ -77,15 +54,11 @@ private:
 public:
 	FNActionContainer(UObject* OwningObject);
 	
-	bool ContainerIsValid(ENActionContainerValidity BitMask) const;
-	void SetActions(TMap<ENGameplayAbility, TSubclassOf<UNGameplayAbility>> ActionMap);
-	void SetAction(ENGameplayAbility EnumKey, const TSubclassOf<UNGameplayAbility>& AbilityClass);
-	template <class T>
-		void SetBindings(TMap<ENGameplayAbility, FNActionBinding<T>> BindingMap);
-	template <class T>
-		void GiveInputs(UInputComponent* InputComponent);
-	template <class T>
-		void SetBinding(ENGameplayAbility EnumKey, FNActionBinding<T> Binding);
+	//bool ContainerIsValid(ENActionContainerValidity Validity) const;
+	bool ContainerIsValid() const;
+	void SetActions(const TMap<ENAbilityAction, TSubclassOf<UNGameplayAbility>>& ActionMap);
+	void SetAction(ENAbilityAction EnumKey, const TSubclassOf<UNGameplayAbility>& AbilityClass);
+	//These need to be templated because the class of functions that are being bound to is unknown to the struct
 	void GiveAbilities(UAbilitySystemComponent* ASC);
 };
 

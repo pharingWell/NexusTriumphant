@@ -12,7 +12,7 @@ ANPlayerState::ANPlayerState(const FObjectInitializer& ObjectInitializer) : Supe
 	// Ability system items
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 	AbilitySystemComponent->SetIsReplicated(true);
-	ChampionDataAsset = CreateDefaultSubobject<UNDA_Champion>("Champion");
+	ChampionDataAsset = CreateDefaultSubobject<UNChampion>("Champion");
 	//InitialAbilitySet = CreateDefaultSubobject<UNAbilitySet>(TEXT("InitialAbilitySet"));
 	//StandardAttributes = CreateDefaultSubobject<UNBaseAttributeSet>(TEXT("StandardAttributeSet"));
 	
@@ -28,38 +28,35 @@ void ANPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty> & OutLi
 	//DOREPLIFETIME(ANPlayerState, StandardAttributes);
 }
 
+void ANPlayerState::RevertAbilityAction(ENAbilityAction Action)
+{
+	if(!CurrentAbilityActions.Contains(Action))
+	{
+		return;
+	}
+	if(!BaseAbilityActions.Contains(Action))
+	{
+		CurrentAbilityActions.Remove(Action);
+		return;
+	}
+	CurrentAbilityActions[Action] = BaseAbilityActions[Action];
+
+}
+
+bool ANPlayerState::RunAbilityAction(ENAbilityAction Action)
+{
+	if(CurrentAbilityActions.Contains(Action))
+	{
+		return GetAbilitySystemComponent()->TryActivateAbility(CurrentAbilityActions[Action]);
+	}
+	return false;
+}
+
 
 void ANPlayerState::BeginPlay()
 {
 	Super::BeginPlay();
-	if(ChampionDataAsset)
-	{
 
-		// creates a gameplay spec for each ability assigned via the champion asset
-		TMap<ENGameplayAbility, TSubclassOf<UNGameplayAbility>> AbilityMap{
-			{ENGameplayAbility::ATTACK, ChampionDataAsset->AttackClass},
-			{ENGameplayAbility::ABILITY1, ChampionDataAsset->Ability1Class},
-			{ENGameplayAbility::ABILITY2, ChampionDataAsset->Ability2Class},
-			{ENGameplayAbility::ABILITY3, ChampionDataAsset->Ability3Class},
-			{ENGameplayAbility::ULTIMATE, ChampionDataAsset->UltimateClass},
-			{ENGameplayAbility::TRAIT, ChampionDataAsset->TraitClass},
-		};
-		ChampionActionsStruct.SetActions(AbilityMap);
-		ChampionActionsStruct.GiveAbilities(GetAbilitySystemComponent());
-		const FNActionContainer FNActions = ChampionActionsStruct.GetActionContainer();
-		if(FNActionContainer::IsValid(FNActions))
-		{
-			SpecHandles = FNActions;
-		}else
-		{
-			UE_LOG_ABILITY_CAUTION("NDA_Champion spec handles failed to be captured", this);
-		}
-	}else
-	{
-		UE_LOG_ABILITY_CAUTION("NDA_Champion not found at begin play", this);
-	}
-
-	
 	//SetupInitialAbilitiesAndEffects();
 }
 

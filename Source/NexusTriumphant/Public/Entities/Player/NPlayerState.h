@@ -6,7 +6,7 @@
 
 #include "AbilitySystemInterface.h"
 #include "AbilitySystemComponent.h"
-#include "AbilitySystem/NDA_Champion.h"
+#include "AbilitySystem/NChampion.h"
 #include "AbilitySystem/Abilities/NAbilitySet.h"
 #include "AbilitySystem/Attributes/NBaseAttributeSet.h"
 
@@ -24,14 +24,14 @@ class NEXUSTRIUMPHANT_API ANPlayerState : public APlayerState, public IAbilitySy
 	
 	/** PROPERTIES */
 
-public:
+private:
 	/** Ability System Component, Attributes, Effects and Abilities for setup */
 
 	UPROPERTY(VisibleAnywhere, Category="Abilities")
 	UAbilitySystemComponent* AbilitySystemComponent{nullptr};
 
 	UPROPERTY(EditDefaultsOnly, Category="Abilities")
-	UNDA_Champion* ChampionDataAsset;
+	UNChampion* ChampionDataAsset{nullptr};
 	
 	
 	/*UPROPERTY(Replicated, VisibleAnywhere, Category="Abilities")
@@ -47,21 +47,28 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category="Abilities")
 	TArray<FGameplayAbilitySpecHandle> InitiallyGrantedAbilitySpecHandles;
 	*/
+
+	
 	/** FUNCTIONS */
 
-	TArray<FGameplayAbilitySpecHandle> SpecHandles;
-	
-private:
-	FNActionContainer ChampionActionsStruct;
-
-	
 public:
 	ANPlayerState(const FObjectInitializer& ObjectInitializer);
 	virtual void BeginPlay() override;
 	
 	// IAbilitySystemInterface
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystemComponent; }
+	UNChampion* GetChampionDataAsset() const { return ChampionDataAsset; }
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty> & OutLifetimeProps) const override;
+
+	// Sets the spec handle with the key Action in CurrentAbilityActions
+	// to the spec handle with the key Action in BaseAbilityActions
+	void RevertAbilityAction(ENAbilityAction Action);
+	UFUNCTION(BlueprintAuthorityOnly, Category="Actions")
+	bool RunAbilityAction(ENAbilityAction Action);
+private:
+	TMap<ENAbilityAction, FGameplayAbilitySpecHandle> BaseAbilityActions;
+	TMap<ENAbilityAction, FGameplayAbilitySpecHandle> CurrentAbilityActions;
+	
 	//void SetupInitialAbilitiesAndEffects();
 	// void OnHealthAttributeChanged(const FOnAttributeChangeData& OnAttributeChangeData) const;
 
