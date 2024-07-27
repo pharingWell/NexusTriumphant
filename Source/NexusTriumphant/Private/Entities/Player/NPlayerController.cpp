@@ -21,8 +21,6 @@ ANPlayerController::ANPlayerController(const FObjectInitializer& ObjectInitializ
 	DefaultMouseCursor = EMouseCursor::Default;
 	CachedDestination = FVector::ZeroVector;
 	FollowTime = 0.f;
-
-	ExecuteActionComponent = CreateDefaultSubobject<UNExecuteActionComponent>(TEXT("ExecuteActionComponent"));
 }
 
 void ANPlayerController::OnConstruction(const FTransform& Transform)
@@ -54,7 +52,6 @@ void ANPlayerController::AcknowledgePossession(APawn* P)
 		{
 			NPlayerState->GetAbilitySystemComponent()->InitAbilityActorInfo(NPlayerState, CharacterBase);
 			CharacterBase->SetPlayerState(NPlayerState);
-			ExecuteActionComponent->SetPlayerState(NPlayerState);
 		}
 		
 	}

@@ -3,10 +3,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "AbilitySystemInterface.h"
 #include "EnhancedInputComponent.h"
+#include "AbilitySystem/NActionHelper.h"
+#include "Entities/Player/NPlayerState.h"
+#include "Entities/Player/NPlayerCharacter.h"
 #include "Templates/SubclassOf.h"
 #include "GameFramework/PlayerController.h"
-#include "AbilitySystem/NExecuteActionComponent.h"
 #include "NPlayerController.generated.h"
 
 /** Forward declaration to improve compiling times */
