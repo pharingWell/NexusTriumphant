@@ -140,20 +140,137 @@ void ANPlayerController::OnSetDestinationReleased()
 	FollowTime = 0.f;
 }
 
+// Fill out your copyright notice in the Description page of Project Settings.
 
 
 
-void ANPlayerController::OnInputStarted(ENAbilityAction InputUsed)
+void ANPlayerController::ExecuteAction(const ENAbilityAction Action)
 {
-		
+	if(!NPlayerState) return;
+	ClearQueue();
+	bool AbilityActivated = NPlayerState->RunAbilityAction(Action);
 }
 
-void ANPlayerController::OnInputTriggered(ENAbilityAction InputUsed)
+void ANPlayerController::CancelCurrentAction()
+{
+	ClearQueue();
+	if(CurrentActionSpecHandle.IsValid())
+	{
+		GetAbilitySystemComponent()->CancelAbilityHandle(NPlayerState->GetHandle(CurrentAbilityAction));
+	}
+	// TODO: Add better check for cancellation here
+}
+
+void ANPlayerController::EnqueueAction(const ENAbilityAction Action)
+{
+	if(!NPlayerState) return;
+	Queue.Enqueue(Action);
+	if(!bExecutingQueue)
+	{
+		ExecuteQueue();
+	}
+}
+
+void ANPlayerController::ClearQueue()
+{
+	Queue.Empty();
+	bExecutingQueue = false;
+	CurrentActionSpecHandle = BlankHandle;
+}
+
+/*
+ * Execute Queue
+ * The queue is executed FIFO, with the first ability added being executed first
+ * After an ability ends (via EndAbility) the queue continues with the next ability
+ * If any non-queued player input is given, or an ability is cancelled, the queue is cleared:
+ * Using an action without holding the "Queue Action" key bind, or an ability returns cancelled, the queue clears
+ */
+
+void ANPlayerController::ExecuteQueue()
+{
+	if(!NPlayerState || Queue.IsEmpty() || bExecutingQueue)
+	{
+		return;
+	}
+	bExecutingQueue = true;
+	ExecuteQueuedAction();
+}
+
+void ANPlayerController::ExecuteQueuedAction()
+{
+	if(Queue.IsEmpty() || !bExecutingQueue)
+	{
+		return;
+	}
+	ENAbilityAction DequeuedAction;
+	Queue.Dequeue(DequeuedAction);
+	if(!DequeuedAction)
+	{
+		// TODO figure out what goes here
+	}
+	FGameplayAbilitySpecHandle TempHandle = NPlayerState->GetHandle(DequeuedAction);
+	bool AbilityActivated = NPlayerState->RunAbilityAction(DequeuedAction);
+	if(!AbilityActivated)
+	{
+		// TODO: determine permutations when this is the case
+		//ClearQueue();
+		return;
+	}
+	CurrentActionSpecHandle = TempHandle;
+}
+
+void ANPlayerController::ActionEnded(const FAbilityEndedData& AbilityEndedData)
+{
+	if(AbilityEndedData.AbilitySpecHandle == CurrentActionSpecHandle)
+	{
+		if(bExecutingQueue){
+			if(AbilityEndedData.bWasCancelled)
+			{
+				ClearQueue();
+				return;
+			}
+			if(Queue.IsEmpty())
+			{
+				bExecutingQueue = false;
+				return;
+			}
+			ExecuteQueuedAction();
+		}
+	}
+}
+
+
+
+/*
+void UNExecuteActionComponent::InitializeComponent()
 {
 	
-}
-
-void ANPlayerController::OnInputFinished(ENAbilityAction InputUsed)
-{
 	
-}
+	GetAbilitySystemComponent()->OnAbilityEnded.AddUFunction(this, "ActionEnded");
+
+	ANPlayerController* Controller = Cast<ANPlayerController>(GetOwner());
+	if(Controller != nullptr)
+	{
+		ANPlayerCharacter* Actor = Cast<ANPlayerCharacter>(Controller->GetCharacter());
+		if(Actor != nullptr)
+		{
+			AvatarActor = Actor;
+			if(ANPlayerState* PlayerState = AvatarActor->GetPlayerState<ANPlayerState>())
+			{
+				OwningState = PlayerState;
+				AbilityActorInfo.InitFromActor(OwningState, AvatarActor, UNExecuteActionComponent::GetAbilitySystemComponent());
+			}else
+			{
+				UE_LOG(LogNexusTriumphant, Warning, TEXT("[NExecuteActionComponent] Incorrect type of player state. Destroying"));
+				UActorComponent::DestroyComponent();
+				return;
+			}
+			bComponentInitialized = true;
+		}else
+		{
+			UE_LOG(LogNexusTriumphant, Warning, TEXT("[NExecuteActionComponent] Incorrect type of owning actor. Destroying"));
+			UActorComponent::DestroyComponent();
+			return;
+		}
+	}
+}*/

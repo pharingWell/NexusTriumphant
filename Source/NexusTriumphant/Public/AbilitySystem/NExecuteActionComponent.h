@@ -67,8 +67,5 @@ public:
 		OwningState = NewPlayerState;
 	}
 private:
-	void ExecuteQueue();
-	void ExecuteQueuedAction();
-	UFUNCTION()
-	void ActionEnded(const FAbilityEndedData& AbilityEndedData);
+
 };

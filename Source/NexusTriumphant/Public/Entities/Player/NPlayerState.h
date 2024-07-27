@@ -13,6 +13,8 @@
 #include "GameFramework/PlayerState.h"
 #include "NPlayerState.generated.h"
 
+static FGameplayAbilitySpecHandle BlankHandle;
+
 class UNAbilitySystemComponent;
 /**
  * 
@@ -65,6 +67,9 @@ public:
 	void RevertAbilityAction(ENAbilityAction Action);
 	UFUNCTION(BlueprintAuthorityOnly, Category="Actions")
 	bool RunAbilityAction(ENAbilityAction Action);
+
+	FGameplayAbilitySpecHandle& GetHandle(ENAbilityAction Action, bool GetBase = false);
+	
 private:
 	TMap<ENAbilityAction, FGameplayAbilitySpecHandle> BaseAbilityActions;
 	TMap<ENAbilityAction, FGameplayAbilitySpecHandle> CurrentAbilityActions;

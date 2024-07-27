@@ -17,7 +17,7 @@ class UInputAction;
 
 
 UCLASS()
-class ANPlayerController : public APlayerController
+class ANPlayerController : public APlayerController, IAbilitySystemInterface
 {
 	GENERATED_BODY()
 
@@ -84,24 +84,53 @@ public:
 	/** Activate Additional Ability #4 Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
 	UInputAction* ActivateAddtAbility4;
-
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override
+	{
+		if(IsValid(NPlayerState))
+			return NPlayerState->GetAbilitySystemComponent();
+		if(IsValid(NPlayerCharacter))
+		{
+			return NPlayerCharacter->GetAbilitySystemComponent();
+		}
+		if(GetPawn()->Implements<IAbilitySystemInterface>())
+		{
+			return Cast<IAbilitySystemInterface>(GetPawn())->GetAbilitySystemComponent();
+		}
+		return nullptr;
+	}
 protected:
 	/** True if the controlled character should navigate to the mouse cursor. */
 	uint32 bMoveToMouseCursor : 1;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "ExecuteAction", meta = (AllowPrivateAccess = "true"))
-	class UNExecuteActionComponent* ExecuteActionComponent;
+	FGameplayAbilitySpecHandle CurrentActionSpecHandle;
+	FGameplayAbilityActorInfo AbilityActorInfo;
+	bool bExecutingQueue;
+	TQueue<ENAbilityAction> Queue;
 private:
 	FVector CachedDestination;
 	bool bIsTouch; // Is it a touch device
 	float FollowTime; // For how long it has been pressed
+	UPROPERTY()
 	ANPlayerState* NPlayerState;
+	UPROPERTY()
+	ANPlayerCharacter* NPlayerCharacter;
 	
 public:
 	ANPlayerController(const FObjectInitializer& ObjectInitializer);
 	virtual void OnConstruction(const FTransform & Transform) override;
 	// Called to bind functionality to input
+	UFUNCTION(BlueprintCallable, Category="Gameplay Ability System")
+	void ExecuteAction(const ENAbilityAction Action);
 	
+	UFUNCTION(BlueprintCallable, Category="Gameplay Ability System")
+	void CancelCurrentAction();
+	
+	UFUNCTION(BlueprintCallable, Category="Gameplay Ability System")
+	void EnqueueAction(const ENAbilityAction Action);
+	
+	UFUNCTION(BlueprintCallable, Category="Gameplay Ability System")
+	void ClearQueue();
 	
 protected:
 	virtual void SetupInputComponent() override;
@@ -114,6 +143,11 @@ protected:
 	void OnInputStarted();
 	void OnSetDestinationTriggered();
 	void OnSetDestinationReleased();
+
+	void ExecuteQueue();
+	void ExecuteQueuedAction();
+	UFUNCTION()
+	void ActionEnded(const FAbilityEndedData& AbilityEndedData);
 	// UFUNCTION(Blueprintable, Category = "Actions")
 	// void OnInputStarted(ENAbilityAction InputUsed);
 	// UFUNCTION(Blueprintable, Category = "Actions")

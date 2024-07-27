@@ -43,13 +43,31 @@ void ANPlayerState::RevertAbilityAction(ENAbilityAction Action)
 
 }
 
-bool ANPlayerState::RunAbilityAction(ENAbilityAction Action)
+FGameplayAbilitySpecHandle& ANPlayerState::GetHandle(ENAbilityAction Action, bool GetBase)
 {
+	if(GetBase)
+	{
+		if(BaseAbilityActions.Contains(Action))
+		{
+			checkf(!BaseAbilityActions[Action].IsValid(),
+				TEXT("[NPlayerState] BaseAA assumption of validity failed, %s is invalid"),
+				BaseAbilityActions[Action].ToString()
+			);
+			return BaseAbilityActions[Action];
+		}
+		return BlankHandle;
+	}
+
 	if(CurrentAbilityActions.Contains(Action))
 	{
-		return GetAbilitySystemComponent()->TryActivateAbility(CurrentAbilityActions[Action]);
+		checkf(!CurrentAbilityActions[Action].IsValid(),
+				TEXT("[NPlayerState] CurrentAA assumption of validity failed, %s is invalid"),
+				CurrentAbilityActions[Action].ToString()
+			);
+		return CurrentAbilityActions[Action];
 	}
-	return false;
+	
+	return BlankHandle;
 }
 
 
