@@ -1,14 +1,26 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "AbilitySystem/NChampion.h"
+#include "AbilitySystem/NChampionSpec.h"
 
+#include "EnhancedInputComponent.h"
 #include "AbilitySystem/NActionHelper.h"
 
 
+UNChampionDef::UNChampionDef(const FObjectInitializer&):
+	AbilityMap({
+		{ENAbilityAction::ATTACK, AttackClass},
+		{ENAbilityAction::ABILITY1, Ability1Class},
+		{ENAbilityAction::ABILITY2, Ability2Class},
+		{ENAbilityAction::ABILITY3, Ability3Class},
+		{ENAbilityAction::ULTIMATE, UltimateClass},
+		{ENAbilityAction::TRAIT, TraitClass},
+		{ENAbilityAction::ADDT1, AdditionalAbility1Class},
+		{ENAbilityAction::ADDT2, AdditionalAbility2Class},
+	})
+{}
 
-
-void UNChampion::SetBinding(UEnhancedInputComponent EnhancedInputComponent*, ENAbilityAction EnumKey, const UInputAction* InputAction)
+/*void UNChampionDef::SetBinding(UEnhancedInputComponent EnhancedInputComponent*, ENAbilityAction EnumKey, const UInputAction* InputAction)
 {
 
 	if(HandlerFunctionMap.Contains(EnumKey))
@@ -22,7 +34,7 @@ void UNChampion::SetBinding(UEnhancedInputComponent EnhancedInputComponent*, ENA
 }
 
 
-void UNChampion::BindInputs(UInputComponent* InputComponent, TMap<ENAbilityAction, UInputAction*> InputMap)
+void UNChampionDef::BindInputs(UInputComponent* InputComponent, TMap<ENAbilityAction, UInputAction*> InputMap)
 {
 	UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent);
 	if (!IsValid(EnhancedInputComponent))
@@ -37,6 +49,6 @@ void UNChampion::BindInputs(UInputComponent* InputComponent, TMap<ENAbilityActio
 		// Setup mouse input events
 		SetBinding(EnhancedInputComponent, Pair.Key, Input);
 	}
-}
+}*/
 
 

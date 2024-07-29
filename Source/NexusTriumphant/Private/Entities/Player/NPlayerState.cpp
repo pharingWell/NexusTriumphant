@@ -12,7 +12,7 @@ ANPlayerState::ANPlayerState(const FObjectInitializer& ObjectInitializer) : Supe
 	// Ability system items
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 	AbilitySystemComponent->SetIsReplicated(true);
-	ChampionDataAsset = CreateDefaultSubobject<UNChampion>("Champion");
+	ChampionDataAsset = CreateDefaultSubobject<UNChampionDef>("Champion");
 	//InitialAbilitySet = CreateDefaultSubobject<UNAbilitySet>(TEXT("InitialAbilitySet"));
 	//StandardAttributes = CreateDefaultSubobject<UNBaseAttributeSet>(TEXT("StandardAttributeSet"));
 	
@@ -51,7 +51,7 @@ FGameplayAbilitySpecHandle& ANPlayerState::GetHandle(ENAbilityAction Action, boo
 		{
 			checkf(!BaseAbilityActions[Action].IsValid(),
 				TEXT("[NPlayerState] BaseAA assumption of validity failed, %s is invalid"),
-				BaseAbilityActions[Action].ToString()
+				*BaseAbilityActions[Action].ToString()
 			);
 			return BaseAbilityActions[Action];
 		}
@@ -62,7 +62,7 @@ FGameplayAbilitySpecHandle& ANPlayerState::GetHandle(ENAbilityAction Action, boo
 	{
 		checkf(!CurrentAbilityActions[Action].IsValid(),
 				TEXT("[NPlayerState] CurrentAA assumption of validity failed, %s is invalid"),
-				CurrentAbilityActions[Action].ToString()
+				*CurrentAbilityActions[Action].ToString()
 			);
 		return CurrentAbilityActions[Action];
 	}

@@ -13,6 +13,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "Engine/LocalPlayer.h"
 #include "Entities/Player/NPlayerCharacter.h"
+#include "NexusTriumphant/NexusTriumphant.h"
 
 
 ANPlayerController::ANPlayerController(const FObjectInitializer& ObjectInitializer): Super(ObjectInitializer)
@@ -38,24 +39,24 @@ void ANPlayerController::BeginPlay()
 {
 	// Call the base class  
 	Super::BeginPlay();
-
+	
 }
 
 void ANPlayerController::AcknowledgePossession(APawn* P)
 {
 	Super::AcknowledgePossession(P);
 
-	ANPlayerState* NPlayerState = GetPlayerState<ANPlayerState>();
-	if (ANPlayerCharacter* CharacterBase = Cast<ANPlayerCharacter>(P))
+	NPlayerState = GetPlayerState<ANPlayerState>();
+	NPlayerCharacter = Cast<ANPlayerCharacter>(P);
+	if (NPlayerCharacter && NPlayerState)
 	{
-		if(NPlayerState)
-		{
-			NPlayerState->GetAbilitySystemComponent()->InitAbilityActorInfo(NPlayerState, CharacterBase);
-			CharacterBase->SetPlayerState(NPlayerState);
-		}
-		
+		NPlayerState->GetAbilitySystemComponent()->InitAbilityActorInfo(NPlayerState, NPlayerCharacter);
+		NPlayerCharacter->SetPlayerState(NPlayerState);
+	}else
+	{
+		UE_LOG(LogNexusTriumphant, Error, TEXT("[NPlayerController] Failed to cast player state or pawn"));
 	}
-
+	UpdateASCRef();
 	//...
 }
 
@@ -67,7 +68,23 @@ void ANPlayerController::SetupInputComponent()
 	// Add Input Mapping Context
 	if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
 	{
-		Subsystem->AddMappingContext(DefaultMappingContext, 0);
+		UInputMappingContext* IMC = NPlayerState->GetChampionDataAsset()->MappingContext;
+		Subsystem->ClearAllMappings();
+		bool bExistInputs = false;
+		if(IMC)
+		{
+			Subsystem->AddMappingContext(IMC, 1);
+			bExistInputs = true;
+		}
+		if(DefaultMappingContext)
+		{
+			Subsystem->AddMappingContext(DefaultMappingContext, 0);
+			bExistInputs = true;
+		}
+		if(!bExistInputs)
+		{
+			UE_LOG(LogNexusTriumphant, Warning, TEXT("[NPlayerController] No input mappings found"));
+		}
 	}
 	//GetPlayerState<>()
 	// Set up action bindings
@@ -137,15 +154,24 @@ void ANPlayerController::OnSetDestinationReleased()
 	FollowTime = 0.f;
 }
 
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
+bool ANPlayerController::RunAbilityAction(ENAbilityAction Action)
+{
+	if(!NPlayerState)
+		return false;
+	if(!bASCRefValid)
+	{
+		UpdateASCRef();
+		if(!bASCRefValid)
+			return false;
+	}
+	return GetAbilitySystemComponent()->TryActivateAbility(NPlayerState->GetHandle(Action));
+}
 
 void ANPlayerController::ExecuteAction(const ENAbilityAction Action)
 {
 	if(!NPlayerState) return;
 	ClearQueue();
-	bool AbilityActivated = NPlayerState->RunAbilityAction(Action);
+	bool AbilityActivated = RunAbilityAction(Action);
 }
 
 void ANPlayerController::CancelCurrentAction()
@@ -153,7 +179,7 @@ void ANPlayerController::CancelCurrentAction()
 	ClearQueue();
 	if(CurrentActionSpecHandle.IsValid())
 	{
-		GetAbilitySystemComponent()->CancelAbilityHandle(NPlayerState->GetHandle(CurrentAbilityAction));
+		//GetAbilitySystemComponent()->CancelAbilityHandle(NPlayerState->GetHandle(CurrentAbilityAction));
 	}
 	// TODO: Add better check for cancellation here
 }
@@ -193,24 +219,31 @@ void ANPlayerController::ExecuteQueue()
 	ExecuteQueuedAction();
 }
 
+/** Attempts to execute the next action in the queue, clearing the queue if an unexpected outcome is reached */
 void ANPlayerController::ExecuteQueuedAction()
 {
 	if(Queue.IsEmpty() || !bExecutingQueue)
 	{
+		ClearQueue();
 		return;
 	}
-	ENAbilityAction DequeuedAction;
+
+	ENAbilityAction DequeuedAction = INVALID;
 	Queue.Dequeue(DequeuedAction);
-	if(!DequeuedAction)
+	if(DequeuedAction == INVALID)
 	{
-		// TODO figure out what goes here
+		UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerController] Encountered invalid action in queue"))
+		ExecuteQueuedAction(); // causes recursion, if this breaks the stack you have worse problems
+		return;
 	}
 	FGameplayAbilitySpecHandle TempHandle = NPlayerState->GetHandle(DequeuedAction);
-	bool AbilityActivated = NPlayerState->RunAbilityAction(DequeuedAction);
+	bool AbilityActivated = RunAbilityAction(DequeuedAction);
 	if(!AbilityActivated)
 	{
 		// TODO: determine permutations when this is the case
-		//ClearQueue();
+		UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerController] Ability Action #%d of Enum failed to run"),
+			int(DequeuedAction));
+		ClearQueue();
 		return;
 	}
 	CurrentActionSpecHandle = TempHandle;
@@ -236,6 +269,18 @@ void ANPlayerController::ActionEnded(const FAbilityEndedData& AbilityEndedData)
 	}
 }
 
+void ANPlayerController::OnInputStarted(ENAbilityAction InputUsed)
+{
+	
+}
+
+void ANPlayerController::OnInputTriggered(ENAbilityAction InputUsed)
+{
+}
+
+void ANPlayerController::OnInputFinished(ENAbilityAction InputUsed)
+{
+}
 
 
 /*

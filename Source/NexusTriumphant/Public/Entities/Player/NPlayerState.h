@@ -6,7 +6,7 @@
 
 #include "AbilitySystemInterface.h"
 #include "AbilitySystemComponent.h"
-#include "AbilitySystem/NChampion.h"
+#include "AbilitySystem/NChampionDef.h"
 #include "AbilitySystem/Abilities/NAbilitySet.h"
 #include "AbilitySystem/Attributes/NBaseAttributeSet.h"
 
@@ -33,7 +33,7 @@ private:
 	UAbilitySystemComponent* AbilitySystemComponent{nullptr};
 
 	UPROPERTY(EditDefaultsOnly, Category="Abilities")
-	UNChampion* ChampionDataAsset{nullptr};
+	UNChampionDef* ChampionDataAsset{nullptr};
 	
 	
 	/*UPROPERTY(Replicated, VisibleAnywhere, Category="Abilities")
@@ -59,14 +59,13 @@ public:
 	
 	// IAbilitySystemInterface
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystemComponent; }
-	UNChampion* GetChampionDataAsset() const { return ChampionDataAsset; }
+	UNChampionDef* GetChampionDataAsset() const { return ChampionDataAsset; }
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty> & OutLifetimeProps) const override;
 
 	// Sets the spec handle with the key Action in CurrentAbilityActions
 	// to the spec handle with the key Action in BaseAbilityActions
 	void RevertAbilityAction(ENAbilityAction Action);
 	UFUNCTION(BlueprintAuthorityOnly, Category="Actions")
-	bool RunAbilityAction(ENAbilityAction Action);
 
 	FGameplayAbilitySpecHandle& GetHandle(ENAbilityAction Action, bool GetBase = false);
 	

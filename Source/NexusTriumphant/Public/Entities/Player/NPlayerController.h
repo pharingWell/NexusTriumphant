@@ -20,7 +20,7 @@ class UInputAction;
 
 
 UCLASS()
-class ANPlayerController : public APlayerController, IAbilitySystemInterface
+class ANPlayerController : public APlayerController, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 
@@ -87,20 +87,7 @@ public:
 	/** Activate Additional Ability #4 Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
 	UInputAction* ActivateAddtAbility4;
-	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override
-	{
-		if(IsValid(NPlayerState))
-			return NPlayerState->GetAbilitySystemComponent();
-		if(IsValid(NPlayerCharacter))
-		{
-			return NPlayerCharacter->GetAbilitySystemComponent();
-		}
-		if(GetPawn()->Implements<IAbilitySystemInterface>())
-		{
-			return Cast<IAbilitySystemInterface>(GetPawn())->GetAbilitySystemComponent();
-		}
-		return nullptr;
-	}
+
 protected:
 	/** True if the controlled character should navigate to the mouse cursor. */
 	uint32 bMoveToMouseCursor : 1;
@@ -118,6 +105,9 @@ private:
 	ANPlayerState* NPlayerState;
 	UPROPERTY()
 	ANPlayerCharacter* NPlayerCharacter;
+	UPROPERTY()
+	UAbilitySystemComponent* ASCRef;
+	bool bASCRefValid;
 	
 public:
 	ANPlayerController(const FObjectInitializer& ObjectInitializer);
@@ -134,8 +124,28 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category="Gameplay Ability System")
 	void ClearQueue();
-	
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override
+	{
+		if(IsValid(NPlayerState))
+			return NPlayerState->GetAbilitySystemComponent();
+		if(IsValid(NPlayerCharacter))
+		{
+			return NPlayerCharacter->GetAbilitySystemComponent();
+		}
+		// if(GetPawn()->Implements<IAbilitySystemInterface>())
+		// {
+		// 	return Cast<IAbilitySystemInterface>(GetPawn())->GetAbilitySystemComponent();
+		// }
+		return nullptr;
+	}
 protected:
+	UFUNCTION()
+	void UpdateASCRef()
+	{
+		ASCRef = GetAbilitySystemComponent();
+		bASCRefValid = IsValid(ASCRef);
+	}
+	UFUNCTION()
 	virtual void SetupInputComponent() override;
 	
 	// To add mapping context
@@ -147,16 +157,17 @@ protected:
 	void OnSetDestinationTriggered();
 	void OnSetDestinationReleased();
 
+	bool RunAbilityAction(ENAbilityAction Action);
 	void ExecuteQueue();
 	void ExecuteQueuedAction();
 	UFUNCTION()
 	void ActionEnded(const FAbilityEndedData& AbilityEndedData);
-	// UFUNCTION(Blueprintable, Category = "Actions")
-	// void OnInputStarted(ENAbilityAction InputUsed);
-	// UFUNCTION(Blueprintable, Category = "Actions")
-	// void OnInputTriggered(ENAbilityAction InputUsed);
-	// UFUNCTION(Blueprintable, Category = "Actions")
-	// void OnInputFinished(ENAbilityAction InputUsed);
+	UFUNCTION(Blueprintable, Category = "Actions")
+	void OnInputStarted(ENAbilityAction InputUsed);
+	UFUNCTION(Blueprintable, Category = "Actions")
+	void OnInputTriggered(ENAbilityAction InputUsed);
+	UFUNCTION(Blueprintable, Category = "Actions")
+	void OnInputFinished(ENAbilityAction InputUsed);
 };
 
 
