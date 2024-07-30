@@ -43,7 +43,12 @@ void ANPlayerState::RevertAbilityAction(ENAbilityAction Action)
 
 }
 
-FGameplayAbilitySpecHandle& ANPlayerState::GetHandle(ENAbilityAction Action, bool GetBase)
+bool ANPlayerState::RunAction(const ENAbilityAction Action)
+{
+	return GetAbilitySystemComponent()->TryActivateAbility(GetHandle(Action));
+}
+
+FGameplayAbilitySpecHandle& ANPlayerState::GetHandle(const ENAbilityAction Action, const bool GetBase)
 {
 	if(GetBase)
 	{

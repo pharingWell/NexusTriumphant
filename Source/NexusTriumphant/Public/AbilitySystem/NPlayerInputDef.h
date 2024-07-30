@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "InputAction.h"
+#include "InputMappingContext.h"
 #include "NActionHelper.h"
 #include "Engine/DataAsset.h"
 #include "NPlayerInputDef.generated.h"
@@ -18,7 +19,7 @@ class NEXUSTRIUMPHANT_API UNPlayerInputDef : public UDataAsset
 
 public:
 	UPROPERTY()
-	const TMap<TEnumAsByte<ENAbilityAction>, UInputAction*> BindingMap;
+	TMap<TEnumAsByte<ENAbilityAction>, UInputAction*> BindingMap;
 	
 	UPROPERTY(EditDefaultsOnly, Category="Input", DisplayName="Enqueue Input Action Modifier")
 	UInputAction* EnqueueInput{nullptr};

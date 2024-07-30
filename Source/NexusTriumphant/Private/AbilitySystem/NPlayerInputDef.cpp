@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "AbilitySystem/NInputSpec.h"
+#include "AbilitySystem/NPlayerInputDef.h"
 
 
 UNPlayerInputDef::UNPlayerInputDef(const FObjectInitializer& ObjectInitializer) :

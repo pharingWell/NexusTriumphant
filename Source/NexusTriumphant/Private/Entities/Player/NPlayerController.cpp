@@ -22,6 +22,7 @@ ANPlayerController::ANPlayerController(const FObjectInitializer& ObjectInitializ
 	DefaultMouseCursor = EMouseCursor::Default;
 	CachedDestination = FVector::ZeroVector;
 	FollowTime = 0.f;
+	InputDefinition = CreateDefaultSubobject<UNPlayerInputDef>(TEXT("Input Definition"));
 }
 
 void ANPlayerController::OnConstruction(const FTransform& Transform)
@@ -62,44 +63,46 @@ void ANPlayerController::AcknowledgePossession(APawn* P)
 
 void ANPlayerController::SetupInputComponent()
 {
-	// set up gameplay key bindings
 	Super::SetupInputComponent();
-
-	// Add Input Mapping Context
-	if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
+	
+	EILPSubsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer());
+	EnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent);
+	if(!IsValid(EnhancedInputComponent))
 	{
-		UInputMappingContext* IMC = NPlayerState->GetChampionDataAsset()->MappingContext;
-		Subsystem->ClearAllMappings();
+		UE_LOG(LogNexusTriumphant, Error, TEXT("[NPlayerController] Enhanced input component not found (failed cast)."));
+		return;
+	}
+	if (IsValid(EILPSubsystem))
+	{
+		EILPSubsystem->ClearAllMappings();
 		bool bExistInputs = false;
-		if(IMC)
+		if(InputDefinition)
 		{
-			Subsystem->AddMappingContext(IMC, 1);
+			// Add Input Mapping Context
+			EILPSubsystem->AddMappingContext(InputDefinition->MappingContext, 1);
+			for (auto Binding : InputDefinition->BindingMap)
+			{
+				EnhancedInputComponent->BindAction(Binding.Value, ETriggerEvent::Started, this, &ANPlayerController::OnInputStarted, Binding.Key);
+				EnhancedInputComponent->BindAction(Binding.Value, ETriggerEvent::Triggered, this, &ANPlayerController::OnInputTriggered, Binding.Key);
+				EnhancedInputComponent->BindAction(Binding.Value, ETriggerEvent::Completed, this, &ANPlayerController::OnInputFinished, Binding.Key);
+				EnhancedInputComponent->BindAction(Binding.Value, ETriggerEvent::Canceled, this, &ANPlayerController::OnInputFinished, Binding.Key);
+			}
 			bExistInputs = true;
 		}
 		if(DefaultMappingContext)
-		{
-			Subsystem->AddMappingContext(DefaultMappingContext, 0);
+		{ 
+			EILPSubsystem->AddMappingContext(DefaultMappingContext, 0);
+			// Setup mouse input events
+			EnhancedInputComponent->BindAction(MoveToAction, ETriggerEvent::Started, this, &ANPlayerController::OnInputStarted);
+			EnhancedInputComponent->BindAction(MoveToAction, ETriggerEvent::Triggered, this, &ANPlayerController::OnSetDestinationTriggered);
+			EnhancedInputComponent->BindAction(MoveToAction, ETriggerEvent::Completed, this, &ANPlayerController::OnSetDestinationReleased);
+			EnhancedInputComponent->BindAction(MoveToAction, ETriggerEvent::Canceled, this, &ANPlayerController::OnSetDestinationReleased);
 			bExistInputs = true;
 		}
 		if(!bExistInputs)
 		{
 			UE_LOG(LogNexusTriumphant, Warning, TEXT("[NPlayerController] No input mappings found"));
 		}
-	}
-	//GetPlayerState<>()
-	// Set up action bindings
-	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent))
-	{
-		
-		// Setup mouse input events
-		EnhancedInputComponent->BindAction(MoveToAction, ETriggerEvent::Started, this, &ANPlayerController::OnInputStarted);
-		EnhancedInputComponent->BindAction(MoveToAction, ETriggerEvent::Triggered, this, &ANPlayerController::OnSetDestinationTriggered);
-		EnhancedInputComponent->BindAction(MoveToAction, ETriggerEvent::Completed, this, &ANPlayerController::OnSetDestinationReleased);
-		EnhancedInputComponent->BindAction(MoveToAction, ETriggerEvent::Canceled, this, &ANPlayerController::OnSetDestinationReleased);
-	}
-	else
-	{
-		UE_LOG(LogBaseEntity, Error, TEXT("'%s' Failed to find an Enhanced Input Component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
 	}
 }
 
@@ -164,7 +167,7 @@ bool ANPlayerController::RunAbilityAction(ENAbilityAction Action)
 		if(!bASCRefValid)
 			return false;
 	}
-	return GetAbilitySystemComponent()->TryActivateAbility(NPlayerState->GetHandle(Action));
+	return NPlayerState->RunAction(Action);
 }
 
 void ANPlayerController::ExecuteAction(const ENAbilityAction Action)
@@ -177,9 +180,9 @@ void ANPlayerController::ExecuteAction(const ENAbilityAction Action)
 void ANPlayerController::CancelCurrentAction()
 {
 	ClearQueue();
-	if(CurrentActionSpecHandle.IsValid())
+	if(CurrentAction != INVALID)
 	{
-		//GetAbilitySystemComponent()->CancelAbilityHandle(NPlayerState->GetHandle(CurrentAbilityAction));
+		//NPlayerState->CancelAction(); ???
 	}
 	// TODO: Add better check for cancellation here
 }
@@ -198,7 +201,7 @@ void ANPlayerController::ClearQueue()
 {
 	Queue.Empty();
 	bExecutingQueue = false;
-	CurrentActionSpecHandle = BlankHandle;
+	CurrentAction = INVALID;
 }
 
 /*
@@ -236,7 +239,7 @@ void ANPlayerController::ExecuteQueuedAction()
 		ExecuteQueuedAction(); // causes recursion, if this breaks the stack you have worse problems
 		return;
 	}
-	FGameplayAbilitySpecHandle TempHandle = NPlayerState->GetHandle(DequeuedAction);
+	//FGameplayAbilitySpecHandle TempHandle = NPlayerState->GetHandle(DequeuedAction);
 	bool AbilityActivated = RunAbilityAction(DequeuedAction);
 	if(!AbilityActivated)
 	{
@@ -246,12 +249,12 @@ void ANPlayerController::ExecuteQueuedAction()
 		ClearQueue();
 		return;
 	}
-	CurrentActionSpecHandle = TempHandle;
+	CurrentAction = DequeuedAction;
 }
 
-void ANPlayerController::ActionEnded(const FAbilityEndedData& AbilityEndedData)
+/*void ANPlayerController::ActionEnded(const FAbilityEndedData& AbilityEndedData)
 {
-	if(AbilityEndedData.AbilitySpecHandle == CurrentActionSpecHandle)
+	if(AbilityEndedData.AbilitySpecHandle == )
 	{
 		if(bExecutingQueue){
 			if(AbilityEndedData.bWasCancelled)
@@ -267,19 +270,21 @@ void ANPlayerController::ActionEnded(const FAbilityEndedData& AbilityEndedData)
 			ExecuteQueuedAction();
 		}
 	}
-}
+}*/
 
-void ANPlayerController::OnInputStarted(ENAbilityAction InputUsed)
+void ANPlayerController::OnInputStarted(TEnumAsByte<ENAbilityAction> InputUsed)
 {
+	UE_LOG(LogActionSystem, Display, TEXT("Used AbilityAction #%d"), int(InputUsed));
 	
 }
 
-void ANPlayerController::OnInputTriggered(ENAbilityAction InputUsed)
+void ANPlayerController::OnInputTriggered(TEnumAsByte<ENAbilityAction> InputUsed)
 {
 }
 
-void ANPlayerController::OnInputFinished(ENAbilityAction InputUsed)
+void ANPlayerController::OnInputFinished(TEnumAsByte<ENAbilityAction> InputUsed)
 {
+	UE_LOG(LogActionSystem, Display, TEXT("Stopped using AbilityAction #%d"), int(InputUsed));
 }
 
 

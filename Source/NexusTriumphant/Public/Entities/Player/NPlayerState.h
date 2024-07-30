@@ -59,15 +59,17 @@ public:
 	
 	// IAbilitySystemInterface
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystemComponent; }
-	UNChampionDef* GetChampionDataAsset() const { return ChampionDataAsset; }
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty> & OutLifetimeProps) const override;
 
 	// Sets the spec handle with the key Action in CurrentAbilityActions
 	// to the spec handle with the key Action in BaseAbilityActions
 	void RevertAbilityAction(ENAbilityAction Action);
 	UFUNCTION(BlueprintAuthorityOnly, Category="Actions")
+	bool RunAction(ENAbilityAction Action);
 
-	FGameplayAbilitySpecHandle& GetHandle(ENAbilityAction Action, bool GetBase = false);
+protected:
+	UNChampionDef* GetChampionDataAsset() const { return ChampionDataAsset; }
+	FGameplayAbilitySpecHandle& GetHandle(const ENAbilityAction Action, const bool GetBase = false);
 	
 private:
 	TMap<ENAbilityAction, FGameplayAbilitySpecHandle> BaseAbilityActions;

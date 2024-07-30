@@ -6,12 +6,14 @@
 #include "AbilitySystemInterface.h"
 #include "EnhancedInputComponent.h"
 #include "AbilitySystem/NActionHelper.h"
+#include "AbilitySystem/NPlayerInputDef.h"
 #include "Entities/Player/NPlayerState.h"
 #include "Entities/Player/NPlayerCharacter.h"
 #include "Templates/SubclassOf.h"
 #include "GameFramework/PlayerController.h"
 #include "NPlayerController.generated.h"
 
+class UEnhancedInputLocalPlayerSubsystem;
 /** Forward declaration to improve compiling times */
 class UNiagaraSystem;
 class UInputMappingContext;
@@ -44,56 +46,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
 	UInputAction* MoveToAction;
 
-	/** Destination Attack Action */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
-	UInputAction* AttackAction;
-
-	/** BASE ABILITIES */
-	
-	/** Activate Ability1 Action */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
-	UInputAction* ActivateAbility1;
-	
-	/** Activate Ability2 Action */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
-	UInputAction* ActivateAbility2;
-
-	/** Activate Ability3 Action */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
-	UInputAction* ActivateAbility3;
-
-	/** Activate AbilityUltimate Action */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
-	UInputAction* ActivateAbilityUltimate;
-
-	/** Activate AbilityTrait Action */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
-	UInputAction* ActivateAbilityTrait;
-
-	/** ADDITIONAL ABILITIES */
-	
-	/** Activate Additional Ability #1 Action */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
-	UInputAction* ActivateAddtAbility1;
-
-	/** Activate Additional Ability #2 Action */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
-	UInputAction* ActivateAddtAbility2;
-
-	/** Activate Additional Ability #3 Action */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
-	UInputAction* ActivateAddtAbility3;
-
-	/** Activate Additional Ability #4 Action */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
-	UInputAction* ActivateAddtAbility4;
 
 protected:
 	/** True if the controlled character should navigate to the mouse cursor. */
 	uint32 bMoveToMouseCursor : 1;
-	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "ExecuteAction", meta = (AllowPrivateAccess = "true"))
-	FGameplayAbilitySpecHandle CurrentActionSpecHandle;
+	TEnumAsByte<ENAbilityAction> CurrentAction;
 	FGameplayAbilityActorInfo AbilityActorInfo;
 	bool bExecutingQueue;
 	TQueue<ENAbilityAction> Queue;
@@ -108,6 +65,12 @@ private:
 	UPROPERTY()
 	UAbilitySystemComponent* ASCRef;
 	bool bASCRefValid;
+	UPROPERTY()
+	UEnhancedInputComponent* EnhancedInputComponent;
+	UPROPERTY()
+	UEnhancedInputLocalPlayerSubsystem* EILPSubsystem;
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	UNPlayerInputDef* InputDefinition;
 	
 public:
 	ANPlayerController(const FObjectInitializer& ObjectInitializer);
@@ -160,14 +123,15 @@ protected:
 	bool RunAbilityAction(ENAbilityAction Action);
 	void ExecuteQueue();
 	void ExecuteQueuedAction();
-	UFUNCTION()
-	void ActionEnded(const FAbilityEndedData& AbilityEndedData);
+	//UFUNCTION()
+	//void ActionEnded(const FAbilityEndedData& AbilityEndedData);
+	
 	UFUNCTION(Blueprintable, Category = "Actions")
-	void OnInputStarted(ENAbilityAction InputUsed);
+	void OnInputStarted(TEnumAsByte<ENAbilityAction> InputUsed);
 	UFUNCTION(Blueprintable, Category = "Actions")
-	void OnInputTriggered(ENAbilityAction InputUsed);
+	void OnInputTriggered(TEnumAsByte<ENAbilityAction> InputUsed);
 	UFUNCTION(Blueprintable, Category = "Actions")
-	void OnInputFinished(ENAbilityAction InputUsed);
+	void OnInputFinished(TEnumAsByte<ENAbilityAction> InputUsed);
 };
 
 
