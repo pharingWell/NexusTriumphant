@@ -18,11 +18,13 @@
 
 ANPlayerController::ANPlayerController(const FObjectInitializer& ObjectInitializer): Super(ObjectInitializer)
 {
+	bIsEnqueuing = false;
 	bShowMouseCursor = true;
 	DefaultMouseCursor = EMouseCursor::Default;
 	CachedDestination = FVector::ZeroVector;
 	FollowTime = 0.f;
 	InputDefinition = CreateDefaultSubobject<UNPlayerInputDef>(TEXT("Input Definition"));
+	PlayerActionComponent = CreateDefaultSubobject<UNPlayerActionComponent>(TEXT("Player Action Component"));
 }
 
 void ANPlayerController::OnConstruction(const FTransform& Transform)
@@ -31,7 +33,7 @@ void ANPlayerController::OnConstruction(const FTransform& Transform)
 	NPlayerState = StaticCast<ANPlayerState*>(GetPlayerState<ANPlayerState>());
 	if(!NPlayerState)
 	{
-		
+		UE_LOG(LogNexusTriumphant, Error, TEXT("[NPlayerController] Failed to cast player state during construction"));
 	}
 }
 
@@ -53,11 +55,11 @@ void ANPlayerController::AcknowledgePossession(APawn* P)
 	{
 		NPlayerState->GetAbilitySystemComponent()->InitAbilityActorInfo(NPlayerState, NPlayerCharacter);
 		NPlayerCharacter->SetPlayerState(NPlayerState);
+		PlayerActionComponent->Setup(NPlayerState);
 	}else
 	{
-		UE_LOG(LogNexusTriumphant, Error, TEXT("[NPlayerController] Failed to cast player state or pawn"));
+		UE_LOG(LogNexusTriumphant, Error, TEXT("[NPlayerController] Failed to cast player pawn (or state invalid)"));
 	}
-	UpdateASCRef();
 	//...
 }
 
@@ -87,6 +89,10 @@ void ANPlayerController::SetupInputComponent()
 				EnhancedInputComponent->BindAction(Binding.Value, ETriggerEvent::Completed, this, &ANPlayerController::OnInputFinished, Binding.Key);
 				EnhancedInputComponent->BindAction(Binding.Value, ETriggerEvent::Canceled, this, &ANPlayerController::OnInputFinished, Binding.Key);
 			}
+			
+			EnhancedInputComponent->BindAction(InputDefinition->EnqueueInput, ETriggerEvent::Started, this, &ANPlayerController::EnqueueStarted);
+			EnhancedInputComponent->BindAction(InputDefinition->EnqueueInput, ETriggerEvent::Completed, this, &ANPlayerController::EnqueueEnded);
+			EnhancedInputComponent->BindAction(InputDefinition->EnqueueInput, ETriggerEvent::Canceled, this, &ANPlayerController::EnqueueEnded);
 			bExistInputs = true;
 		}
 		if(DefaultMappingContext)
@@ -157,124 +163,26 @@ void ANPlayerController::OnSetDestinationReleased()
 	FollowTime = 0.f;
 }
 
-bool ANPlayerController::RunAbilityAction(ENAbilityAction Action)
+void ANPlayerController::EnqueueStarted()
 {
-	if(!NPlayerState)
-		return false;
-	if(!bASCRefValid)
-	{
-		UpdateASCRef();
-		if(!bASCRefValid)
-			return false;
-	}
-	return NPlayerState->RunAction(Action);
+	bIsEnqueuing = true;
 }
 
-void ANPlayerController::ExecuteAction(const ENAbilityAction Action)
+void ANPlayerController::EnqueueEnded()
 {
-	if(!NPlayerState) return;
-	ClearQueue();
-	bool AbilityActivated = RunAbilityAction(Action);
+	bIsEnqueuing = false;
 }
-
-void ANPlayerController::CancelCurrentAction()
-{
-	ClearQueue();
-	if(CurrentAction != INVALID)
-	{
-		//NPlayerState->CancelAction(); ???
-	}
-	// TODO: Add better check for cancellation here
-}
-
-void ANPlayerController::EnqueueAction(const ENAbilityAction Action)
-{
-	if(!NPlayerState) return;
-	Queue.Enqueue(Action);
-	if(!bExecutingQueue)
-	{
-		ExecuteQueue();
-	}
-}
-
-void ANPlayerController::ClearQueue()
-{
-	Queue.Empty();
-	bExecutingQueue = false;
-	CurrentAction = INVALID;
-}
-
-/*
- * Execute Queue
- * The queue is executed FIFO, with the first ability added being executed first
- * After an ability ends (via EndAbility) the queue continues with the next ability
- * If any non-queued player input is given, or an ability is cancelled, the queue is cleared:
- * Using an action without holding the "Queue Action" key bind, or an ability returns cancelled, the queue clears
- */
-
-void ANPlayerController::ExecuteQueue()
-{
-	if(!NPlayerState || Queue.IsEmpty() || bExecutingQueue)
-	{
-		return;
-	}
-	bExecutingQueue = true;
-	ExecuteQueuedAction();
-}
-
-/** Attempts to execute the next action in the queue, clearing the queue if an unexpected outcome is reached */
-void ANPlayerController::ExecuteQueuedAction()
-{
-	if(Queue.IsEmpty() || !bExecutingQueue)
-	{
-		ClearQueue();
-		return;
-	}
-
-	ENAbilityAction DequeuedAction = INVALID;
-	Queue.Dequeue(DequeuedAction);
-	if(DequeuedAction == INVALID)
-	{
-		UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerController] Encountered invalid action in queue"))
-		ExecuteQueuedAction(); // causes recursion, if this breaks the stack you have worse problems
-		return;
-	}
-	//FGameplayAbilitySpecHandle TempHandle = NPlayerState->GetHandle(DequeuedAction);
-	bool AbilityActivated = RunAbilityAction(DequeuedAction);
-	if(!AbilityActivated)
-	{
-		// TODO: determine permutations when this is the case
-		UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerController] Ability Action #%d of Enum failed to run"),
-			int(DequeuedAction));
-		ClearQueue();
-		return;
-	}
-	CurrentAction = DequeuedAction;
-}
-
-/*void ANPlayerController::ActionEnded(const FAbilityEndedData& AbilityEndedData)
-{
-	if(AbilityEndedData.AbilitySpecHandle == )
-	{
-		if(bExecutingQueue){
-			if(AbilityEndedData.bWasCancelled)
-			{
-				ClearQueue();
-				return;
-			}
-			if(Queue.IsEmpty())
-			{
-				bExecutingQueue = false;
-				return;
-			}
-			ExecuteQueuedAction();
-		}
-	}
-}*/
 
 void ANPlayerController::OnInputStarted(TEnumAsByte<ENAbilityAction> InputUsed)
 {
 	UE_LOG(LogActionSystem, Display, TEXT("Used AbilityAction #%d"), int(InputUsed));
+	if(bIsEnqueuing)
+	{
+		PlayerActionComponent->EnqueueAction(InputUsed);
+	}else
+	{
+		PlayerActionComponent->ExecuteAction(InputUsed);
+	}
 	
 }
 
@@ -287,37 +195,3 @@ void ANPlayerController::OnInputFinished(TEnumAsByte<ENAbilityAction> InputUsed)
 	UE_LOG(LogActionSystem, Display, TEXT("Stopped using AbilityAction #%d"), int(InputUsed));
 }
 
-
-/*
-void UNExecuteActionComponent::InitializeComponent()
-{
-	
-	
-	GetAbilitySystemComponent()->OnAbilityEnded.AddUFunction(this, "ActionEnded");
-
-	ANPlayerController* Controller = Cast<ANPlayerController>(GetOwner());
-	if(Controller != nullptr)
-	{
-		ANPlayerCharacter* Actor = Cast<ANPlayerCharacter>(Controller->GetCharacter());
-		if(Actor != nullptr)
-		{
-			AvatarActor = Actor;
-			if(ANPlayerState* PlayerState = AvatarActor->GetPlayerState<ANPlayerState>())
-			{
-				OwningState = PlayerState;
-				AbilityActorInfo.InitFromActor(OwningState, AvatarActor, UNExecuteActionComponent::GetAbilitySystemComponent());
-			}else
-			{
-				UE_LOG(LogNexusTriumphant, Warning, TEXT("[NExecuteActionComponent] Incorrect type of player state. Destroying"));
-				UActorComponent::DestroyComponent();
-				return;
-			}
-			bComponentInitialized = true;
-		}else
-		{
-			UE_LOG(LogNexusTriumphant, Warning, TEXT("[NExecuteActionComponent] Incorrect type of owning actor. Destroying"));
-			UActorComponent::DestroyComponent();
-			return;
-		}
-	}
-}*/

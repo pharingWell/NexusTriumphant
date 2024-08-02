@@ -6,14 +6,13 @@
 
 #include "AbilitySystemInterface.h"
 #include "AbilitySystemComponent.h"
-#include "AbilitySystem/NChampionDef.h"
+#include "Entities/Player/NChampionDef.h"
 #include "AbilitySystem/Abilities/NAbilitySet.h"
 #include "AbilitySystem/Attributes/NBaseAttributeSet.h"
 
 #include "GameFramework/PlayerState.h"
 #include "NPlayerState.generated.h"
 
-static FGameplayAbilitySpecHandle BlankHandle;
 
 class UNAbilitySystemComponent;
 /**
@@ -63,25 +62,9 @@ public:
 
 	// Sets the spec handle with the key Action in CurrentAbilityActions
 	// to the spec handle with the key Action in BaseAbilityActions
-	void RevertAbilityAction(ENAbilityAction Action);
-	UFUNCTION(BlueprintAuthorityOnly, Category="Actions")
-	bool RunAction(ENAbilityAction Action);
 
 protected:
 	UNChampionDef* GetChampionDataAsset() const { return ChampionDataAsset; }
-	FGameplayAbilitySpecHandle& GetHandle(const ENAbilityAction Action, const bool GetBase = false);
-	
-private:
-	TMap<ENAbilityAction, FGameplayAbilitySpecHandle> BaseAbilityActions;
-	TMap<ENAbilityAction, FGameplayAbilitySpecHandle> CurrentAbilityActions;
-	
-	//void SetupInitialAbilitiesAndEffects();
-	// void OnHealthAttributeChanged(const FOnAttributeChangeData& OnAttributeChangeData) const;
 
-	// UFUNCTION(BlueprintCallable, BlueprintPure)
-	// TArray<FGameplayAbilitySpecHandle> GetInitiallyGrantedAbilitySpecHandles()
-	// {
-	// 	return InitiallyGrantedAbilitySpecHandles;
-	// }
 
 };
