@@ -4,14 +4,14 @@
 
 // Sets default values for this component's properties
 UNPlayerActionComponent::UNPlayerActionComponent(const FObjectInitializer& ObjectInitializer) :
-CurrentActionSpecHandle(BlankHandle), bExecutingQueue(false), NPlayerStateRef(nullptr),
+CurrentActionSpecHandle(nullptr), bExecutingQueue(false), NPlayerStateRef(nullptr),
 ASCRef(nullptr), bASCRefValid(false), bSetup(false)
 
 {
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
 	//PrimaryComponentTick.bCanEverTick = true;
-	
+	BlankHandle = FGameplayAbilitySpecHandle();
 	// ...
 }
 
@@ -36,6 +36,8 @@ void UNPlayerActionComponent::Setup(ANPlayerState* NPlayerState)
 	UE_LOG(LogActionSystem, Error, TEXT("[NPlayerActionComponent] Failed to get valid PlayerState ref"));
 	
 }
+
+
 
 
 /** Restores the Base Ability Action to the Current Ability Action slot */
@@ -115,9 +117,9 @@ void UNPlayerActionComponent::CancelCurrentAction()
 	if(!bSetup || !IsValid(NPlayerStateRef))
 		return;
 	ClearQueue();
-	if(CurrentActionSpecHandle.IsValid())
+	if(CurrentActionSpecHandle->IsValid())
 	{
-		ASCRef->CancelAbilityHandle(CurrentActionSpecHandle);
+		ASCRef->CancelAbilityHandle(*CurrentActionSpecHandle);
 	}
 	// TODO: Add better check for cancellation here
 }
@@ -139,7 +141,7 @@ void UNPlayerActionComponent::ClearQueue()
 		return;
 	Queue.Empty();
 	bExecutingQueue = false;
-	CurrentActionSpecHandle = BlankHandle;
+	CurrentActionSpecHandle = nullptr;
 }
 
 
@@ -180,7 +182,7 @@ void UNPlayerActionComponent::ExecuteQueuedAction()
 		ExecuteQueuedAction(); // causes recursion, if this breaks the stack you have worse problems
 		return;
 	}
-	FGameplayAbilitySpecHandle TempHandle = GetHandle(DequeuedAction);
+	FGameplayAbilitySpecHandle* TempHandlePtr = &GetHandle(DequeuedAction); // I'm decently sure this causes undefined behavior
 	bool AbilityActivated = RunAbilityAction(DequeuedAction);
 	if(!AbilityActivated)
 	{
@@ -190,7 +192,7 @@ void UNPlayerActionComponent::ExecuteQueuedAction()
 		ClearQueue();
 		return;
 	}
-	CurrentActionSpecHandle = TempHandle;
+	CurrentActionSpecHandle = TempHandlePtr;
 }
 
 void UNPlayerActionComponent::ActionEnded(const FAbilityEndedData& AbilityEndedData)
@@ -199,7 +201,7 @@ void UNPlayerActionComponent::ActionEnded(const FAbilityEndedData& AbilityEndedD
 	if(!bSetup || !IsValid(NPlayerStateRef))
 		// should be unreachable, as action ended is bound during setup, but could be reached if the ref becomes invalid
 		return;
-	if(AbilityEndedData.AbilitySpecHandle == CurrentActionSpecHandle)
+	if(AbilityEndedData.AbilitySpecHandle == *CurrentActionSpecHandle)
 	{
 		if(bExecutingQueue){
 			if(AbilityEndedData.bWasCancelled)

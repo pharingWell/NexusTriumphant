@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "AbilitySystem/NChampionDef.h"
+#include "Entities/Player/NChampionDef.h"
 
 #include "EnhancedInputComponent.h"
 #include "AbilitySystem/NActionHelper.h"

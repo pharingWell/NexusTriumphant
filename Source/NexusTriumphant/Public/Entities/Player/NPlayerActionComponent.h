@@ -20,7 +20,7 @@ class NEXUSTRIUMPHANT_API UNPlayerActionComponent : public UActorComponent, publ
 	GENERATED_BODY()
 
 protected:
-	FGameplayAbilitySpecHandle& CurrentActionSpecHandle;
+	FGameplayAbilitySpecHandle* CurrentActionSpecHandle;
 	FGameplayAbilityActorInfo AbilityActorInfo;
 	bool bExecutingQueue;
 	TQueue<ENAbilityAction> Queue;
@@ -41,6 +41,19 @@ public:
 	UNPlayerActionComponent(const FObjectInitializer& ObjectInitializer);
 	void Setup(ANPlayerState* NPlayerState);
 
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override
+	{
+		if(bASCRefValid)
+		{
+			return ASCRef;
+		}
+		if(!IsValid(NPlayerStateRef))
+		{
+			UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerActionComponent] GetASC before setup/while NPlayerState ref invalid"));
+			return nullptr;
+		}
+		return NPlayerStateRef->GetAbilitySystemComponent();
+	}
 
 	void RevertAbilityAction(ENAbilityAction Action);
 	

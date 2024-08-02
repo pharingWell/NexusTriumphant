@@ -30,11 +30,6 @@ ANPlayerController::ANPlayerController(const FObjectInitializer& ObjectInitializ
 void ANPlayerController::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);
-	NPlayerState = StaticCast<ANPlayerState*>(GetPlayerState<ANPlayerState>());
-	if(!NPlayerState)
-	{
-		UE_LOG(LogNexusTriumphant, Error, TEXT("[NPlayerController] Failed to cast player state during construction"));
-	}
 }
 
 
@@ -82,18 +77,30 @@ void ANPlayerController::SetupInputComponent()
 		{
 			// Add Input Mapping Context
 			EILPSubsystem->AddMappingContext(InputDefinition->MappingContext, 1);
+			if(InputDefinition->BindingMap.Num() < 1)
+			{
+				UE_LOG(LogNexusTriumphant, Warning, TEXT("[NPlayerController] Binding map is empty"));
+			}
 			for (auto Binding : InputDefinition->BindingMap)
 			{
-				EnhancedInputComponent->BindAction(Binding.Value, ETriggerEvent::Started, this, &ANPlayerController::OnInputStarted, Binding.Key);
-				EnhancedInputComponent->BindAction(Binding.Value, ETriggerEvent::Triggered, this, &ANPlayerController::OnInputTriggered, Binding.Key);
-				EnhancedInputComponent->BindAction(Binding.Value, ETriggerEvent::Completed, this, &ANPlayerController::OnInputFinished, Binding.Key);
-				EnhancedInputComponent->BindAction(Binding.Value, ETriggerEvent::Canceled, this, &ANPlayerController::OnInputFinished, Binding.Key);
+				UInputAction* InputAction = Binding.Value;
+				TEnumAsByte<ENAbilityAction>& ActionEnum = Binding.Key;
+				if(!IsValid(Binding.Value))
+				{
+					UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerController] Invalid: Pair<%s , %d>"),
+					ToCStr(InputAction->GetFullName()), int(ActionEnum));
+				}
+				EnhancedInputComponent->BindAction(InputAction, ETriggerEvent::Started, this, &ANPlayerController::OnInputStarted, ActionEnum);
+				EnhancedInputComponent->BindAction(InputAction, ETriggerEvent::Triggered, this, &ANPlayerController::OnInputTriggered, ActionEnum);
+				EnhancedInputComponent->BindAction(InputAction, ETriggerEvent::Completed, this, &ANPlayerController::OnInputFinished, ActionEnum);
+				EnhancedInputComponent->BindAction(InputAction, ETriggerEvent::Canceled, this, &ANPlayerController::OnInputFinished, ActionEnum);
 			}
 			
 			EnhancedInputComponent->BindAction(InputDefinition->EnqueueInput, ETriggerEvent::Started, this, &ANPlayerController::EnqueueStarted);
 			EnhancedInputComponent->BindAction(InputDefinition->EnqueueInput, ETriggerEvent::Completed, this, &ANPlayerController::EnqueueEnded);
 			EnhancedInputComponent->BindAction(InputDefinition->EnqueueInput, ETriggerEvent::Canceled, this, &ANPlayerController::EnqueueEnded);
 			bExistInputs = true;
+			UE_LOG(LogActionSystem, Display, TEXT("[Check Passed] InputDefinition Binding Map Bound"));
 		}
 		if(DefaultMappingContext)
 		{ 
@@ -173,9 +180,9 @@ void ANPlayerController::EnqueueEnded()
 	bIsEnqueuing = false;
 }
 
-void ANPlayerController::OnInputStarted(TEnumAsByte<ENAbilityAction> InputUsed)
+void ANPlayerController::OnInputStarted(const TEnumAsByte<ENAbilityAction> InputUsed)
 {
-	UE_LOG(LogActionSystem, Display, TEXT("Used AbilityAction #%d"), int(InputUsed));
+	UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerController] Used AbilityAction #%d"), int(InputUsed));
 	if(bIsEnqueuing)
 	{
 		PlayerActionComponent->EnqueueAction(InputUsed);

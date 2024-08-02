@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "InputAction.h"
 #include "InputMappingContext.h"
-#include "NActionHelper.h"
+#include "AbilitySystem/NActionHelper.h"
 #include "Engine/DataAsset.h"
 #include "NPlayerInputDef.generated.h"
 
