@@ -45,35 +45,35 @@ class NEXUSTRIUMPHANT_API UNChampionDef : public UDataAsset
 	
 private:
 	UPROPERTY(EditDefaultsOnly, Category="Ability", DisplayName="Attack Gameplay Ability")
-	TSubclassOf<UNGameplayAbility> AttackClass;
+	TSubclassOf<UGameplayAbility> AttackClass;
 	
 	UPROPERTY(EditDefaultsOnly, Category="Ability", DisplayName="First Gameplay Ability")
-	TSubclassOf<UNGameplayAbility> Ability1Class;
+	TSubclassOf<UGameplayAbility> Ability1Class;
 
 	UPROPERTY(EditDefaultsOnly, Category="Ability", DisplayName="Second Gameplay Ability")
-	TSubclassOf<UNGameplayAbility> Ability2Class;
+	TSubclassOf<UGameplayAbility> Ability2Class;
 	
 	UPROPERTY(EditDefaultsOnly, Category="Ability", DisplayName="Third Gameplay Ability")
-	TSubclassOf<UNGameplayAbility> Ability3Class;
+	TSubclassOf<UGameplayAbility> Ability3Class;
 
 	UPROPERTY(EditDefaultsOnly, Category="Ability", DisplayName="Ultimate Gameplay Ability")
-	TSubclassOf<UNGameplayAbility> UltimateClass;
+	TSubclassOf<UGameplayAbility> UltimateClass;
 
 	UPROPERTY(EditDefaultsOnly, Category="Ability", DisplayName="Trait Gameplay Ability")
-	TSubclassOf<UNGameplayAbility> TraitClass;
+	TSubclassOf<UGameplayAbility> TraitClass;
 
 	UPROPERTY(EditDefaultsOnly, Category="Ability", DisplayName="First Additional Gameplay Ability")
-	TSubclassOf<UNGameplayAbility> AdditionalAbility1Class;
+	TSubclassOf<UGameplayAbility> AdditionalAbility1Class;
 	
 	UPROPERTY(EditDefaultsOnly, Category="Ability", DisplayName="Second Additional Gameplay Ability")
-	TSubclassOf<UNGameplayAbility> AdditionalAbility2Class;
+	TSubclassOf<UGameplayAbility> AdditionalAbility2Class;
 
 public:	
 	
 	FGameplayAttribute ChampionStats;
 	
 	UPROPERTY()
-	TMap<TEnumAsByte<ENAbilityAction>, TSubclassOf<UNGameplayAbility>> AbilityMap;
+	TMap<TEnumAsByte<ENAbilityAction>, TSubclassOf<UGameplayAbility>> AbilityMap;
 
 private:
 	//TMap<ENAbilityAction, FNActionHandlerFunctions> HandlerFunctionMap;

@@ -57,8 +57,6 @@ public:
 
 	void RevertAbilityAction(ENAbilityAction Action);
 	
-
-
 	UFUNCTION(BlueprintCallable, Category="Gameplay Ability System")
 	FGameplayAbilitySpecHandle& GetHandle(ENAbilityAction Action, bool GetBase = false);
 

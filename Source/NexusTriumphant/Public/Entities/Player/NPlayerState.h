@@ -57,6 +57,7 @@ public:
 	virtual void BeginPlay() override;
 	
 	// IAbilitySystemInterface
+	UNChampionDef* GetChampionDataAsset() const { return ChampionDataAsset; }
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystemComponent; }
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty> & OutLifetimeProps) const override;
 
@@ -64,7 +65,7 @@ public:
 	// to the spec handle with the key Action in BaseAbilityActions
 
 protected:
-	UNChampionDef* GetChampionDataAsset() const { return ChampionDataAsset; }
+	
 
 
 };

@@ -30,15 +30,23 @@ void UNPlayerActionComponent::Setup(ANPlayerState* NPlayerState)
 			return;
 		}
 		ASCRef->OnAbilityEnded.AddUFunction(this, "ActionEnded");
+		for (auto AbilityPair : NPlayerStateRef->GetChampionDataAsset()->AbilityMap)
+		{
+			BaseAbilityActions.Add(AbilityPair.Key, ASCRef->GiveAbility(FGameplayAbilitySpec(AbilityPair.Value, 1, AbilityPair.Key, this)));
+		}
+		CurrentAbilityActions = BaseAbilityActions;
+		FString String = "";
+		for (auto Element : BaseAbilityActions)
+		{
+			String += FString::Printf(TEXT("[%d, "), Element.Key) + Element.Value.ToString() + "],";
+		}
+		UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerActionComponent] CurrentAbilityActions: {%s}"), ToCStr(String));
 		bSetup = true;
 		return;
 	}
 	UE_LOG(LogActionSystem, Error, TEXT("[NPlayerActionComponent] Failed to get valid PlayerState ref"));
 	
 }
-
-
-
 
 /** Restores the Base Ability Action to the Current Ability Action slot */
 void UNPlayerActionComponent::RevertAbilityAction(const ENAbilityAction Action)
@@ -96,7 +104,11 @@ void UNPlayerActionComponent::ExecuteAction(const ENAbilityAction Action)
 	if(!bSetup || !IsValid(NPlayerStateRef))
 		return;
 	ClearQueue();
-	RunAbilityAction(Action); //discarding return
+	bool bDidAbilityRun = RunAbilityAction(Action);
+	if(!bDidAbilityRun)
+	{
+		UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerActionComponent] Ran Action #%d, but it failed to activate"), Action);
+	}
 }
 
 bool UNPlayerActionComponent::RunAbilityAction(const ENAbilityAction Action)

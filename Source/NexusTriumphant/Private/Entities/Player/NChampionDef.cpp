@@ -7,18 +7,20 @@
 #include "AbilitySystem/NActionHelper.h"
 
 
-UNChampionDef::UNChampionDef(const FObjectInitializer&):
-	AbilityMap({
-		{ENAbilityAction::ATTACK, AttackClass},
-		{ENAbilityAction::ABILITY1, Ability1Class},
-		{ENAbilityAction::ABILITY2, Ability2Class},
-		{ENAbilityAction::ABILITY3, Ability3Class},
-		{ENAbilityAction::ULTIMATE, UltimateClass},
-		{ENAbilityAction::TRAIT, TraitClass},
-		{ENAbilityAction::ADDT1, AdditionalAbility1Class},
-		{ENAbilityAction::ADDT2, AdditionalAbility2Class},
-	})
-{}
+UNChampionDef::UNChampionDef(const FObjectInitializer&)
+{
+	AbilityMap= {
+			{ENAbilityAction::ATTACK, AttackClass},
+			{ENAbilityAction::ABILITY1, Ability1Class},
+			{ENAbilityAction::ABILITY2, Ability2Class},
+			{ENAbilityAction::ABILITY3, Ability3Class},
+			{ENAbilityAction::ULTIMATE, UltimateClass},
+			{ENAbilityAction::TRAIT, TraitClass},
+			{ENAbilityAction::ADDT1, AdditionalAbility1Class},
+			{ENAbilityAction::ADDT2, AdditionalAbility2Class},
+		};
+	
+}
 
 /*void UNChampionDef::SetBinding(UEnhancedInputComponent EnhancedInputComponent*, ENAbilityAction EnumKey, const UInputAction* InputAction)
 {
