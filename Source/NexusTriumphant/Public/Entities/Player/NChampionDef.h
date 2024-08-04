@@ -31,7 +31,7 @@ struct FNActionHandlerFunctions
 };*/
 
 
-class UGameplayAbility;
+class UNGameplayAbility;
 
 /**
  * Champion Specification
@@ -42,39 +42,40 @@ UCLASS()
 class NEXUSTRIUMPHANT_API UNChampionDef : public UDataAsset
 {
 	GENERATED_BODY()
-	
-private:
-	UPROPERTY(EditDefaultsOnly, Category="Ability", DisplayName="Attack Gameplay Ability")
-	TSubclassOf<UGameplayAbility> AttackClass;
-	
-	UPROPERTY(EditDefaultsOnly, Category="Ability", DisplayName="First Gameplay Ability")
-	TSubclassOf<UGameplayAbility> Ability1Class;
-
-	UPROPERTY(EditDefaultsOnly, Category="Ability", DisplayName="Second Gameplay Ability")
-	TSubclassOf<UGameplayAbility> Ability2Class;
-	
-	UPROPERTY(EditDefaultsOnly, Category="Ability", DisplayName="Third Gameplay Ability")
-	TSubclassOf<UGameplayAbility> Ability3Class;
-
-	UPROPERTY(EditDefaultsOnly, Category="Ability", DisplayName="Ultimate Gameplay Ability")
-	TSubclassOf<UGameplayAbility> UltimateClass;
-
-	UPROPERTY(EditDefaultsOnly, Category="Ability", DisplayName="Trait Gameplay Ability")
-	TSubclassOf<UGameplayAbility> TraitClass;
-
-	UPROPERTY(EditDefaultsOnly, Category="Ability", DisplayName="First Additional Gameplay Ability")
-	TSubclassOf<UGameplayAbility> AdditionalAbility1Class;
-	
-	UPROPERTY(EditDefaultsOnly, Category="Ability", DisplayName="Second Additional Gameplay Ability")
-	TSubclassOf<UGameplayAbility> AdditionalAbility2Class;
 
 public:	
 	
 	FGameplayAttribute ChampionStats;
 	
-	UPROPERTY()
-	TMap<TEnumAsByte<ENAbilityAction>, TSubclassOf<UGameplayAbility>> AbilityMap;
+	
+	
+protected:
+	UPROPERTY(EditDefaultsOnly, Category="Ability", DisplayName="Attack Gameplay Ability")
+	TSubclassOf<UNGameplayAbility> AttackClass;
+	
+	UPROPERTY(EditDefaultsOnly, Category="Ability", DisplayName="First Gameplay Ability")
+	TSubclassOf<UNGameplayAbility> Ability1Class;
 
+	UPROPERTY(EditDefaultsOnly, Category="Ability", DisplayName="Second Gameplay Ability")
+	TSubclassOf<UNGameplayAbility> Ability2Class;
+	
+	UPROPERTY(EditDefaultsOnly, Category="Ability", DisplayName="Third Gameplay Ability")
+	TSubclassOf<UNGameplayAbility> Ability3Class;
+
+	UPROPERTY(EditDefaultsOnly, Category="Ability", DisplayName="Ultimate Gameplay Ability")
+	TSubclassOf<UNGameplayAbility> UltimateClass;
+
+	UPROPERTY(EditDefaultsOnly, Category="Ability", DisplayName="Trait Gameplay Ability")
+	TSubclassOf<UNGameplayAbility> TraitClass;
+
+	UPROPERTY(EditDefaultsOnly, Category="Ability", DisplayName="First Additional Gameplay Ability")
+	TSubclassOf<UNGameplayAbility> AdditionalAbility1Class;
+	
+	UPROPERTY(EditDefaultsOnly, Category="Ability", DisplayName="Second Additional Gameplay Ability")
+	TSubclassOf<UNGameplayAbility> AdditionalAbility2Class;
+
+	UPROPERTY()
+	TMap<TEnumAsByte<ENAbilityAction>, TSubclassOf<UNGameplayAbility>> AbilityMap;
 private:
 	//TMap<ENAbilityAction, FNActionHandlerFunctions> HandlerFunctionMap;
 
@@ -82,7 +83,7 @@ private:
 	
 public:
 	UNChampionDef(const FObjectInitializer& ObjectInitializer);
-	
+	TMap<TEnumAsByte<ENAbilityAction>, TSubclassOf<UNGameplayAbility>>& GetUpdatedAbilityMap();
 	/* void SetBinding(UEnhancedInputComponent* EnhancedInputComponent, ENAbilityAction EnumKey,
 	                const UInputAction* InputAction);
 */

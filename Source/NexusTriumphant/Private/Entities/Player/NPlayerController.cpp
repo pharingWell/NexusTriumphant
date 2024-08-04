@@ -46,7 +46,7 @@ void ANPlayerController::AcknowledgePossession(APawn* P)
 
 	NPlayerState = GetPlayerState<ANPlayerState>();
 	NPlayerCharacter = Cast<ANPlayerCharacter>(P);
-	if (NPlayerCharacter && NPlayerState)
+	if (IsValid(NPlayerCharacter) && IsValid(NPlayerState))
 	{
 		NPlayerState->GetAbilitySystemComponent()->InitAbilityActorInfo(NPlayerState, NPlayerCharacter);
 		NPlayerCharacter->SetPlayerState(NPlayerState);

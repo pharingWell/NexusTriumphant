@@ -35,6 +35,7 @@ protected:
 	TMap<ENAbilityAction, FGameplayAbilitySpecHandle> CurrentAbilityActions;
 
 	bool bSetup;
+	bool bPlay;
 	
 public:
 	// Sets default values for this component's properties
@@ -83,7 +84,7 @@ public:
 	//						   FActorComponentTickFunction* ThisTickFunction) override;
 protected:
 	// Called when the game starts
-	//virtual void BeginPlay() override;
+	virtual void BeginPlay() override;
 
 	// Internal call for running the ability action
 	UFUNCTION(BlueprintCallable, Category="Gameplay Ability System")

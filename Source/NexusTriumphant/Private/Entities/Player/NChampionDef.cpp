@@ -7,9 +7,11 @@
 #include "AbilitySystem/NActionHelper.h"
 
 
-UNChampionDef::UNChampionDef(const FObjectInitializer&)
+UNChampionDef::UNChampionDef(const FObjectInitializer&) : AbilityMap({}) {}
+	
+TMap<TEnumAsByte<ENAbilityAction>, TSubclassOf<UNGameplayAbility>>& UNChampionDef::GetUpdatedAbilityMap()
 {
-	AbilityMap= {
+	AbilityMap = {
 			{ENAbilityAction::ATTACK, AttackClass},
 			{ENAbilityAction::ABILITY1, Ability1Class},
 			{ENAbilityAction::ABILITY2, Ability2Class},
@@ -19,8 +21,9 @@ UNChampionDef::UNChampionDef(const FObjectInitializer&)
 			{ENAbilityAction::ADDT1, AdditionalAbility1Class},
 			{ENAbilityAction::ADDT2, AdditionalAbility2Class},
 		};
-	
+	return AbilityMap;
 }
+
 
 /*void UNChampionDef::SetBinding(UEnhancedInputComponent EnhancedInputComponent*, ENAbilityAction EnumKey, const UInputAction* InputAction)
 {

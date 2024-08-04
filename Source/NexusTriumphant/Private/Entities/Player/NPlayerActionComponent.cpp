@@ -5,7 +5,7 @@
 // Sets default values for this component's properties
 UNPlayerActionComponent::UNPlayerActionComponent(const FObjectInitializer& ObjectInitializer) :
 CurrentActionSpecHandle(nullptr), bExecutingQueue(false), NPlayerStateRef(nullptr),
-ASCRef(nullptr), bASCRefValid(false), bSetup(false)
+ASCRef(nullptr), bASCRefValid(false), bSetup(false), bPlay(false)
 
 {
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
@@ -15,6 +15,10 @@ ASCRef(nullptr), bASCRefValid(false), bSetup(false)
 	// ...
 }
 
+void UNPlayerActionComponent::BeginPlay()
+{
+	bPlay = true;
+}
 
 // This function connects the action component to the ability system component via the NPlayerState
 void UNPlayerActionComponent::Setup(ANPlayerState* NPlayerState)
@@ -29,19 +33,37 @@ void UNPlayerActionComponent::Setup(ANPlayerState* NPlayerState)
 			UE_LOG(LogActionSystem, Error, TEXT("[NPlayerActionComponent] Failed to get valid ASC ref"));
 			return;
 		}
-		ASCRef->OnAbilityEnded.AddUFunction(this, "ActionEnded");
-		for (auto AbilityPair : NPlayerStateRef->GetChampionDataAsset()->AbilityMap)
+		if(bPlay)
 		{
-			BaseAbilityActions.Add(AbilityPair.Key, ASCRef->GiveAbility(FGameplayAbilitySpec(AbilityPair.Value, 1, AbilityPair.Key, this)));
+			UE_LOG(LogActionSystem, Warning, TEXT("Setup correctly"));
 		}
-		CurrentAbilityActions = BaseAbilityActions;
-		FString String = "";
-		for (auto Element : BaseAbilityActions)
+		if(NPlayerState->HasAuthority())
 		{
-			String += FString::Printf(TEXT("[%d, "), Element.Key) + Element.Value.ToString() + "],";
+			ASCRef->OnAbilityEnded.AddUFunction(this, "ActionEnded");
+
+			TMap<TEnumAsByte<ENAbilityAction>, FString> Names {};
+			for (auto AbilityPair : NPlayerStateRef->GetChampionDataAsset()->GetUpdatedAbilityMap())
+			{
+				if(IsValid(AbilityPair.Value))
+				{
+					Names.Add(AbilityPair.Key, AbilityPair.Value->GetDescription());
+					BaseAbilityActions.Add(AbilityPair.Key, ASCRef->GiveAbility(
+						FGameplayAbilitySpec(AbilityPair.Value, 1, AbilityPair.Key, this)
+						)
+					);
+				}
+			}
+			CurrentAbilityActions = BaseAbilityActions;
+			FString String = "";
+			for (auto Element : BaseAbilityActions)
+			{
+				String += FString::Printf(TEXT("[%d, %s, %s]"), Element.Key, ToCStr(Element.Value.ToString()), ToCStr(Names[Element.Key]));
+			}
+			UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerActionComponent] CurrentAbilityActions: {%s}"), ToCStr(String));
+
+			
+			bSetup = true;
 		}
-		UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerActionComponent] CurrentAbilityActions: {%s}"), ToCStr(String));
-		bSetup = true;
 		return;
 	}
 	UE_LOG(LogActionSystem, Error, TEXT("[NPlayerActionComponent] Failed to get valid PlayerState ref"));

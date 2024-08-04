@@ -29,10 +29,10 @@ private:
 	/** Ability System Component, Attributes, Effects and Abilities for setup */
 
 	UPROPERTY(VisibleAnywhere, Category="Abilities")
-	UAbilitySystemComponent* AbilitySystemComponent{nullptr};
+	UAbilitySystemComponent* AbilitySystemComponent;
 
 	UPROPERTY(EditDefaultsOnly, Category="Abilities")
-	UNChampionDef* ChampionDataAsset{nullptr};
+	UNChampionDef* ChampionDataAsset;
 	
 	
 	/*UPROPERTY(Replicated, VisibleAnywhere, Category="Abilities")
