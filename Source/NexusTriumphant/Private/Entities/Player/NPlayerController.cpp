@@ -1,6 +1,17 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "Entities/Player/NPlayerController.h"
+
+#include "Entities/NexusEntity.h"
+#include "GameFramework/Pawn.h"
+#include "Blueprint/AIBlueprintHelperLibrary.h"
+#include "NiagaraSystem.h"
+#include "NiagaraFunctionLibrary.h"
+#include "Engine/World.h"
+#include "EnhancedInputComponent.h"
+#include "InputActionValue.h"
+#include "EnhancedInputSubsystems.h"
+#include "Engine/LocalPlayer.h"
 #include "Entities/Player/NPlayerCharacter.h"
 #include "NexusTriumphant/NexusTriumphant.h"
 
@@ -10,7 +21,7 @@ ANPlayerController::ANPlayerController(const FObjectInitializer& ObjectInitializ
 	bIsEnqueuing = false;
 	bShowMouseCursor = true;
 	DefaultMouseCursor = EMouseCursor::Default;
-	CachedMoveToDestination = FVector::ZeroVector;
+	CachedDestination = FVector::ZeroVector;
 	FollowTime = 0.f;
 	InputDefinition = CreateDefaultSubobject<UNPlayerInputDef>(TEXT("Input Definition"));
 	PlayerActionComponent = CreateDefaultSubobject<UNPlayerActionComponent>(TEXT("Player Action Component"));
@@ -32,43 +43,20 @@ void ANPlayerController::BeginPlay()
 void ANPlayerController::AcknowledgePossession(APawn* P)
 {
 	Super::AcknowledgePossession(P);
-	NPlayerCharacter = Cast<ANPlayerCharacter>(P);
-	if (!IsValid(NPlayerCharacter))
-	{
-		UE_LOG(LogNexusTriumphant, Error, TEXT("[NPlayerController] Failed to cast player pawn"));
-		return;
-	}
-	CompleteSetup();
-}
 
-void ANPlayerController::InitPlayerState()
-{
-	Super::InitPlayerState();
 	NPlayerState = GetPlayerState<ANPlayerState>();
-	if (!IsValid(NPlayerState))
+	NPlayerCharacter = Cast<ANPlayerCharacter>(P);
+	if (IsValid(NPlayerCharacter) && IsValid(NPlayerState))
 	{
-		UE_LOG(LogNexusTriumphant, Error, TEXT("[NPlayerController] Player state invalid)"));
-		return;
-	}
-	CompleteSetup();
-}
-
-void ANPlayerController::CompleteSetup()
-{
-	if (!IsValid(NPlayerCharacter) || !IsValid(NPlayerState))
+		NPlayerState->GetAbilitySystemComponent()->InitAbilityActorInfo(NPlayerState, NPlayerCharacter);
+		NPlayerCharacter->SetPlayerState(NPlayerState);
+		PlayerActionComponent->Setup(NPlayerState);
+	}else
 	{
-		return;
+		UE_LOG(LogNexusTriumphant, Error, TEXT("[NPlayerController] Failed to cast player pawn (or state invalid)"));
 	}
-	NPlayerState->GetAbilitySystemComponent()->InitAbilityActorInfo(NPlayerState, NPlayerCharacter);
-	NPlayerCharacter->SetPlayerState(NPlayerState.Get());
-	PlayerActionComponent->Setup(NPlayerState.Get(), this);
+	//...
 }
-
-void ANPlayerController::SetupNPS(TObjectPtr<UNPlayerSystem> InNPS)
-{
-	NPS = InNPS;
-}
-
 
 void ANPlayerController::SetupInputComponent()
 {
@@ -76,7 +64,7 @@ void ANPlayerController::SetupInputComponent()
 	
 	EILPSubsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer());
 	EnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent);
-	if(!IsValid(EnhancedInputComponent.Get()))
+	if(!IsValid(EnhancedInputComponent))
 	{
 		UE_LOG(LogNexusTriumphant, Error, TEXT("[NPlayerController] Enhanced input component not found (failed cast)."));
 		return;

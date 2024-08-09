@@ -28,11 +28,6 @@ void ANPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty> & OutLi
 	//DOREPLIFETIME(ANPlayerState, StandardAttributes);
 }
 
-void ANPlayerState::SetupNPS(TObjectPtr<UNPlayerSystem> InNPS)
-{
-	NPS = InNPS;
-}
-
 void ANPlayerState::BeginPlay()
 {
 	Super::BeginPlay();

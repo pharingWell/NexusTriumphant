@@ -32,8 +32,7 @@ class UInputMappingContext;
 
 
 UCLASS()
-class NEXUSTRIUMPHANT_API ANPlayerCharacter : public ANexusEntity, public IAbilitySystemInterface,
-											  public INPlayerSystemInterface
+class NEXUSTRIUMPHANT_API ANPlayerCharacter : public ANexusEntity, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 
@@ -41,8 +40,7 @@ class NEXUSTRIUMPHANT_API ANPlayerCharacter : public ANexusEntity, public IAbili
 	/** PROPERTIES */
 public:
 protected:
-	UPROPERTY()
-	TObjectPtr<UNPlayerSystem> NPS;
+
 	/** MappingContext for player input. */
 	UPROPERTY(VisibleAnywhere, Category = "EnhancedInput")
 	UInputMappingContext* InputMapping;
@@ -87,7 +85,6 @@ public:
 		return nullptr;
 	}
 
-	virtual void SetupNPS(TObjectPtr<UNPlayerSystem> InNPS) override;
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

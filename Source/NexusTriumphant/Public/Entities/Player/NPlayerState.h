@@ -6,19 +6,20 @@
 
 #include "AbilitySystemInterface.h"
 #include "AbilitySystemComponent.h"
-#include "NPlayerSystem.h"
 #include "Entities/Player/NChampionDef.h"
 #include "AbilitySystem/Abilities/NAbilitySet.h"
 #include "AbilitySystem/Attributes/NBaseAttributeSet.h"
 
 #include "GameFramework/PlayerState.h"
 #include "NPlayerState.generated.h"
+
+
+class UNAbilitySystemComponent;
 /**
  * 
  */
 UCLASS()
-class NEXUSTRIUMPHANT_API ANPlayerState : public APlayerState, public IAbilitySystemInterface,
-                                          public INPlayerSystemInterface
+class NEXUSTRIUMPHANT_API ANPlayerState : public APlayerState, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 	
@@ -33,8 +34,7 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category="Abilities")
 	UNChampionDef* ChampionDataAsset;
 	
-	UPROPERTY()
-	TObjectPtr<UNPlayerSystem> NPS;
+	
 	/*UPROPERTY(Replicated, VisibleAnywhere, Category="Abilities")
 	UNBaseAttributeSet* StandardAttributes{nullptr};
 
@@ -60,7 +60,7 @@ public:
 	UNChampionDef* GetChampionDataAsset() const { return ChampionDataAsset; }
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystemComponent; }
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty> & OutLifetimeProps) const override;
-	virtual void SetupNPS(TObjectPtr<UNPlayerSystem> InNPS) override;
+
 	// Sets the spec handle with the key Action in CurrentAbilityActions
 	// to the spec handle with the key Action in BaseAbilityActions
 

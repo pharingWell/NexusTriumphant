@@ -3,18 +3,17 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Templates/SubclassOf.h"
-#include "GameFramework/PlayerController.h"
-#include "GameFramework/Pawn.h"
-#include "Engine/World.h"
 #include "AbilitySystemInterface.h"
 #include "EnhancedInputComponent.h"
-#include "EnhancedInputSubsystems.h"
-#include "NPlayerSystem.h"
-#include "Engine/LocalPlayer.h"
+#include "NPlayerActionComponent.h"
+#include "AbilitySystem/NActionHelper.h"
+#include "Entities/Player/NPlayerInputDef.h"
+#include "Entities/Player/NPlayerState.h"
+#include "Entities/Player/NPlayerCharacter.h"
+#include "Templates/SubclassOf.h"
+#include "GameFramework/PlayerController.h"
 #include "NPlayerController.generated.h"
 
-class UNPlayerActionComponent;
 class UEnhancedInputLocalPlayerSubsystem;
 /** Forward declaration to improve compiling times */
 class UNiagaraSystem;
@@ -22,9 +21,9 @@ class UInputMappingContext;
 class UInputAction;
 
 
+
 UCLASS()
-class NEXUSTRIUMPHANT_API ANPlayerController : public APlayerController, public IAbilitySystemInterface,
-                                               public INPlayerSystemInterface
+class ANPlayerController : public APlayerController, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 
@@ -55,17 +54,24 @@ protected:
 	/** True if the controlled character should navigate to the mouse cursor. */
 	uint32 bMoveToMouseCursor : 1;
 	TEnumAsByte<ENAbilityAction> CurrentAction;
+	FGameplayAbilityActorInfo AbilityActorInfo;
 
 	bool bIsEnqueuing;
-
+	
 	UPROPERTY()
-	TObjectPtr<UNPlayerSystem> NPS;
-	bool bNPSValid;
+	UNPlayerActionComponent* PlayerActionComponent;
 	UPROPERTY()
-	TObjectPtr<UEnhancedInputComponent> EnhancedInputComponent;
+	ANPlayerState* NPlayerState;
 	UPROPERTY()
-	TObjectPtr<UEnhancedInputLocalPlayerSubsystem> EILPSubsystem;
-
+	ANPlayerCharacter* NPlayerCharacter;
+	UPROPERTY()
+	UAbilitySystemComponent* ASCRef;
+	bool bASCRefValid;
+	UPROPERTY()
+	UEnhancedInputComponent* EnhancedInputComponent;
+	UPROPERTY()
+	UEnhancedInputLocalPlayerSubsystem* EILPSubsystem;
+	
 	
 private:
 	FVector CachedMoveToDestination;
@@ -79,20 +85,22 @@ public:
 	// Called to bind functionality to input
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override
 	{
-		
+		if(IsValid(NPlayerState))
+			return NPlayerState->GetAbilitySystemComponent();
+		if(IsValid(NPlayerCharacter))
+		{
+			return NPlayerCharacter->GetAbilitySystemComponent();
+		}
 		// if(GetPawn()->Implements<IAbilitySystemInterface>())
 		// {
 		// 	return Cast<IAbilitySystemInterface>(GetPawn())->GetAbilitySystemComponent();
 		// }
 		return nullptr;
 	}
-	virtual void SetupNPS(TObjectPtr<UNPlayerSystem> NPS) override;
 protected:
 	UFUNCTION()
 	virtual void SetupInputComponent() override;
-	UFUNCTION()
-	virtual void InitPlayerState() override;
-	void CompleteSetup();
+	
 	// To add mapping context
 	virtual void BeginPlay() override;
 	virtual void AcknowledgePossession(APawn* P) override;
