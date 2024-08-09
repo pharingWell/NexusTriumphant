@@ -5,43 +5,45 @@
 #include "Entities/Player/NPlayerState.h"
 DEFINE_LOG_CATEGORY(LogPlayerSystem);
 
-UNPlayerSystem::UNPlayerSystem(const FObjectInitializer&)
-{
-	
-}
 
-void UNPlayerSystem::Setup(
-	TObjectPtr<UNPlayerActionComponent> ActionComponent,
-	TObjectPtr<APlayerState> PlayerState,
-	TObjectPtr<ANPlayerController> Controller,
-	TObjectPtr<APawn> Pawn,
-	TObjectPtr<UAbilitySystemComponent> InASC)
+void FNPlayerSystem::Setup(
+	const TObjectPtr<UNPlayerActionComponent>& ActionComponent,
+	const TObjectPtr<ANPlayerState>& PlayerState,
+	const TObjectPtr<ANPlayerController>& Controller,
+	const TObjectPtr<ANPlayerCharacter>& Character,
+	const TObjectPtr<UAbilitySystemComponent>& InASC)
 {
-	TSet<FString> InvalidComponents{};
-	if(IsValid(ActionComponent)){
-		NPlayerActionComponent = ActionComponent;}
-	else
+		TSet<FString> InvalidComponents{};
+	if(!IsValid(ActionComponent))
+	{
+		NPlayerActionComponent = ActionComponent;
 		InvalidComponents.Add(TEXT("ActionComponent"));
-	
-	if(IsValid(PlayerState)){
-		NPlayerState = Cast<ANPlayerState>(PlayerState);}
-	else
+	}
+	if(!IsValid(PlayerState))
+	{
+		NPlayerState = PlayerState;
 		InvalidComponents.Add(TEXT("PlayerState"));
-	
-	if(IsValid(Controller)){
-		NPlayerController = Controller;}
-	else
+	}
+	if(!IsValid(Controller))
+	{
+		NPlayerController = Controller;
 		InvalidComponents.Add(TEXT("Controller"));
-	
-	if(IsValid(Pawn)){
-		NPlayerCharacter = Cast<ANPlayerCharacter>(Pawn);}
-	else
+	}
+	if(IsValid(Character))
+	{
+		NPlayerCharacter = Character;
 		InvalidComponents.Add(TEXT("PlayerCharacter"));
-	
-	if(IsValid(InASC)){
-		ASC = InASC;}
-	else
+	}
+	if(IsValid(InASC))
+	{
+		ASC = InASC;
 		InvalidComponents.Add(TEXT("AbilitySystemComponent"));
+	}
+	for (auto InvalidComponent : InvalidComponents)
+	{
+		UE_LOG(LogPlayerSystem, Warning, TEXT("[NPlayerSystem] %s is invalid in NPS"), ToCStr(InvalidComponent));
+	}
+	bValid = (InvalidComponents.Num() == 0);
 	
 	if(IsValid(NPlayerActionComponent)) 
 		NPlayerActionComponent->SetupNPS(this);
@@ -51,9 +53,6 @@ void UNPlayerSystem::Setup(
 		NPlayerState->SetupNPS(this);
 	if(IsValid(NPlayerCharacter))
 		NPlayerCharacter->SetupNPS(this);
-	for (auto InvalidComponent : InvalidComponents)
-	{
-		UE_LOG(LogPlayerSystem, Warning, TEXT("[NPlayerSystem] %s is invalid in NPS"), ToCStr(InvalidComponent));
-	}
-	bValid = (InvalidComponents.Num() == 0);
+	ASC->InitAbilityActorInfo(NPlayerState, NPlayerCharacter);
+	AbilityActorInfo = ASC->AbilityActorInfo;
 }

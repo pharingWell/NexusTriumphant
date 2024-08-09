@@ -4,12 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystemInterface.h"
-#include "AbilitySystem/NActionHelper.h"
-#include "GameplayTagContainer.h"
 #include "NPlayerSystem.h"
 #include "NPlayerActionComponent.generated.h"
 
-class UNPlayerSystem;
+struct FNPlayerSystem;
 class ANPlayerState;
 class ANPlayerController;
 struct FGameplayTag;
@@ -17,7 +15,7 @@ struct FGameplayTag;
 // Should not be made valid
 static FGameplayAbilitySpecHandle BlankHandle;
 
-UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
+UCLASS()
 class NEXUSTRIUMPHANT_API UNPlayerActionComponent : public UActorComponent, public IAbilitySystemInterface,
                                                     public INPlayerSystemInterface
 {
@@ -28,10 +26,7 @@ protected:
 	FGameplayAbilityActorInfo AbilityActorInfo;
 	bool bExecutingQueue;
 	TQueue<ENAbilityAction> Queue;
-
-	UPROPERTY()
-	TObjectPtr<UNPlayerSystem> NPS;
-	bool bNPSValid;
+	FNPlayerSystem* NPS;
 	
 	// UPROPERTY()
 	// ANPlayerController* NPlayerController;
@@ -51,11 +46,11 @@ public:
 	UNPlayerActionComponent(const FObjectInitializer& ObjectInitializer);
 
 	// Initialize the PlayerActionComponent with the references needed to run. Called from the PlayerController
-	void Setup(ANPlayerState* NPlayerState, ANPlayerController* PlayerController);
+
 
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override
 	{
-		if(bNPSValid)
+		if(NPS->Valid())
 		{
 			return NPS->ASC;
 		}
@@ -89,7 +84,7 @@ public:
 	//virtual void TickComponent(float DeltaTime, ELevelTick TickType,
 	//						   FActorComponentTickFunction* ThisTickFunction) override;
 	
-	virtual void SetupNPS(TObjectPtr<UNPlayerSystem> InNPS) override;
+	virtual void SetupNPS(FNPlayerSystem* InNPS) override;
 	
 protected:
 	// Called when the game starts

@@ -11,43 +11,37 @@ class ANPlayerController;
 class ANPlayerState;
 class UNPlayerActionComponent;
 
-UCLASS()
-class UNPlayerSystem : public UObject
+USTRUCT()
+struct NEXUSTRIUMPHANT_API FNPlayerSystem
 {
 	GENERATED_BODY()
 public:
-	UPROPERTY()
 	TObjectPtr<UNPlayerActionComponent> NPlayerActionComponent;
-	UPROPERTY()
 	TObjectPtr<ANPlayerState> NPlayerState;
-	UPROPERTY()
 	TObjectPtr<ANPlayerController> NPlayerController;
-	UPROPERTY()
 	TObjectPtr<ANPlayerCharacter> NPlayerCharacter;
-	UPROPERTY()
 	TObjectPtr<UAbilitySystemComponent> ASC;
-	FGameplayAbilityActorInfo AbilityActorInfo;
+	TSharedPtr<FGameplayAbilityActorInfo> AbilityActorInfo;
 
 private:
 	bool bValid = false;
 	
 public:
-	UNPlayerSystem::UNPlayerSystem(const FObjectInitializer&);
-	void Setup(TObjectPtr<UNPlayerActionComponent> ActionComponent, TObjectPtr<APlayerState> PlayerState,
-	               TObjectPtr<ANPlayerController> Controller, TObjectPtr<APawn> Pawn,
-	               TObjectPtr<UAbilitySystemComponent> ASC);
-	FORCEINLINE bool IsStructValid() const { return bValid; }
+	void Setup(const TObjectPtr<UNPlayerActionComponent>& ActionComponent, const TObjectPtr<ANPlayerState>& PlayerState,
+	           const TObjectPtr<ANPlayerController>& Controller, const TObjectPtr<ANPlayerCharacter>& Character,
+	           const TObjectPtr<UAbilitySystemComponent>& InASC);
+	FORCEINLINE bool Valid() const { return bValid; }
 };
 
 UINTERFACE()
-class UNPlayerSystemInterface : public UInterface
+class NEXUSTRIUMPHANT_API UNPlayerSystemInterface : public UInterface
 {
 	GENERATED_UINTERFACE_BODY()
 };
 
-class INPlayerSystemInterface
+class NEXUSTRIUMPHANT_API INPlayerSystemInterface
 {
 	GENERATED_IINTERFACE_BODY()
-	virtual void SetupNPS(TObjectPtr<UNPlayerSystem> InNPS) = 0;
+	virtual void SetupNPS(FNPlayerSystem* InNPS) = 0;
 	
 };
