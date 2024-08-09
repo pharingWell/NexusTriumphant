@@ -48,10 +48,6 @@ void ANPlayerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlay
 	PlayerState = Cast<ANPlayerState>(NewPlayerState);
 }
 
-void ANPlayerCharacter::OnSetDestinationReleased()
-{
-}
-
 // Called when the game starts or when spawned
 void ANPlayerCharacter::BeginPlay()
 {

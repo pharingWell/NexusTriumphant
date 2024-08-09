@@ -73,6 +73,16 @@ void ANPlayerController::SetupInputComponent()
 	{
 		EILPSubsystem->ClearAllMappings();
 		bool bExistInputs = false;
+		if(DefaultMappingContext)
+		{ 
+			EILPSubsystem->AddMappingContext(DefaultMappingContext, 0);
+			// Setup mouse input events
+			EnhancedInputComponent->BindAction(MoveToAction, ETriggerEvent::Started, this, &ANPlayerController::OnInputStarted, TEnumAsByte(MOVETO));
+			EnhancedInputComponent->BindAction(MoveToAction, ETriggerEvent::Triggered, this, &ANPlayerController::OnInputTriggered, TEnumAsByte(MOVETO));
+			EnhancedInputComponent->BindAction(MoveToAction, ETriggerEvent::Completed, this, &ANPlayerController::OnInputFinished, TEnumAsByte(MOVETO));
+			EnhancedInputComponent->BindAction(MoveToAction, ETriggerEvent::Canceled, this, &ANPlayerController::OnInputFinished, TEnumAsByte(MOVETO));
+			bExistInputs = true;
+		}
 		if(InputDefinition)
 		{
 			// Add Input Mapping Context
@@ -84,7 +94,7 @@ void ANPlayerController::SetupInputComponent()
 			for (auto Binding : InputDefinition->BindingMap)
 			{
 				UInputAction* InputAction = Binding.Value;
-				TEnumAsByte<ENAbilityAction>& ActionEnum = Binding.Key;
+				TEnumAsByte ActionEnum = Binding.Key;
 				if(!IsValid(Binding.Value))
 				{
 					UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerController] Invalid: Pair<%s , %d>"),
@@ -100,74 +110,16 @@ void ANPlayerController::SetupInputComponent()
 			EnhancedInputComponent->BindAction(InputDefinition->EnqueueInput, ETriggerEvent::Completed, this, &ANPlayerController::EnqueueEnded);
 			EnhancedInputComponent->BindAction(InputDefinition->EnqueueInput, ETriggerEvent::Canceled, this, &ANPlayerController::EnqueueEnded);
 			bExistInputs = true;
-			UE_LOG(LogActionSystem, Display, TEXT("[Check Passed] InputDefinition Binding Map Bound"));
+		}else
+		{
+			UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerController] Input Definition is invalid."))
 		}
-		if(DefaultMappingContext)
-		{ 
-			EILPSubsystem->AddMappingContext(DefaultMappingContext, 0);
-			// Setup mouse input events
-			EnhancedInputComponent->BindAction(MoveToAction, ETriggerEvent::Started, this, &ANPlayerController::OnInputStarted);
-			EnhancedInputComponent->BindAction(MoveToAction, ETriggerEvent::Triggered, this, &ANPlayerController::OnSetDestinationTriggered);
-			EnhancedInputComponent->BindAction(MoveToAction, ETriggerEvent::Completed, this, &ANPlayerController::OnSetDestinationReleased);
-			EnhancedInputComponent->BindAction(MoveToAction, ETriggerEvent::Canceled, this, &ANPlayerController::OnSetDestinationReleased);
-			bExistInputs = true;
-		}
+		
 		if(!bExistInputs)
 		{
 			UE_LOG(LogNexusTriumphant, Warning, TEXT("[NPlayerController] No input mappings found"));
 		}
 	}
-}
-
-void ANPlayerController::OnInputStarted()
-{
-	StopMovement();
-}
-
-// Triggered every frame when the input is held down
-void ANPlayerController::OnSetDestinationTriggered()
-{
-	// We flag that the input is being pressed
-	FollowTime += GetWorld()->GetDeltaSeconds();
-	
-	// We look for the location in the world where the player has pressed the input
-	FHitResult Hit;
-	bool bHitSuccessful;
-	if (bIsTouch)
-	{
-		bHitSuccessful = GetHitResultUnderFinger(ETouchIndex::Touch1, ECollisionChannel::ECC_Visibility, true, Hit);
-	}
-	else
-	{
-		bHitSuccessful = GetHitResultUnderCursor(ECollisionChannel::ECC_Visibility, true, Hit);
-	}
-
-	// If we hit a surface, cache the location
-	if (bHitSuccessful)
-	{
-		CachedDestination = Hit.Location;
-	}
-		
-	// Move towards mouse pointer or touch
-	APawn* ControlledPawn = GetPawn();
-	if (ControlledPawn != nullptr)
-	{
-		FVector WorldDirection = (CachedDestination - ControlledPawn->GetActorLocation()).GetSafeNormal();
-		ControlledPawn->AddMovementInput(WorldDirection, 1.0, false);
-	}
-}
-
-void ANPlayerController::OnSetDestinationReleased()
-{
-	// If it was a short press
-	if (FollowTime <= ShortPressThreshold)
-	{
-		// We move there and spawn some particles
-		UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, CachedDestination);
-		UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, FXCursor, CachedDestination, FRotator::ZeroRotator, FVector(1.f, 1.f, 1.f), true, true, ENCPoolMethod::None, true);
-	}
-
-	FollowTime = 0.f;
 }
 
 void ANPlayerController::EnqueueStarted()
@@ -182,23 +134,76 @@ void ANPlayerController::EnqueueEnded()
 
 void ANPlayerController::OnInputStarted(const TEnumAsByte<ENAbilityAction> InputUsed)
 {
-	UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerController] Used AbilityAction #%d"), int(InputUsed));
-	if(bIsEnqueuing)
+	UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerController] Started AbilityAction #%d"), int(InputUsed));
+	switch (InputUsed)
 	{
-		PlayerActionComponent->EnqueueAction(InputUsed);
-	}else
-	{
-		PlayerActionComponent->ExecuteAction(InputUsed);
+		case MOVETO:
+			StopMovement();
+			break;
+		default:
+			if(bIsEnqueuing)
+			{
+				PlayerActionComponent->EnqueueAction(InputUsed);
+			}else
+			{
+				PlayerActionComponent->ExecuteAction(InputUsed);
+			}
+			break;
 	}
-	
 }
 
-void ANPlayerController::OnInputTriggered(TEnumAsByte<ENAbilityAction> InputUsed)
+void ANPlayerController::OnInputTriggered(const TEnumAsByte<ENAbilityAction> InputUsed)
 {
+	UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerController] Triggered AbilityAction #%d"), int(InputUsed));
+	FHitResult Hit;
+	APawn* ControlledPawn;
+	switch (InputUsed)
+	{
+		case MOVETO:
+			// We flag that the input is being pressed
+				FollowTime += GetWorld()->GetDeltaSeconds();
+		
+			// We look for the location in the world where the player has pressed the input
+			
+			bool bHitSuccessful;
+			if (bIsTouch)
+			{
+				bHitSuccessful = GetHitResultUnderFinger(ETouchIndex::Touch1, ECollisionChannel::ECC_Visibility, true, Hit);
+			}
+			else
+			{
+				bHitSuccessful = GetHitResultUnderCursor(ECollisionChannel::ECC_Visibility, true, Hit);
+			}
+
+			// If we hit a surface, cache the location
+			if (bHitSuccessful)
+			{
+				CachedMoveToDestination = Hit.Location;
+			}
+			
+			// Move towards mouse pointer or touch
+			ControlledPawn = GetPawn();
+			if (ControlledPawn != nullptr)
+			{
+				FVector WorldDirection = (CachedMoveToDestination - ControlledPawn->GetActorLocation()).GetSafeNormal();
+				ControlledPawn->AddMovementInput(WorldDirection, 1.0, false);
+			}
+			break;
+		default:
+			break;
+	}
 }
 
-void ANPlayerController::OnInputFinished(TEnumAsByte<ENAbilityAction> InputUsed)
+void ANPlayerController::OnInputFinished(const TEnumAsByte<ENAbilityAction> InputUsed)
 {
 	UE_LOG(LogActionSystem, Display, TEXT("Stopped using AbilityAction #%d"), int(InputUsed));
+	switch (InputUsed)
+	{
+		case MOVETO:
+			
+			break;
+		default:
+			break;
+	}
 }
 

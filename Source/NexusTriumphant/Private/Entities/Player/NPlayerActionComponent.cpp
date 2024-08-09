@@ -17,6 +17,7 @@ ASCRef(nullptr), bASCRefValid(false), bSetup(false), bPlay(false)
 
 void UNPlayerActionComponent::BeginPlay()
 {
+	Super::BeginPlay();
 	bPlay = true;
 }
 
@@ -59,7 +60,7 @@ void UNPlayerActionComponent::Setup(ANPlayerState* NPlayerState)
 			{
 				String += FString::Printf(TEXT("[%d, %s, %s]"), Element.Key, ToCStr(Element.Value.ToString()), ToCStr(Names[Element.Key]));
 			}
-			UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerActionComponent] CurrentAbilityActions: {%s}"), ToCStr(String));
+			UE_LOG(LogActionSystem, Display, TEXT("[NPlayerActionComponent] CurrentAbilityActions: {%s}"), ToCStr(String));
 
 			
 			bSetup = true;
@@ -143,7 +144,13 @@ bool UNPlayerActionComponent::RunAbilityAction(const ENAbilityAction Action)
 		if(!bASCRefValid)
 			return false;
 	}
-	return ASCRef->TryActivateAbility(GetHandle(Action));
+	if(NPlayerStateRef->HasAuthority())
+	{
+		return ASCRef->TryActivateAbility(GetHandle(Action));
+	}
+	UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerActionComponent] Failed to activate ability because lacking authority"));
+	return false;
+	
 }
 
 void UNPlayerActionComponent::CancelCurrentAction()

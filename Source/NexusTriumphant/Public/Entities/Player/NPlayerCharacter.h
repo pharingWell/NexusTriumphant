@@ -90,7 +90,6 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState) override;
 private:
-	void OnSetDestinationReleased();
 
 
 

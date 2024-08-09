@@ -74,7 +74,7 @@ protected:
 	
 	
 private:
-	FVector CachedDestination;
+	FVector CachedMoveToDestination;
 	bool bIsTouch; // Is it a touch device
 	float FollowTime; // For how long it has been pressed
 	
@@ -104,22 +104,17 @@ protected:
 	// To add mapping context
 	virtual void BeginPlay() override;
 	virtual void AcknowledgePossession(APawn* P) override;
-
-	/** Input handlers for SetDestination action. */
-	void OnInputStarted();
-	void OnSetDestinationTriggered();
-	void OnSetDestinationReleased();
 	
 	UFUNCTION(Blueprintable, Category = "Actions")
 	void EnqueueStarted();
 	UFUNCTION(Blueprintable, Category = "Actions")
 	void EnqueueEnded();
 	UFUNCTION(Blueprintable, Category = "Actions")
-	void OnInputStarted(TEnumAsByte<ENAbilityAction> InputUsed);
+	void OnInputStarted(const TEnumAsByte<ENAbilityAction> InputUsed);
 	UFUNCTION(Blueprintable, Category = "Actions")
-	void OnInputTriggered(TEnumAsByte<ENAbilityAction> InputUsed);
+	void OnInputTriggered(const TEnumAsByte<ENAbilityAction> InputUsed);
 	UFUNCTION(Blueprintable, Category = "Actions")
-	void OnInputFinished(TEnumAsByte<ENAbilityAction> InputUsed);
+	void OnInputFinished(const TEnumAsByte<ENAbilityAction> InputUsed);
 };
 
 
