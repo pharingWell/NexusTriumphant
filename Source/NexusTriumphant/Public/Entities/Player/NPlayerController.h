@@ -23,8 +23,8 @@ class UInputAction;
 
 
 UCLASS()
-class NEXUSTRIUMPHANT_API ANPlayerController : public APlayerController, public IAbilitySystemInterface
-                                               //, public INPlayerSystemInterface
+class NEXUSTRIUMPHANT_API ANPlayerController : public APlayerController, public IAbilitySystemInterface,
+                                               public INPlayerSystemInterface
 {
 	GENERATED_BODY()
 
@@ -57,18 +57,15 @@ protected:
 	TEnumAsByte<ENAbilityAction> CurrentAction;
 
 	bool bIsEnqueuing;
-	FNPlayerSystem NPS;
+
+	UPROPERTY()
+	TObjectPtr<UNPlayerSystem> NPS;
+	bool bNPSValid;
 	UPROPERTY()
 	TObjectPtr<UEnhancedInputComponent> EnhancedInputComponent;
 	UPROPERTY()
 	TObjectPtr<UEnhancedInputLocalPlayerSubsystem> EILPSubsystem;
 
-	UPROPERTY()
-	UNPlayerActionComponent* NPActionComponent;
-	UPROPERTY()
-	ANPlayerState* NPlayerState;
-	UPROPERTY()
-	ANPlayerCharacter* NPlayerCharacter;
 	
 private:
 	FVector CachedMoveToDestination;
@@ -80,9 +77,16 @@ public:
 	explicit ANPlayerController(const FObjectInitializer& ObjectInitializer);
 	virtual void OnConstruction(const FTransform & Transform) override;
 	// Called to bind functionality to input
-	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
-	
-	//virtual void SetupNPS(FNPlayerSystem* NPS) override;
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override
+	{
+		
+		// if(GetPawn()->Implements<IAbilitySystemInterface>())
+		// {
+		// 	return Cast<IAbilitySystemInterface>(GetPawn())->GetAbilitySystemComponent();
+		// }
+		return nullptr;
+	}
+	virtual void SetupNPS(TObjectPtr<UNPlayerSystem> NPS) override;
 protected:
 	UFUNCTION()
 	virtual void SetupInputComponent() override;

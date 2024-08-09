@@ -1,14 +1,13 @@
 #include "Entities/Player/NPlayerActionComponent.h"
 
-#include "GameplayTags.h"
-#include "GameplayTagContainer.h"
 #include "Entities/Player/NPlayerController.h"
-#include "Entities/Player/NPlayerState.h"
+
+
 
 
 // Sets default values for this component's properties
 UNPlayerActionComponent::UNPlayerActionComponent(const FObjectInitializer& ObjectInitializer) :
-	CurrentActionSpecHandle(nullptr), bExecutingQueue(false), NPS(nullptr), bSetup(false), bPlay(false)
+	CurrentActionSpecHandle(nullptr), bExecutingQueue(false), bNPSValid(false), bSetup(false), bPlay(false)
 // NPlayerController(nullptr), NPlayerStateRef(nullptr), ASCRef(nullptr), bASCRefValid(false),
 {
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
@@ -75,14 +74,14 @@ FGameplayAbilitySpecHandle& UNPlayerActionComponent::GetHandle(const ENAbilityAc
 // Single function that triggers Gameplay Ability
 bool UNPlayerActionComponent::RunAbilityAction(const ENAbilityAction Action)
 {
-	if (NPS->Valid())
+	if (bNPSValid)
 		return false;
 	if (NPS->NPlayerState->HasAuthority())
 	{
 		FGameplayEventData EventData;
 		EventData.OptionalObject = NPS->NPlayerController;
 		FGameplayTag Tag =  FGameplayTag::EmptyTag; //::RequestGameplayTag(FName("Ability.Used"));
-		return NPS->ASC->TriggerAbilityFromGameplayEvent(GetHandle(Action), NPS->AbilityActorInfo.Get(),
+		return NPS->ASC->TriggerAbilityFromGameplayEvent(GetHandle(Action), NPS->ASC->AbilityActorInfo.Get(),
 			Tag, &EventData, *NPS->ASC);
 	}
 	UE_LOG(LogActionSystem, Warning,
@@ -92,7 +91,7 @@ bool UNPlayerActionComponent::RunAbilityAction(const ENAbilityAction Action)
 
 void UNPlayerActionComponent::CancelCurrentAction()
 {
-	if (!NPS->Valid())
+	if (!bNPSValid)
 		return;
 	ClearQueue();
 	if (CurrentActionSpecHandle->IsValid())
@@ -104,7 +103,7 @@ void UNPlayerActionComponent::CancelCurrentAction()
 
 void UNPlayerActionComponent::ExecuteAction(const ENAbilityAction Action)
 {
-	if (!NPS->Valid())
+	if (!bNPSValid)
 		return;
 	ClearQueue();
 	bool bDidAbilityRun = RunAbilityAction(Action);
@@ -117,7 +116,7 @@ void UNPlayerActionComponent::ExecuteAction(const ENAbilityAction Action)
 
 void UNPlayerActionComponent::EnqueueAction(const ENAbilityAction Action)
 {
-	if (!NPS->Valid())
+	if (!bNPSValid)
 		return;
 	Queue.Enqueue(Action);
 	if (!bExecutingQueue)
@@ -128,7 +127,7 @@ void UNPlayerActionComponent::EnqueueAction(const ENAbilityAction Action)
 
 void UNPlayerActionComponent::ClearQueue()
 {
-	if (!NPS->Valid())
+	if (!bNPSValid)
 		return;
 	Queue.Empty();
 	bExecutingQueue = false;
@@ -146,7 +145,7 @@ void UNPlayerActionComponent::ClearQueue()
 
 void UNPlayerActionComponent::ExecuteQueue()
 {
-	if (!bSetup || !NPS->Valid() || Queue.IsEmpty() || bExecutingQueue)
+	if (!bSetup || !bNPSValid || Queue.IsEmpty() || bExecutingQueue)
 	{
 		return;
 	}
@@ -157,7 +156,7 @@ void UNPlayerActionComponent::ExecuteQueue()
 /** Attempts to execute the next action in the queue, clearing the queue if an unexpected outcome is reached */
 void UNPlayerActionComponent::ExecuteQueuedAction()
 {
-	if (!bSetup || !NPS->Valid())
+	if (!bSetup || !bNPSValid)
 		return;
 	if (Queue.IsEmpty() || !bExecutingQueue)
 	{
@@ -189,7 +188,7 @@ void UNPlayerActionComponent::ExecuteQueuedAction()
 
 void UNPlayerActionComponent::ActionEnded(const FAbilityEndedData& AbilityEndedData)
 {
-	if (!bSetup || !NPS->Valid())
+	if (!bSetup || !bNPSValid)
 		// should be unreachable, as action ended is bound during setup, but could be reached if the ref becomes invalid
 		return;
 	if (AbilityEndedData.AbilitySpecHandle == *CurrentActionSpecHandle)
@@ -211,9 +210,10 @@ void UNPlayerActionComponent::ActionEnded(const FAbilityEndedData& AbilityEndedD
 	}
 }
 
-void UNPlayerActionComponent::SetupNPS(FNPlayerSystem* InNPS)
+void UNPlayerActionComponent::SetupNPS(const TObjectPtr<UNPlayerSystem> InNPS)
 {
 	NPS = InNPS;
+	bNPSValid = InNPS->IsStructValid();
 
 	if (bPlay)
 	{

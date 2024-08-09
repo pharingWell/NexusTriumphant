@@ -1,8 +1,6 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "Entities/Player/NPlayerController.h"
-
-#include "Entities/Player/NPlayerActionComponent.h"
 #include "Entities/Player/NPlayerCharacter.h"
 #include "NexusTriumphant/NexusTriumphant.h"
 
@@ -15,28 +13,14 @@ ANPlayerController::ANPlayerController(const FObjectInitializer& ObjectInitializ
 	CachedMoveToDestination = FVector::ZeroVector;
 	FollowTime = 0.f;
 	InputDefinition = CreateDefaultSubobject<UNPlayerInputDef>(TEXT("Input Definition"));
-	UNPlayerActionComponent* PlayerActionComponent;
 	PlayerActionComponent = CreateDefaultSubobject<UNPlayerActionComponent>(TEXT("Player Action Component"));
-
-}
-
-UAbilitySystemComponent* ANPlayerController::GetAbilitySystemComponent() const
-{
-		
-	if(NPS.Valid())
-	{
-		return NPS.ASC;
-	}else if(IsValid(NPlayerState))
-	{
-		return NPlayerState->GetAbilitySystemComponent();
-	}
-	return nullptr;
 }
 
 void ANPlayerController::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);
 }
+
 
 void ANPlayerController::BeginPlay()
 {
@@ -75,13 +59,16 @@ void ANPlayerController::CompleteSetup()
 	{
 		return;
 	}
-	if(!IsValid(NPlayerState->GetAbilitySystemComponent()))
-	{
-		UE_LOG(LogPlayerSystem, Warning, TEXT("[NPlayerController] Invalid Ability System Component"));
-	}
-	NPlayerCharacter->SetPlayerState(NPlayerState);
-	NPS.Setup(NPActionComponent, NPlayerState, this, NPlayerCharacter, NPlayerState->GetAbilitySystemComponent());
+	NPlayerState->GetAbilitySystemComponent()->InitAbilityActorInfo(NPlayerState, NPlayerCharacter);
+	NPlayerCharacter->SetPlayerState(NPlayerState.Get());
+	PlayerActionComponent->Setup(NPlayerState.Get(), this);
 }
+
+void ANPlayerController::SetupNPS(TObjectPtr<UNPlayerSystem> InNPS)
+{
+	NPS = InNPS;
+}
+
 
 void ANPlayerController::SetupInputComponent()
 {
@@ -168,10 +155,10 @@ void ANPlayerController::OnInputStarted(const TEnumAsByte<ENAbilityAction> Input
 		default:
 			if(bIsEnqueuing)
 			{
-				NPS.NPlayerActionComponent->EnqueueAction(InputUsed);
+				PlayerActionComponent->EnqueueAction(InputUsed);
 			}else
 			{
-				NPS.NPlayerActionComponent->ExecuteAction(InputUsed);
+				PlayerActionComponent->ExecuteAction(InputUsed);
 			}
 			break;
 	}

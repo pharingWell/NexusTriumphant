@@ -41,7 +41,8 @@ class NEXUSTRIUMPHANT_API ANPlayerCharacter : public ANexusEntity, public IAbili
 	/** PROPERTIES */
 public:
 protected:
-	FNPlayerSystem* NPS;
+	UPROPERTY()
+	TObjectPtr<UNPlayerSystem> NPS;
 	/** MappingContext for player input. */
 	UPROPERTY(VisibleAnywhere, Category = "EnhancedInput")
 	UInputMappingContext* InputMapping;
@@ -86,7 +87,7 @@ public:
 		return nullptr;
 	}
 
-	virtual void SetupNPS(FNPlayerSystem* InNPS) override;
+	virtual void SetupNPS(TObjectPtr<UNPlayerSystem> InNPS) override;
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

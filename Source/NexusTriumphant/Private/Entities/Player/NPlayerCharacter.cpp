@@ -46,7 +46,7 @@ void ANPlayerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlay
 	PlayerState = Cast<ANPlayerState>(NewPlayerState);
 }
 
-void ANPlayerCharacter::SetupNPS(FNPlayerSystem* InNPS)
+void ANPlayerCharacter::SetupNPS(TObjectPtr<UNPlayerSystem> InNPS)
 {
 	NPS = InNPS;
 }
