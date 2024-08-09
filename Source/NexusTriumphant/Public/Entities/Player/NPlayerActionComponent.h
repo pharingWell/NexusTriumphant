@@ -4,18 +4,22 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystemInterface.h"
-#include "Abilities/GameplayAbilityTypes.h"
 #include "AbilitySystem/NActionHelper.h"
-#include "Components/ActorComponent.h"
-#include "AbilitySystemComponent.h"
-#include "Entities/Player/NPlayerState.h"
+#include "GameplayTagContainer.h"
+#include "NPlayerSystem.h"
 #include "NPlayerActionComponent.generated.h"
+
+class UNPlayerSystem;
+class ANPlayerState;
+class ANPlayerController;
+struct FGameplayTag;
 
 // Should not be made valid
 static FGameplayAbilitySpecHandle BlankHandle;
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class NEXUSTRIUMPHANT_API UNPlayerActionComponent : public UActorComponent, public IAbilitySystemInterface
+class NEXUSTRIUMPHANT_API UNPlayerActionComponent : public UActorComponent, public IAbilitySystemInterface,
+                                                    public INPlayerSystemInterface
 {
 	GENERATED_BODY()
 
@@ -26,11 +30,16 @@ protected:
 	TQueue<ENAbilityAction> Queue;
 
 	UPROPERTY()
-	ANPlayerState* NPlayerStateRef;
-	UPROPERTY()
-	UAbilitySystemComponent* ASCRef;
+	TObjectPtr<UNPlayerSystem> NPS;
+	bool bNPSValid;
 	
-	bool bASCRefValid;
+	// UPROPERTY()
+	// ANPlayerController* NPlayerController;
+	// UPROPERTY()
+	// ANPlayerState* NPlayerStateRef;
+	// UPROPERTY()
+	// UAbilitySystemComponent* ASCRef;
+	
 	TMap<ENAbilityAction, FGameplayAbilitySpecHandle> BaseAbilityActions;
 	TMap<ENAbilityAction, FGameplayAbilitySpecHandle> CurrentAbilityActions;
 
@@ -40,20 +49,17 @@ protected:
 public:
 	// Sets default values for this component's properties
 	UNPlayerActionComponent(const FObjectInitializer& ObjectInitializer);
-	void Setup(ANPlayerState* NPlayerState);
+
+	// Initialize the PlayerActionComponent with the references needed to run. Called from the PlayerController
+	void Setup(ANPlayerState* NPlayerState, ANPlayerController* PlayerController);
 
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override
 	{
-		if(bASCRefValid)
+		if(bNPSValid)
 		{
-			return ASCRef;
+			return NPS->ASC;
 		}
-		if(!IsValid(NPlayerStateRef))
-		{
-			UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerActionComponent] GetASC before setup/while NPlayerState ref invalid"));
-			return nullptr;
-		}
-		return NPlayerStateRef->GetAbilitySystemComponent();
+		return nullptr;
 	}
 
 	void RevertAbilityAction(ENAbilityAction Action);
@@ -82,6 +88,9 @@ public:
 	
 	//virtual void TickComponent(float DeltaTime, ELevelTick TickType,
 	//						   FActorComponentTickFunction* ThisTickFunction) override;
+	
+	virtual void SetupNPS(TObjectPtr<UNPlayerSystem> InNPS) override;
+	
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
@@ -89,13 +98,7 @@ protected:
 	// Internal call for running the ability action
 	UFUNCTION(BlueprintCallable, Category="Gameplay Ability System")
 	bool RunAbilityAction(ENAbilityAction Action);
-	
-	UFUNCTION()
-	void UpdateASCRef()
-	{
-		ASCRef = GetAbilitySystemComponent();
-		bASCRefValid = IsValid(ASCRef);
-	}
+
 	void ExecuteQueue();
 	void ExecuteQueuedAction();
 };

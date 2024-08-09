@@ -4,8 +4,6 @@
 #include "Entities/Player/NPlayerCharacter.h"
 
 #include "Entities/NexusEntity.h"
-#include "Net/UnrealNetwork.h"
-#include "GameFramework/CharacterMovementComponent.h"
 #include "Components/CapsuleComponent.h"
 
 
@@ -46,6 +44,11 @@ void ANPlayerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlay
 {
 	Super::OnPlayerStateChanged(NewPlayerState, OldPlayerState);
 	PlayerState = Cast<ANPlayerState>(NewPlayerState);
+}
+
+void ANPlayerCharacter::SetupNPS(TObjectPtr<UNPlayerSystem> InNPS)
+{
+	NPS = InNPS;
 }
 
 // Called when the game starts or when spawned
