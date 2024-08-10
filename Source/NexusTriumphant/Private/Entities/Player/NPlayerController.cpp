@@ -21,7 +21,7 @@ ANPlayerController::ANPlayerController(const FObjectInitializer& ObjectInitializ
 	bIsEnqueuing = false;
 	bShowMouseCursor = true;
 	DefaultMouseCursor = EMouseCursor::Default;
-	CachedDestination = FVector::ZeroVector;
+	CachedMoveToDestination = FVector::ZeroVector;
 	FollowTime = 0.f;
 	InputDefinition = CreateDefaultSubobject<UNPlayerInputDef>(TEXT("Input Definition"));
 	PlayerActionComponent = CreateDefaultSubobject<UNPlayerActionComponent>(TEXT("Player Action Component"));
@@ -36,7 +36,7 @@ void ANPlayerController::OnConstruction(const FTransform& Transform)
 void ANPlayerController::BeginPlay()
 {
 	// Call the base class  
-	Super::BeginPlay();
+	Super::BeginPlay();	
 	
 }
 
@@ -50,7 +50,7 @@ void ANPlayerController::AcknowledgePossession(APawn* P)
 	{
 		NPlayerState->GetAbilitySystemComponent()->InitAbilityActorInfo(NPlayerState, NPlayerCharacter);
 		NPlayerCharacter->SetPlayerState(NPlayerState);
-		PlayerActionComponent->Setup(NPlayerState);
+		PlayerActionComponent->Setup(NPlayerState, this);
 	}else
 	{
 		UE_LOG(LogNexusTriumphant, Error, TEXT("[NPlayerController] Failed to cast player pawn (or state invalid)"));
@@ -135,21 +135,19 @@ void ANPlayerController::EnqueueEnded()
 void ANPlayerController::OnInputStarted(const TEnumAsByte<ENAbilityAction> InputUsed)
 {
 	UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerController] Started AbilityAction #%d"), int(InputUsed));
-	switch (InputUsed)
+	if (InputUsed == MOVETO)
 	{
-		case MOVETO:
-			StopMovement();
-			break;
-		default:
-			if(bIsEnqueuing)
-			{
-				PlayerActionComponent->EnqueueAction(InputUsed);
-			}else
-			{
-				PlayerActionComponent->ExecuteAction(InputUsed);
-			}
-			break;
+		StopMovement();
 	}
+	if(bIsEnqueuing)
+	{
+		UE_LOG(LogActionSystem, Warning, TEXT("Queue is on"));
+		PlayerActionComponent->EnqueueAction(InputUsed);
+	}else
+	{
+		PlayerActionComponent->ExecuteAction(InputUsed);
+	}
+	
 }
 
 void ANPlayerController::OnInputTriggered(const TEnumAsByte<ENAbilityAction> InputUsed)
@@ -205,5 +203,11 @@ void ANPlayerController::OnInputFinished(const TEnumAsByte<ENAbilityAction> Inpu
 		default:
 			break;
 	}
+}
+
+bool ANPlayerController::K2_GetHitResultUnderCursor(ECollisionChannel TraceChannel, bool bTraceComplex,
+                                                 FHitResult& HitResult)
+{
+	return GetHitResultUnderCursor(ECollisionChannel::ECC_Visibility, true, HitResult);
 }
 

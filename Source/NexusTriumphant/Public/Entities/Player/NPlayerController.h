@@ -97,6 +97,9 @@ public:
 		// }
 		return nullptr;
 	}
+
+	UFUNCTION(BlueprintCallable, Category="Collision")
+	bool K2_GetHitResultUnderCursor(ECollisionChannel TraceChannel, bool bTraceComplex, FHitResult& HitResult);
 protected:
 	UFUNCTION()
 	virtual void SetupInputComponent() override;

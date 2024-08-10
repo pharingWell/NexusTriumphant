@@ -18,7 +18,8 @@ public class NexusTriumphant : ModuleRules
 			"NavigationSystem", 
 			"AIModule", 
 			"Niagara", 
-			"EnhancedInput"
+			"EnhancedInput",
+			"GameplayTags"
 		});
 		/* PrivateDependencyModuleNames.AddRange(new string[]
 		{

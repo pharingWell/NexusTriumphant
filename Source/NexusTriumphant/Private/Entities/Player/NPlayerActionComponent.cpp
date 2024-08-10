@@ -1,17 +1,20 @@
 
 
 #include "Entities/Player/NPlayerActionComponent.h"
+#include "GameplayAbilitySpecHandle.h"
+#include "Entities/Player/NPlayerController.h"
 
 // Sets default values for this component's properties
 UNPlayerActionComponent::UNPlayerActionComponent(const FObjectInitializer& ObjectInitializer) :
-CurrentActionSpecHandle(nullptr), bExecutingQueue(false), NPlayerStateRef(nullptr),
-ASCRef(nullptr), bASCRefValid(false), bSetup(false), bPlay(false)
+	bExecutingQueue(false), NPlayerController(nullptr), NPlayerState(nullptr),
+	ASCRef(nullptr), bSetup(false), bPlay(false)
 
 {
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
 	//PrimaryComponentTick.bCanEverTick = true;
 	BlankHandle = FGameplayAbilitySpecHandle();
+	CurrentActionSpecHandle = BlankHandle;
 	// ...
 }
 
@@ -22,53 +25,67 @@ void UNPlayerActionComponent::BeginPlay()
 }
 
 // This function connects the action component to the ability system component via the NPlayerState
-void UNPlayerActionComponent::Setup(ANPlayerState* NPlayerState)
+void UNPlayerActionComponent::Setup(ANPlayerState* InPlayerState, ANPlayerController* InPlayerController)
 {
-	if(IsValid(NPlayerState))
+	if(!IsValid(InPlayerController))
 	{
-		NPlayerStateRef = NPlayerState;
-		ASCRef = NPlayerState->GetAbilitySystemComponent();
-		bASCRefValid = IsValid(ASCRef);
-		if(!bASCRefValid)
-		{
-			UE_LOG(LogActionSystem, Error, TEXT("[NPlayerActionComponent] Failed to get valid ASC ref"));
-			return;
-		}
-		if(bPlay)
-		{
-			UE_LOG(LogActionSystem, Warning, TEXT("Setup correctly"));
-		}
-		if(NPlayerState->HasAuthority())
-		{
-			ASCRef->OnAbilityEnded.AddUFunction(this, "ActionEnded");
-
-			TMap<TEnumAsByte<ENAbilityAction>, FString> Names {};
-			for (auto AbilityPair : NPlayerStateRef->GetChampionDataAsset()->GetUpdatedAbilityMap())
-			{
-				if(IsValid(AbilityPair.Value))
-				{
-					Names.Add(AbilityPair.Key, AbilityPair.Value->GetDescription());
-					BaseAbilityActions.Add(AbilityPair.Key, ASCRef->GiveAbility(
-						FGameplayAbilitySpec(AbilityPair.Value, 1, AbilityPair.Key, this)
-						)
-					);
-				}
-			}
-			CurrentAbilityActions = BaseAbilityActions;
-			FString String = "";
-			for (auto Element : BaseAbilityActions)
-			{
-				String += FString::Printf(TEXT("[%d, %s, %s]"), Element.Key, ToCStr(Element.Value.ToString()), ToCStr(Names[Element.Key]));
-			}
-			UE_LOG(LogActionSystem, Display, TEXT("[NPlayerActionComponent] CurrentAbilityActions: {%s}"), ToCStr(String));
-
-			
-			bSetup = true;
-		}
+		UE_LOG(LogActionSystem, Error, TEXT("[NPlayerActionComponent] Failed to get valid PlayerController ref"));
 		return;
 	}
-	UE_LOG(LogActionSystem, Error, TEXT("[NPlayerActionComponent] Failed to get valid PlayerState ref"));
-	
+	NPlayerController = InPlayerController;
+	if(!IsValid(InPlayerState))
+	{
+		UE_LOG(LogActionSystem, Error, TEXT("[NPlayerActionComponent] Failed to get valid PlayerState ref"));
+		return;
+	}
+	NPlayerState = InPlayerState;
+	ASCRef = InPlayerState->GetAbilitySystemComponent();
+	if(!IsValid(ASCRef))
+	{
+		UE_LOG(LogActionSystem, Error, TEXT("[NPlayerActionComponent] Failed to get valid ASC ref"));
+		return;
+	}
+	if(bPlay)
+	{
+		UE_LOG(LogActionSystem, Warning, TEXT("Setup correctly"));
+	}
+
+	ASCRef->OnAbilityEnded.AddUFunction(this, "ActionEnded");
+
+	TMap<TEnumAsByte<ENAbilityAction>, FString> Names {};
+	for (auto AbilityPair : NPlayerState->GetChampionDataAsset()->GetUpdatedAbilityMap())
+	{
+		if(IsValid(AbilityPair.Value))
+		{
+			Names.Add(AbilityPair.Key, AbilityPair.Value->GetDescription());
+			BaseAbilityActions.Add(AbilityPair.Key, ASCRef->GiveAbility(
+				FGameplayAbilitySpec(AbilityPair.Value, 1, AbilityPair.Key, this)
+				)
+			);
+		}
+	}
+	CurrentAbilityActions = BaseAbilityActions;
+	FString String = "";
+	for (auto Element : BaseAbilityActions)
+	{
+		String += FString::Printf(TEXT("[%d, %s, %s]"), Element.Key, ToCStr(Element.Value.ToString()), ToCStr(Names[Element.Key]));
+	}
+	UE_LOG(LogActionSystem, Display, TEXT("[NPlayerActionComponent] CurrentAbilityActions: {%s}"), ToCStr(String));
+	bSetup = true;
+}
+
+UAbilitySystemComponent* UNPlayerActionComponent::GetAbilitySystemComponent() const
+{
+	if(IsValid(ASCRef))
+	{
+		return ASCRef;
+	}
+	if(!IsValid(NPlayerState))
+	{
+		UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerActionComponent] GetASC before setup/while NPlayerState ref invalid"));
+		return nullptr;
+	}
+	return NPlayerState->GetAbilitySystemComponent();
 }
 
 /** Restores the Base Ability Action to the Current Ability Action slot */
@@ -100,8 +117,8 @@ FGameplayAbilitySpecHandle& UNPlayerActionComponent::GetHandle(const ENAbilityAc
 	{
 		if(BaseAbilityActions.Contains(Action))
 		{
-			checkf(!BaseAbilityActions[Action].IsValid(),
-				TEXT("[NPlayerState] BaseAA assumption of validity failed, %s is invalid"),
+			checkf(BaseAbilityActions[Action].IsValid(),
+				TEXT("[NPlayerState] BaseAbilityActions assumption of validity failed, %s is invalid"),
 				*BaseAbilityActions[Action].ToString()
 			);
 			return BaseAbilityActions[Action];
@@ -111,8 +128,8 @@ FGameplayAbilitySpecHandle& UNPlayerActionComponent::GetHandle(const ENAbilityAc
 
 	if(CurrentAbilityActions.Contains(Action))
 	{
-		checkf(!CurrentAbilityActions[Action].IsValid(),
-				TEXT("[NPlayerState] CurrentAA assumption of validity failed, %s is invalid"),
+		checkf(CurrentAbilityActions[Action].IsValid(),
+				TEXT("[NPlayerState] CurrentAbilityActions assumption of validity failed, %s is invalid"),
 				*CurrentAbilityActions[Action].ToString()
 			);
 		return CurrentAbilityActions[Action];
@@ -124,7 +141,7 @@ FGameplayAbilitySpecHandle& UNPlayerActionComponent::GetHandle(const ENAbilityAc
 
 void UNPlayerActionComponent::ExecuteAction(const ENAbilityAction Action)
 {
-	if(!bSetup || !IsValid(NPlayerStateRef))
+	if(!bSetup || !IsValid(NPlayerState))
 		return;
 	ClearQueue();
 	bool bDidAbilityRun = RunAbilityAction(Action);
@@ -136,17 +153,24 @@ void UNPlayerActionComponent::ExecuteAction(const ENAbilityAction Action)
 
 bool UNPlayerActionComponent::RunAbilityAction(const ENAbilityAction Action)
 {
-	if(!bSetup || !IsValid(NPlayerStateRef))
+	if(!bSetup || !IsValid(NPlayerState))
 		return false;
-	if(!bASCRefValid)
+	if(!IsValid(ASCRef))
 	{
-		UpdateASCRef();
-		if(!bASCRefValid)
-			return false;
+		ASCRef = NPlayerState->GetAbilitySystemComponent();
+		if(!IsValid(ASCRef))
+		{
+			UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerActionCmp] "));
+		}
 	}
-	if(NPlayerStateRef->HasAuthority())
+	if(NPlayerState->HasAuthority())
 	{
-		return ASCRef->TryActivateAbility(GetHandle(Action));
+		FGameplayEventData EventData;
+		EventData.Instigator = NPlayerController;
+		EventData.OptionalObject = NPlayerController;
+		UE_LOG(LogActionSystem, Warning, TEXT("Triggered Ability %d"), int(Action));
+		return ASCRef->TriggerAbilityFromGameplayEvent(GetHandle(Action), ASCRef->AbilityActorInfo.Get(),
+			FGameplayTag::RequestGameplayTag(FName("Ability.Used")), &EventData, *ASCRef);
 	}
 	UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerActionComponent] Failed to activate ability because lacking authority"));
 	return false;
@@ -155,19 +179,19 @@ bool UNPlayerActionComponent::RunAbilityAction(const ENAbilityAction Action)
 
 void UNPlayerActionComponent::CancelCurrentAction()
 {
-	if(!bSetup || !IsValid(NPlayerStateRef))
+	if(!bSetup || !IsValid(NPlayerState))
 		return;
 	ClearQueue();
-	if(CurrentActionSpecHandle->IsValid())
+	if(CurrentActionSpecHandle.IsValid())
 	{
-		ASCRef->CancelAbilityHandle(*CurrentActionSpecHandle);
+		ASCRef->CancelAbilityHandle(CurrentActionSpecHandle);
 	}
 	// TODO: Add better check for cancellation here
 }
 
 void UNPlayerActionComponent::EnqueueAction(const ENAbilityAction Action)
 {
-	if(!bSetup || !IsValid(NPlayerStateRef))
+	if(!bSetup || !IsValid(NPlayerState))
 		return;
 	Queue.Enqueue(Action);
 	if(!bExecutingQueue)
@@ -178,11 +202,11 @@ void UNPlayerActionComponent::EnqueueAction(const ENAbilityAction Action)
 
 void UNPlayerActionComponent::ClearQueue()
 {
-	if(!bSetup || !IsValid(NPlayerStateRef))
+	if(!bSetup || !IsValid(NPlayerState))
 		return;
 	Queue.Empty();
 	bExecutingQueue = false;
-	CurrentActionSpecHandle = nullptr;
+	CurrentActionSpecHandle = BlankHandle;
 }
 
 
@@ -196,7 +220,7 @@ void UNPlayerActionComponent::ClearQueue()
 
 void UNPlayerActionComponent::ExecuteQueue()
 {
-	if(!bSetup || !IsValid(NPlayerStateRef) || Queue.IsEmpty() || bExecutingQueue)
+	if(!bSetup || !IsValid(NPlayerState) || Queue.IsEmpty() || bExecutingQueue)
 	{
 		return;
 	}
@@ -207,7 +231,7 @@ void UNPlayerActionComponent::ExecuteQueue()
 /** Attempts to execute the next action in the queue, clearing the queue if an unexpected outcome is reached */
 void UNPlayerActionComponent::ExecuteQueuedAction()
 {
-	if(!bSetup || !IsValid(NPlayerStateRef))
+	if(!bSetup || !IsValid(NPlayerState))
 		return;
 	if(Queue.IsEmpty() || !bExecutingQueue)
 	{
@@ -223,7 +247,7 @@ void UNPlayerActionComponent::ExecuteQueuedAction()
 		ExecuteQueuedAction(); // causes recursion, if this breaks the stack you have worse problems
 		return;
 	}
-	FGameplayAbilitySpecHandle* TempHandlePtr = &GetHandle(DequeuedAction); // I'm decently sure this causes undefined behavior
+	FGameplayAbilitySpecHandle TempHandle = GetHandle(DequeuedAction); // I'm decently sure this causes undefined behavior
 	bool AbilityActivated = RunAbilityAction(DequeuedAction);
 	if(!AbilityActivated)
 	{
@@ -233,16 +257,17 @@ void UNPlayerActionComponent::ExecuteQueuedAction()
 		ClearQueue();
 		return;
 	}
-	CurrentActionSpecHandle = TempHandlePtr;
+	CurrentActionSpecHandle = TempHandle;
 }
 
 void UNPlayerActionComponent::ActionEnded(const FAbilityEndedData& AbilityEndedData)
 {
 	
-	if(!bSetup || !IsValid(NPlayerStateRef))
+	if(!bSetup || !IsValid(NPlayerState))
 		// should be unreachable, as action ended is bound during setup, but could be reached if the ref becomes invalid
 		return;
-	if(AbilityEndedData.AbilitySpecHandle == *CurrentActionSpecHandle)
+	if(CurrentActionSpecHandle.IsValid() &&
+		AbilityEndedData.AbilitySpecHandle == CurrentActionSpecHandle)
 	{
 		if(bExecutingQueue){
 			if(AbilityEndedData.bWasCancelled)
