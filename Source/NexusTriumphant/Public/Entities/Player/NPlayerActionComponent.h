@@ -7,12 +7,13 @@
 #include "Abilities/GameplayAbilityTypes.h"
 #include "AbilitySystem/NActionHelper.h"
 #include "Components/ActorComponent.h"
-#include "AbilitySystemComponent.h"
-#include "Entities/Player/NPlayerState.h"
 #include "NPlayerActionComponent.generated.h"
 
 // Should not be made valid
 static FGameplayAbilitySpecHandle BlankHandle;
+class ANPlayerController;
+class ANPlayerState;
+class UAbilitySystemComponent;
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class NEXUSTRIUMPHANT_API UNPlayerActionComponent : public UActorComponent, public IAbilitySystemInterface
@@ -20,17 +21,17 @@ class NEXUSTRIUMPHANT_API UNPlayerActionComponent : public UActorComponent, publ
 	GENERATED_BODY()
 
 protected:
-	FGameplayAbilitySpecHandle* CurrentActionSpecHandle;
+	FGameplayAbilitySpecHandle CurrentActionSpecHandle;
 	FGameplayAbilityActorInfo AbilityActorInfo;
 	bool bExecutingQueue;
 	TQueue<ENAbilityAction> Queue;
 
 	UPROPERTY()
-	ANPlayerState* NPlayerStateRef;
+	ANPlayerController* NPlayerController;
+	UPROPERTY()
+	ANPlayerState* NPlayerState;
 	UPROPERTY()
 	UAbilitySystemComponent* ASCRef;
-	
-	bool bASCRefValid;
 	TMap<ENAbilityAction, FGameplayAbilitySpecHandle> BaseAbilityActions;
 	TMap<ENAbilityAction, FGameplayAbilitySpecHandle> CurrentAbilityActions;
 
@@ -40,22 +41,9 @@ protected:
 public:
 	// Sets default values for this component's properties
 	UNPlayerActionComponent(const FObjectInitializer& ObjectInitializer);
-	void Setup(ANPlayerState* NPlayerState);
+	void Setup(ANPlayerState* InPlayerState, ANPlayerController* InPlayerController);
 
-	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override
-	{
-		if(bASCRefValid)
-		{
-			return ASCRef;
-		}
-		if(!IsValid(NPlayerStateRef))
-		{
-			UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerActionComponent] GetASC before setup/while NPlayerState ref invalid"));
-			return nullptr;
-		}
-		return NPlayerStateRef->GetAbilitySystemComponent();
-	}
-
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 	void RevertAbilityAction(ENAbilityAction Action);
 	
 	UFUNCTION(BlueprintCallable, Category="Gameplay Ability System")
@@ -89,13 +77,6 @@ protected:
 	// Internal call for running the ability action
 	UFUNCTION(BlueprintCallable, Category="Gameplay Ability System")
 	bool RunAbilityAction(ENAbilityAction Action);
-	
-	UFUNCTION()
-	void UpdateASCRef()
-	{
-		ASCRef = GetAbilitySystemComponent();
-		bASCRefValid = IsValid(ASCRef);
-	}
 	void ExecuteQueue();
 	void ExecuteQueuedAction();
 };

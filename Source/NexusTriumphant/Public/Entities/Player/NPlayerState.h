@@ -13,8 +13,6 @@
 #include "GameFramework/PlayerState.h"
 #include "NPlayerState.generated.h"
 
-
-class UNAbilitySystemComponent;
 /**
  * 
  */
