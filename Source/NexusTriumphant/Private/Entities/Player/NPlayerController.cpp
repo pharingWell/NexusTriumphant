@@ -73,7 +73,7 @@ void ANPlayerController::SetupInputComponent()
 	{
 		EILPSubsystem->ClearAllMappings();
 		bool bExistInputs = false;
-		if(DefaultMappingContext)
+		if(DefaultMappingContext && false)
 		{ 
 			EILPSubsystem->AddMappingContext(DefaultMappingContext, 0);
 			// Setup mouse input events
@@ -83,17 +83,32 @@ void ANPlayerController::SetupInputComponent()
 			EnhancedInputComponent->BindAction(MoveToAction, ETriggerEvent::Canceled, this, &ANPlayerController::OnInputFinished, TEnumAsByte(MOVETO));
 			bExistInputs = true;
 		}
-		if(InputDefinition)
+		if(IsValid(InputDefinition) && IsValid(InputDefinition->MappingContext))
 		{
+			UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerController]::%s"), ToCStr(InputDefinition->MappingContext.GetFullName()));
 			// Add Input Mapping Context
-			EILPSubsystem->AddMappingContext(InputDefinition->MappingContext, 1);
+			EILPSubsystem->AddMappingContext(InputDefinition->MappingContext, 0);
 			if(InputDefinition->BindingMap.Num() < 1)
 			{
-				UE_LOG(LogNexusTriumphant, Warning, TEXT("[NPlayerController] Binding map is empty"));
+				UE_LOG(LogNexusTriumphant, Warning, TEXT("[NPlayerController] Binding map is emty"));
+			}
+			auto Mappings = InputDefinition->MappingContext->GetMappings();
+			TSet<const UInputAction*> UnusedIAs;
+			TArray<const UInputAction*> AdditionalIAs;
+			for (auto Mapping : Mappings)
+			{
+				UnusedIAs.Add(Mapping.Action);
 			}
 			for (auto Binding : InputDefinition->BindingMap)
 			{
-				UInputAction* InputAction = Binding.Value;
+				auto& InputAction = Binding.Value;
+				if(UnusedIAs.Contains(InputAction))
+				{
+					UnusedIAs.Remove(InputAction);
+				}else
+				{
+					AdditionalIAs.Add(InputAction);
+				}
 				TEnumAsByte ActionEnum = Binding.Key;
 				if(!IsValid(Binding.Value))
 				{
@@ -105,20 +120,50 @@ void ANPlayerController::SetupInputComponent()
 				EnhancedInputComponent->BindAction(InputAction, ETriggerEvent::Completed, this, &ANPlayerController::OnInputFinished, ActionEnum);
 				EnhancedInputComponent->BindAction(InputAction, ETriggerEvent::Canceled, this, &ANPlayerController::OnInputFinished, ActionEnum);
 			}
-			
 			EnhancedInputComponent->BindAction(InputDefinition->EnqueueInput, ETriggerEvent::Started, this, &ANPlayerController::EnqueueStarted);
 			EnhancedInputComponent->BindAction(InputDefinition->EnqueueInput, ETriggerEvent::Completed, this, &ANPlayerController::EnqueueEnded);
 			EnhancedInputComponent->BindAction(InputDefinition->EnqueueInput, ETriggerEvent::Canceled, this, &ANPlayerController::EnqueueEnded);
+			UnusedIAs.Remove(InputDefinition->EnqueueInput);
+			
+			if(UnusedIAs.Num() > 0)
+			{
+				FString UnusedIAsString = "";
+				for (auto InputAction : UnusedIAs)
+				{
+					UnusedIAsString += InputAction->GetName() + ", ";
+				}
+				UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerController] Unused input actions in Input Definition Mapping: %s"), ToCStr(UnusedIAsString));
+			}
+			if(AdditionalIAs.Num() > 0)
+			{
+				FString AdditionalIAsString = "";
+				for (auto InputAction : AdditionalIAs)
+				{
+					if(IsValid(InputAction))
+					{
+						AdditionalIAsString += InputAction->GetName() + ", ";
+					}else
+					{
+						AdditionalIAsString += "Invalid, ";
+					}
+					
+				}
+				UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerController] Additional input actions in Input Definition Mapping: %s"), ToCStr(AdditionalIAsString));
+			}
+			
 			bExistInputs = true;
 		}else
 		{
-			UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerController] Input Definition is invalid."))
+			UE_LOG(LogActionSystem, Error, TEXT("[NPlayerController] Input Definition or Input Definition Mapping Context is invalid."))
 		}
 		
 		if(!bExistInputs)
 		{
 			UE_LOG(LogNexusTriumphant, Warning, TEXT("[NPlayerController] No input mappings found"));
 		}
+	}else
+	{
+		UE_LOG(LogActionSystem, Error, TEXT("[NPlayerController] Enhanced Input Local Player is invalid."))
 	}
 }
 

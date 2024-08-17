@@ -6,7 +6,6 @@ UENUM()
 enum ENAbilityAction //Nexus Ability Action: What action the play is taking to activate these things
 {
 	INVALID = -1,
-	
 	MOVETO,
 	ATTACK,
 	ABILITY1,

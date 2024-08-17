@@ -19,39 +19,43 @@ class NEXUSTRIUMPHANT_API UNPlayerInputDef : public UDataAsset
 
 public:
 	UPROPERTY()
-	TMap<TEnumAsByte<ENAbilityAction>, UInputAction*> BindingMap;
+	TMap<TEnumAsByte<ENAbilityAction>, TObjectPtr<UInputAction>> BindingMap;
 	
 	UPROPERTY(EditDefaultsOnly, Category="Input", DisplayName="Enqueue Input Action Modifier")
-	UInputAction* EnqueueInput{nullptr};
+	TObjectPtr<UInputAction> EnqueueInput;
 	
 	UPROPERTY(EditDefaultsOnly, Category="Ability", DisplayName="Input Mapping")
-	UInputMappingContext* MappingContext{nullptr};
+	TObjectPtr<UInputMappingContext> MappingContext;
 	
 private:
+	UPROPERTY(EditDefaultsOnly, Category="Input", DisplayName="Move To Input Action")
+	TObjectPtr<UInputAction> MoveToInput;
+	
 	UPROPERTY(EditDefaultsOnly, Category="Input", DisplayName="Attack Input Action")
-	UInputAction* AttackInput{nullptr};
+	TObjectPtr<UInputAction> AttackInput;
 	
 	UPROPERTY(EditDefaultsOnly, Category="Input", DisplayName="First Ability Input Action")
-	UInputAction* Ability1Input{nullptr};
+	TObjectPtr<UInputAction> Ability1Input;
 
 	UPROPERTY(EditDefaultsOnly, Category="Input", DisplayName="Second Ability Input Action")
-	UInputAction* Ability2Input{nullptr};
+	TObjectPtr<UInputAction> Ability2Input;
 	
 	UPROPERTY(EditDefaultsOnly, Category="Input", DisplayName="Third Ability Input Action")
-	UInputAction* Ability3Input{nullptr};
+	TObjectPtr<UInputAction> Ability3Input;
 
 	UPROPERTY(EditDefaultsOnly, Category="Input", DisplayName="Ultimate Input Action")
-	UInputAction* UltimateInput{nullptr};
+	TObjectPtr<UInputAction> UltimateInput;
 
 	UPROPERTY(EditDefaultsOnly, Category="Input", DisplayName="Trait Input Action")
-	UInputAction* TraitInput{nullptr};
+	TObjectPtr<UInputAction> TraitInput;
 
 	UPROPERTY(EditDefaultsOnly, Category="Input", DisplayName="First Additional Ability Input Action")
-	UInputAction* AdditionalAbility1Input{nullptr};
+	TObjectPtr<UInputAction> AdditionalAbility1Input;
 	
 	UPROPERTY(EditDefaultsOnly, Category="Input", DisplayName="Second Additional Ability Input Action")
-	UInputAction* AdditionalAbility2Input{nullptr};
+	TObjectPtr<UInputAction> AdditionalAbility2Input;
 public:
 	explicit UNPlayerInputDef(const FObjectInitializer& ObjectInitializer);
-	
+
+	MAKE A SUBCLASS OF UINPUTACTION?
 };
