@@ -56,6 +56,4 @@ private:
 	TObjectPtr<UInputAction> AdditionalAbility2Input;
 public:
 	explicit UNPlayerInputDef(const FObjectInitializer& ObjectInitializer);
-
-	MAKE A SUBCLASS OF UINPUTACTION?
 };
