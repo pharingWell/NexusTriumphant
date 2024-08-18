@@ -6,13 +6,41 @@
 #include "EnhancedInputLibrary.h"
 #include "EnhancedInputModule.h"
 #include "PlayerMappableKeySettings.h"
-
+#if WITH_EDITOR
+#include "Misc/DataValidation.h"
+#endif
 
 UNInputMappingContext::UNInputMappingContext()
 	:
 	Super()
 {
 }
+
+#define LOCTEXT_NAMESPACE "InputMappingContext"
+#if WITH_EDITOR
+EDataValidationResult UNInputMappingContext::IsDataValid(FDataValidationContext& Context) const
+{
+	EDataValidationResult 	Result = CombineDataValidationResults(Super::IsDataValid(Context), EDataValidationResult::Valid);
+	if(Mappings.Num() > 0)
+	{
+		Context.AddError(LOCTEXT("MappingsNotEmpty", "Mappings cannot have any elements!"));
+		Result = EDataValidationResult::Invalid;
+	}
+	Result = CombineDataValidationResults(Result, NMappingArray.Action->IsDataValid(Context));
+	for (const FEnhancedActionKeyMapping& Mapping : NMappingArray.Mappings)
+	{
+		EDataValidationResult MappingResult = Mapping.IsDataValid(Context);
+		if(Mapping.Action != NMappingArray.Action)
+		{
+			Context.AddError(LOCTEXT("ActionMismatch", "Enum Mappings Action does not match individual mapping Action!"));
+			MappingResult = CombineDataValidationResults(MappingResult, EDataValidationResult::Invalid);
+		}
+		Result = CombineDataValidationResults(Result, MappingResult);
+	}
+	return Result;
+}
+#endif	// WITH_EDITOR
+#undef LOCTEXT_NAMESPACE 
 
 FEnhancedActionKeyMapping& UNInputMappingContext::NMapKey(const UInputAction* InAction, FKey ToKey,
                                                           TEnumAsByte<ENAbilityAction> Enum)

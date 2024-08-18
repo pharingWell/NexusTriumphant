@@ -5,13 +5,13 @@
 # include "CoreMinimal.h"
 #include "InputMappingContext.h"
 #include "EnhancedActionKeyMapping.h"
+#include "AbilitySystem/NActionHelper.h"
 
-#include "Input/NInputAction.h"
-#include "Input/NActionKeyMapping.h"
 
 #include "NInputMappingContext.generated.h"
 
 struct FKey;
+
 
 class UNInputAction;
 
@@ -33,6 +33,9 @@ struct FNEnhancedEnumMapping
 	TEnumAsByte<ENAbilityAction> Enum;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
 	TArray<FEnhancedActionKeyMapping> Mappings;
+
+	
+	
 };
 
 /**
@@ -68,7 +71,9 @@ public:
 	friend class FActionMappingsNodeBuilderEx;
 
 public:	
-
+	#if WITH_EDITOR
+		virtual EDataValidationResult IsDataValid(class FDataValidationContext& Context) const override;
+	#endif
 	/**
 	* Mapping accessors.
 	* Note: Use UEnhancedInputLibrary::RequestRebuildControlMappingsForContext to invoke changes made to an FNActionKeyMapping
