@@ -10,6 +10,7 @@ class UInputModifier;
 class UInputTrigger;
 class UPlayerMappableKeySettings;
 
+/*
 USTRUCT(BlueprintType)
 struct FNActionEnumStruct
 {
@@ -25,14 +26,15 @@ struct FNActionEnumStruct
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
 	TEnumAsByte<ENAbilityAction> Enum = ENAbilityAction::INVALID;
 	
-};
+};*/
 
+/*
 /**
  * Defines a mapping between a key activation and the resulting enhanced action
  * An key could be a button press, joystick axis movement, etc.
  * An enhanced action could be MoveForward, Jump, Fire, etc.
  *
-**/
+*#1#
 USTRUCT(BlueprintType)
 struct NEXUSTRIUMPHANT_API FNActionKeyMapping
 {
@@ -47,7 +49,7 @@ struct NEXUSTRIUMPHANT_API FNActionKeyMapping
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
 	FNActionEnumStruct EnumStruct = FNActionEnumStruct();
 
-	/** Identical comparison, including Triggers and Modifiers current inner values. */
+	/** Identical comparison, including Triggers and Modifiers current inner values. #1#
 	bool operator==(const FNActionKeyMapping& Other) const;
 
-};
+};*/

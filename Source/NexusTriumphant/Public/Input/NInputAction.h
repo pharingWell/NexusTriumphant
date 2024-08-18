@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+/*// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -9,7 +9,7 @@
 
 /**
  * 
- */
+ #1#
 UCLASS(HideCategories=("Input|Action", "Input"))
 class NEXUSTRIUMPHANT_API UNInputAction : public UInputAction
 {
@@ -17,4 +17,4 @@ class NEXUSTRIUMPHANT_API UNInputAction : public UInputAction
 
 	UPROPERTY(EditDefaultsOnly, Category="Action", meta=(DisplayName="Enum"))
 	TEnumAsByte<ENAbilityAction> ActionEnum;
-};
+};*/

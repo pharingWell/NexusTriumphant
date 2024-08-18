@@ -14,28 +14,33 @@ UNInputMappingContext::UNInputMappingContext()
 {
 }
 
-FNActionKeyMapping& UNInputMappingContext::NMapKey(const UNInputAction* Action, FKey ToKey, TEnumAsByte<ENAbilityAction> Enum)
+FEnhancedActionKeyMapping& UNInputMappingContext::NMapKey(const UInputAction* InAction, FKey ToKey,
+                                                          TEnumAsByte<ENAbilityAction> Enum)
 {
 	IEnhancedInputModule::Get().GetLibrary()->RequestRebuildControlMappingsUsingContext(this);
-	return NMappings.Add_GetRef(FNActionKeyMapping(FNActionEnumStruct(Action, Enum), ToKey));
+	return NMappingArray.Mappings.Add_GetRef(FEnhancedActionKeyMapping(InAction, ToKey));
 }
 
-void UNInputMappingContext::NUnmapKey(const UInputAction* Action, FKey Key, TEnumAsByte<ENAbilityAction> Enum)
+void UNInputMappingContext::NUnmapKey(const UInputAction* Action, FKey Key, TEnumAsByte<ENAbilityAction> InEnum)
 {
-	int32 MappingIdx = NMappings.IndexOfByPredicate(
-		[&Action, &Key, &Enum](const FNActionKeyMapping& Other)
-		{ return Other.EnumStruct.Action == Action && Other.Key == Key && Other.EnumStruct.Enum == Enum; }
+	if(InEnum != NMappingArray.Enum)
+	{
+		return;;
+	}
+	int32 MappingIdx = NMappingArray.Mappings.IndexOfByPredicate(
+		[&Action, &Key, &InEnum](const FEnhancedActionKeyMapping& Other)
+		{ return Other.Action == Action && Other.Key == Key; }
 	);
 	if (MappingIdx != INDEX_NONE)
 	{
-		NMappings.RemoveAtSwap(MappingIdx);	// TODO: Preserve order?
+		NMappingArray.Mappings.RemoveAtSwap(MappingIdx);	// TODO: Preserve order?
 		IEnhancedInputModule::Get().GetLibrary()->RequestRebuildControlMappingsUsingContext(this);
 	}
 }
 
 void UNInputMappingContext::NUnmapAllKeysFromAction(const UInputAction* Action)
 {
-	int32 Found = NMappings.RemoveAllSwap([&Action](const FEnhancedActionKeyMapping& Mapping) { return Mapping.Action == Action; });
+	int32 Found = NMappingArray.Mappings.RemoveAllSwap([&Action](const FEnhancedActionKeyMapping& Entry) { return Entry.Action == Action; });
 	if (Found > 0)
 	{
 		IEnhancedInputModule::Get().GetLibrary()->RequestRebuildControlMappingsUsingContext(this);
@@ -44,9 +49,9 @@ void UNInputMappingContext::NUnmapAllKeysFromAction(const UInputAction* Action)
 
 void UNInputMappingContext::NUnmapAll()
 {
-	if (NMappings.Num())
+	if (NMappingArray.Mappings.Num())
 	{
-		NMappings.Empty();
+		NMappingArray.Mappings.Empty();
 		IEnhancedInputModule::Get().GetLibrary()->RequestRebuildControlMappingsUsingContext(this);
 	}
 }

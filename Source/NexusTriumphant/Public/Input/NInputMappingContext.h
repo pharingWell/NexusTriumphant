@@ -15,6 +15,26 @@ struct FKey;
 
 class UNInputAction;
 
+
+USTRUCT(BlueprintType)
+struct FNEnhancedEnumMapping
+{
+	GENERATED_BODY()
+	FNEnhancedEnumMapping(UInputAction* InAction  = nullptr, TEnumAsByte<ENAbilityAction> InEnum = ENAbilityAction::INVALID,
+		TArray<FEnhancedActionKeyMapping> InMappings = {})
+		: Action(InAction), Enum(InEnum)
+	{
+		
+	}
+	/** Action to be affected by the key  */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+	TObjectPtr<const UInputAction> Action;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+	TEnumAsByte<ENAbilityAction> Enum;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+	TArray<FEnhancedActionKeyMapping> Mappings;
+};
+
 /**
 * UInputMappingContext : A collection of key to action mappings for a specific input context
 * Could be used to:
@@ -31,12 +51,12 @@ class NEXUSTRIUMPHANT_API UNInputMappingContext : public UInputMappingContext
 protected:
 	// List of key to action mappings.
 	UPROPERTY(config, BlueprintReadOnly, EditAnywhere, Category = "EnumMappings", meta = (DisplayName="Mappings with Enum"))
-	TArray<FNActionKeyMapping> NMappings;
+	FNEnhancedEnumMapping NMappingArray;
 
 public:
 	UNInputMappingContext();
 	UFUNCTION(BlueprintCallable, Category = "Mapping")
-	FNActionKeyMapping& NMapKey(const UNInputAction* Action, FKey ToKey, TEnumAsByte<ENAbilityAction> Enum);
+	FEnhancedActionKeyMapping& NMapKey(const UInputAction* InAction, FKey ToKey, TEnumAsByte<ENAbilityAction> Enum);
 	UFUNCTION(BlueprintCallable, Category = "Mapping")
 	void NUnmapKey(const UInputAction* Action, FKey Key, TEnumAsByte<ENAbilityAction> Enum);
 	UFUNCTION(BlueprintCallable, Category = "Mapping")
@@ -53,7 +73,7 @@ public:
 	* Mapping accessors.
 	* Note: Use UEnhancedInputLibrary::RequestRebuildControlMappingsForContext to invoke changes made to an FNActionKeyMapping
 	*/
-	const TArray<FNActionKeyMapping>& GetNMappings() const { return NMappings; }
-	FNActionKeyMapping& GetNMapping(TArray<FNActionKeyMapping>::SizeType Index) { return NMappings[Index]; }
+	const FNEnhancedEnumMapping& GetNMappings() const { return NMappingArray; }
+	FEnhancedActionKeyMapping& GetNMapping(TArray<FNEnhancedEnumMapping>::SizeType Index) { return NMappingArray.Mappings[Index]; }
 
 };
