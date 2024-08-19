@@ -12,6 +12,7 @@
 #include "Entities/Player/NPlayerCharacter.h"
 #include "Templates/SubclassOf.h"
 #include "GameFramework/PlayerController.h"
+#include "Input/NInputMappingContext.h"
 #include "NPlayerController.generated.h"
 
 class UEnhancedInputLocalPlayerSubsystem;
@@ -41,15 +42,20 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
 	UInputMappingContext* DefaultMappingContext;
 
+	/** NMappingContext */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
+	UNInputMappingContext* NMappingContext;
+
 	/** BASE ACTIONS */
 	
 	/** Destination MoveTo Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
 	UInputAction* MoveToAction;
-	
-	UPROPERTY(EditDefaultsOnly, Category = "Input")
-	UNPlayerInputDef* InputDefinition;
 
+	/** Enqueue Action */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
+	UInputAction* EnqueueAction;
+	
 protected:
 	/** True if the controlled character should navigate to the mouse cursor. */
 	uint32 bMoveToMouseCursor : 1;
