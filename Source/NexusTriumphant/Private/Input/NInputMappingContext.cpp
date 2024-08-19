@@ -16,70 +16,89 @@ UNInputMappingContext::UNInputMappingContext()
 {
 }
 
+void UNInputMappingContext::CreateUnderlyingMapping()
+{
+	Mappings.Empty();
+	for (auto Element : NMappingArray)
+	{
+		NEnumMappingMap.Add(Element.Enum, Element.KeyMappings);
+		Mappings.Append(Element.KeyMappings);
+	}
+	UE_LOG(LogInput, Display, TEXT("[NInputMappingContext] Mapping count: %d"), Mappings.Num());
+}
+
+void UNInputMappingContext::PostLoad()
+{
+	Super::PostLoad();
+}
+
+void UNInputMappingContext::UpdateKeyMappingActions()
+{
+	for (auto& Element : NMappingArray)
+	{
+		for (auto& Mapping : Element.KeyMappings)
+		{
+			Mapping.Action = Element.Action; //sends the action down to the mappings
+		}
+	}
+}
+
+void UNInputMappingContext::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+{
+	UpdateKeyMappingActions();
+	Super::PostEditChangeProperty(PropertyChangedEvent);
+	CreateUnderlyingMapping();
+}
+
+void UNInputMappingContext::PostEditChangeChainProperty(FPropertyChangedChainEvent& PropertyChangedEvent)
+{
+	UpdateKeyMappingActions();
+	Super::PostEditChangeChainProperty(PropertyChangedEvent);
+	CreateUnderlyingMapping();
+}
+
+
 #define LOCTEXT_NAMESPACE "InputMappingContext"
 #if WITH_EDITOR
 EDataValidationResult UNInputMappingContext::IsDataValid(FDataValidationContext& Context) const
 {
+	TSet<ENAbilityAction> UsedEnums = {};
 	EDataValidationResult 	Result = CombineDataValidationResults(Super::IsDataValid(Context), EDataValidationResult::Valid);
-	if(Mappings.Num() > 0)
+	// if(Mappings.Num() > 0)
+	// {
+	// 	Context.AddError(LOCTEXT("MappingsNotEmpty", "Mappings cannot have any elements!"));
+	// 	Result = EDataValidationResult::Invalid;
+	// }
+	for (const FNEnhancedEnumMapping& EnumMapping : NMappingArray)
 	{
-		Context.AddError(LOCTEXT("MappingsNotEmpty", "Mappings cannot have any elements!"));
-		Result = EDataValidationResult::Invalid;
-	}
-	Result = CombineDataValidationResults(Result, NMappingArray.Action->IsDataValid(Context));
-	for (const FEnhancedActionKeyMapping& Mapping : NMappingArray.Mappings)
-	{
-		EDataValidationResult MappingResult = Mapping.IsDataValid(Context);
-		if(Mapping.Action != NMappingArray.Action)
+		if(EnumMapping.Enum == INVALID)
 		{
-			Context.AddError(LOCTEXT("ActionMismatch", "Enum Mappings Action does not match individual mapping Action!"));
-			MappingResult = CombineDataValidationResults(MappingResult, EDataValidationResult::Invalid);
+			Context.AddError(LOCTEXT("InvalidEnum", "Ability Action Enum cannont be set to Invalid"));
+			Result = EDataValidationResult::Invalid;
+		}else
+		{
+			if(UsedEnums.Contains(EnumMapping.Enum))
+			{
+				Context.AddError(LOCTEXT("RepeatedEnum", "Same Ability Action Enum cannot be used multiple times."));
+				Result = EDataValidationResult::Invalid;
+			}
+			else
+			{
+				UsedEnums.Add(EnumMapping.Enum);
+			}
 		}
-		Result = CombineDataValidationResults(Result, MappingResult);
+		Result = CombineDataValidationResults(Result, EnumMapping.Action->IsDataValid(Context));
+		for (const FEnhancedActionKeyMapping& Mapping : EnumMapping.KeyMappings)
+		{
+			Result = CombineDataValidationResults(Result, Mapping.IsDataValid(Context));
+			if(Mapping.Action != EnumMapping.Action)
+			{
+				Context.AddError(LOCTEXT("ActionMismatch", "Enum Mappings Action does not match individual mapping Action!"));
+				Result = EDataValidationResult::Invalid;
+			}
+		}
 	}
 	return Result;
 }
 #endif	// WITH_EDITOR
 #undef LOCTEXT_NAMESPACE 
-
-FEnhancedActionKeyMapping& UNInputMappingContext::NMapKey(const UInputAction* InAction, FKey ToKey,
-                                                          TEnumAsByte<ENAbilityAction> Enum)
-{
-	IEnhancedInputModule::Get().GetLibrary()->RequestRebuildControlMappingsUsingContext(this);
-	return NMappingArray.Mappings.Add_GetRef(FEnhancedActionKeyMapping(InAction, ToKey));
-}
-
-void UNInputMappingContext::NUnmapKey(const UInputAction* Action, FKey Key, TEnumAsByte<ENAbilityAction> InEnum)
-{
-	if(InEnum != NMappingArray.Enum)
-	{
-		return;;
-	}
-	int32 MappingIdx = NMappingArray.Mappings.IndexOfByPredicate(
-		[&Action, &Key, &InEnum](const FEnhancedActionKeyMapping& Other)
-		{ return Other.Action == Action && Other.Key == Key; }
-	);
-	if (MappingIdx != INDEX_NONE)
-	{
-		NMappingArray.Mappings.RemoveAtSwap(MappingIdx);	// TODO: Preserve order?
-		IEnhancedInputModule::Get().GetLibrary()->RequestRebuildControlMappingsUsingContext(this);
-	}
-}
-
-void UNInputMappingContext::NUnmapAllKeysFromAction(const UInputAction* Action)
-{
-	int32 Found = NMappingArray.Mappings.RemoveAllSwap([&Action](const FEnhancedActionKeyMapping& Entry) { return Entry.Action == Action; });
-	if (Found > 0)
-	{
-		IEnhancedInputModule::Get().GetLibrary()->RequestRebuildControlMappingsUsingContext(this);
-	}
-}
-
-void UNInputMappingContext::NUnmapAll()
-{
-	if (NMappingArray.Mappings.Num())
-	{
-		NMappingArray.Mappings.Empty();
-		IEnhancedInputModule::Get().GetLibrary()->RequestRebuildControlMappingsUsingContext(this);
-	}
-}

@@ -32,10 +32,7 @@ struct FNEnhancedEnumMapping
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
 	TEnumAsByte<ENAbilityAction> Enum;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
-	TArray<FEnhancedActionKeyMapping> Mappings;
-
-	
-	
+	TArray<FEnhancedActionKeyMapping> KeyMappings;
 };
 
 /**
@@ -46,39 +43,35 @@ struct FNEnhancedEnumMapping
 *	Define context specific mappings (e.g. I switch from a gun (shoot action) to a grappling hook (reel in, reel out, disconnect actions).
 *	Define overlay mappings to be applied on top of existing control mappings (e.g. Hero specific action mappings in a NexusTriumphant)
 */
+
 UCLASS(BlueprintType, config = Input, PrioritizeCategories=("EnumMappings"))
 class NEXUSTRIUMPHANT_API UNInputMappingContext : public UInputMappingContext
 {
 	GENERATED_BODY()
 
-protected:
-	// List of key to action mappings.
-	UPROPERTY(config, BlueprintReadOnly, EditAnywhere, Category = "EnumMappings", meta = (DisplayName="Mappings with Enum"))
-	FNEnhancedEnumMapping NMappingArray;
-
-public:
-	UNInputMappingContext();
-	UFUNCTION(BlueprintCallable, Category = "Mapping")
-	FEnhancedActionKeyMapping& NMapKey(const UInputAction* InAction, FKey ToKey, TEnumAsByte<ENAbilityAction> Enum);
-	UFUNCTION(BlueprintCallable, Category = "Mapping")
-	void NUnmapKey(const UInputAction* Action, FKey Key, TEnumAsByte<ENAbilityAction> Enum);
-	UFUNCTION(BlueprintCallable, Category = "Mapping")
-	void NUnmapAllKeysFromAction(const UInputAction* Action);
-	UFUNCTION(BlueprintCallable, Category = "Mapping")
-	void NUnmapAll();
-	
 	friend class FInputContextDetails;
 	friend class FActionMappingsNodeBuilderEx;
-
-public:	
-	#if WITH_EDITOR
+protected:
+	// List of key to action mappings.
+	UPROPERTY(config, BlueprintReadOnly, EditAnywhere, Category = "EnumMappings", meta = (DisplayName="KeyMappings with Enum"))
+	TArray<FNEnhancedEnumMapping> NMappingArray;
+	TMap<ENAbilityAction, const TArray<FEnhancedActionKeyMapping>> NEnumMappingMap;
+	
+public:
+	UNInputMappingContext();
+	void CreateUnderlyingMapping();
+	virtual void PostLoad() override;
+	void UpdateKeyMappingActions();
+	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+	virtual void PostEditChangeChainProperty(FPropertyChangedChainEvent& PropertyChangedEvent) override;
+#if WITH_EDITOR
 		virtual EDataValidationResult IsDataValid(class FDataValidationContext& Context) const override;
 	#endif
 	/**
 	* Mapping accessors.
 	* Note: Use UEnhancedInputLibrary::RequestRebuildControlMappingsForContext to invoke changes made to an FNActionKeyMapping
 	*/
-	const FNEnhancedEnumMapping& GetNMappings() const { return NMappingArray; }
-	FEnhancedActionKeyMapping& GetNMapping(TArray<FNEnhancedEnumMapping>::SizeType Index) { return NMappingArray.Mappings[Index]; }
+	const TArray<FNEnhancedEnumMapping>& GetNMappings() const { return NMappingArray; }
+	FNEnhancedEnumMapping& GetNMapping(TArray<FNEnhancedEnumMapping>::SizeType Index) { return NMappingArray[Index]; }
 
 };
