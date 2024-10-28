@@ -1,8 +1,8 @@
 
 
-#include "Entities/Player/NPlayerActionComponent.h"
+#include "Player/NPlayerActionComponent.h"
 #include "GameplayAbilitySpecHandle.h"
-#include "Entities/Player/NPlayerController.h"
+#include "Player/NPlayerController.h"
 
 // Sets default values for this component's properties
 UNPlayerActionComponent::UNPlayerActionComponent(const FObjectInitializer& ObjectInitializer) :

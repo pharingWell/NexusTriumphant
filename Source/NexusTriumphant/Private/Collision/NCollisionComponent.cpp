@@ -40,6 +40,7 @@ void UNCollisionComponent::PostEditChangeProperty(FPropertyChangedEvent& Propert
 		}
 	}
 }
+#endif
 
 void UNCollisionComponent::SetupCapsule(float Radius, float InHeightOffset, bool bUpdateOverlaps)
 {
@@ -47,7 +48,7 @@ void UNCollisionComponent::SetupCapsule(float Radius, float InHeightOffset, bool
 	this->HeightOffset = InHeightOffset;
 	InitCapsuleSize(Radius, ECC_HALFHEIGHT);
 }
-#endif
+
 
 void UNCollisionComponent::SetCapsuleRadius(float Radius, bool bUpdateOverlaps)
 {

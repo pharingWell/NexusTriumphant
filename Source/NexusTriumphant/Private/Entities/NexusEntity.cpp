@@ -58,6 +58,7 @@ void ANexusEntity::BeginPlay()
 	DebugVisualizationsDisable();
 }
 
+#if WITH_EDITOR
 void ANexusEntity::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
@@ -69,6 +70,7 @@ void ANexusEntity::PostEditChangeProperty(FPropertyChangedEvent& PropertyChanged
 		GetMesh()->SetRelativeLocation(FVector3d(0, 0, -EntityHalfHeight));
 	}
 }
+#endif //WITH_EDITOR
 
 void ANexusEntity::Tick(float DeltaSeconds)
 {

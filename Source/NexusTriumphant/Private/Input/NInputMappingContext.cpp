@@ -43,6 +43,7 @@ void UNInputMappingContext::UpdateKeyMappingActions()
 	}
 }
 
+#if WITH_EDITOR
 void UNInputMappingContext::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	UpdateKeyMappingActions();
@@ -57,9 +58,7 @@ void UNInputMappingContext::PostEditChangeChainProperty(FPropertyChangedChainEve
 	CreateUnderlyingMapping();
 }
 
-
 #define LOCTEXT_NAMESPACE "InputMappingContext"
-#if WITH_EDITOR
 EDataValidationResult UNInputMappingContext::IsDataValid(FDataValidationContext& Context) const
 {
 	TSet<ENAbilityAction> UsedEnums = {};
@@ -100,5 +99,5 @@ EDataValidationResult UNInputMappingContext::IsDataValid(FDataValidationContext&
 	}
 	return Result;
 }
-#endif	// WITH_EDITOR
 #undef LOCTEXT_NAMESPACE 
+#endif	// WITH_EDITOR

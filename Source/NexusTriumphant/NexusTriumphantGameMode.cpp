@@ -1,10 +1,10 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "NexusTriumphantGameMode.h"
-#include "Public/Entities/Player/NPlayerController.h"
+#include "Public/Player/NPlayerController.h"
 #include "AbilitySystem/Abilities/NAbilityHelpers.h"
-#include "Entities/Player/NPlayerController.h"
-#include "Entities/Player/NPlayerState.h"
+#include "Player/NPlayerController.h"
+#include "Player/NPlayerState.h"
 #include "UObject/ConstructorHelpers.h"
 
 ANexusTriumphantGameMode::ANexusTriumphantGameMode()
@@ -13,7 +13,7 @@ ANexusTriumphantGameMode::ANexusTriumphantGameMode()
 	PlayerControllerClass = ANPlayerController::StaticClass();
 
 	// set default pawn class to our Blueprinted character
-	static ConstructorHelpers::FClassFinder<APawn> PlayerPawnBPClass(TEXT("/Game/NexusTriumphant/Entities/Player/BP_PlayerCharacter"));
+	static ConstructorHelpers::FClassFinder<APawn> PlayerPawnBPClass(TEXT("/Game/NexusTriumphant/Player/BP_PlayerCharacter"));
 	if (PlayerPawnBPClass.Class != nullptr)
 	{
 		//UE_LOG_ABILITY_CAUTION("Default Pawn used", this);
@@ -21,8 +21,8 @@ ANexusTriumphantGameMode::ANexusTriumphantGameMode()
 	}
 
 	// set default controller to our Blueprinted controller
-	static ConstructorHelpers::FClassFinder<APlayerController> PlayerControllerBPClass(TEXT("/Game/NexusTriumphant/Entities/Player/BP_BasePlayerController"));
-	if(PlayerControllerBPClass.Class != NULL)
+	static ConstructorHelpers::FClassFinder<APlayerController> PlayerControllerBPClass(TEXT("/Game/NexusTriumphant/Player/BP_BasePlayerController"));
+	if(PlayerControllerBPClass.Class != nullptr)
 	{
 		PlayerControllerClass = PlayerControllerBPClass.Class;
 	}

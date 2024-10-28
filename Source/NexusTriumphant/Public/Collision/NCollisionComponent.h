@@ -32,11 +32,14 @@ public:
 	// Sets default values for this component's properties
 	UNCollisionComponent();
 	
+#if WITH_EDITOR
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+#endif
 	
 	void SetupCapsule(float Radius, float HeightOffset, bool bUpdateOverlaps=true);
-	
-	void SetCapsuleRadius(float Radius, bool bUpdateOverlaps=true); //intentionally hides function
+
+	//intentionally hides function
+	void SetCapsuleRadius(float Radius, bool bUpdateOverlaps=true); 
 	
 	void SetEntityRadius(float Radius, bool bUpdateOverlaps=true);
 	

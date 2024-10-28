@@ -58,7 +58,9 @@ public:
 	// Called every frame.
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void BeginPlay() override;
+#if WITH_EDITOR
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+#endif //WITH_EDITOR
 	
 	UFUNCTION(Exec, Category="Commands")
 	void DebugVisualizationsToggle(const FString modeString);

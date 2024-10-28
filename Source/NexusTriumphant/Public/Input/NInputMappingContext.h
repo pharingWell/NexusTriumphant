@@ -62,11 +62,11 @@ public:
 	void CreateUnderlyingMapping();
 	virtual void PostLoad() override;
 	void UpdateKeyMappingActions();
-	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
-	virtual void PostEditChangeChainProperty(FPropertyChangedChainEvent& PropertyChangedEvent) override;
 #if WITH_EDITOR
-		virtual EDataValidationResult IsDataValid(class FDataValidationContext& Context) const override;
-	#endif
+	virtual void PostEditChangeProperty( struct FPropertyChangedEvent& PropertyChangedEvent) override;
+	virtual void PostEditChangeChainProperty(struct FPropertyChangedChainEvent& PropertyChangedEvent) override;
+	virtual EDataValidationResult IsDataValid(class FDataValidationContext& Context) const override;
+#endif
 	/**
 	* Mapping accessors.
 	* Note: Use UEnhancedInputLibrary::RequestRebuildControlMappingsForContext to invoke changes made to an FNActionKeyMapping

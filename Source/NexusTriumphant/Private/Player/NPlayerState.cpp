@@ -1,8 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
-#include "Entities/Player/NPlayerState.h"
+#include "Player/NPlayerState.h"
 #include "AbilitySystem/NActionHelper.h"
 #include "AbilitySystem/Abilities/NAbilityHelpers.h"
-#include "Entities/Player/NPlayerCharacter.h"
+#include "Player/NPlayerCharacter.h"
 #include "Net/UnrealNetwork.h"
 #include "NexusTriumphant/NexusTriumphant.h"
 

@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Entities/Player/NPlayerCharacter.h"
+#include "Player/NPlayerCharacter.h"
 
 #include "Entities/NexusEntity.h"
 #include "Net/UnrealNetwork.h"
@@ -12,11 +12,9 @@
 // Sets default values
 ANPlayerCharacter::ANPlayerCharacter(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
-	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this character to call Tick() every frame.
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.bStartWithTickEnabled = true;
-
-	
 	
 	// Create a camera boom...
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
@@ -75,9 +73,7 @@ void ANPlayerCharacter::Tick(float DeltaTime)
 void ANPlayerCharacter::PossessedBy(AController * NewController)
 {
 	Super::PossessedBy(NewController);
-
-
-
+	
 	// ASC MixedMode replication requires that the ASC Owner's Owner be the Controller.
 	SetOwner(NewController);
 }

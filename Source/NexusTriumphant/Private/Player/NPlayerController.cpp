@@ -1,6 +1,6 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
-#include "Entities/Player/NPlayerController.h"
+#include "Player/NPlayerController.h"
 
 #include "Entities/NexusEntity.h"
 #include "GameFramework/Pawn.h"
@@ -12,7 +12,7 @@
 #include "InputActionValue.h"
 #include "EnhancedInputSubsystems.h"
 #include "Engine/LocalPlayer.h"
-#include "Entities/Player/NPlayerCharacter.h"
+#include "Player/NPlayerCharacter.h"
 #include "NexusTriumphant/NexusTriumphant.h"
 
 
