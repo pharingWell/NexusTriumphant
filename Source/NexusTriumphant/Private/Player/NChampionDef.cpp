@@ -3,9 +3,6 @@
 
 #include "Player/NChampionDef.h"
 
-#include "EnhancedInputComponent.h"
-#include "AbilitySystem/NActionHelper.h"
-
 
 UNChampionDef::UNChampionDef(const FObjectInitializer&) : AbilityMap({}) {}
 	
