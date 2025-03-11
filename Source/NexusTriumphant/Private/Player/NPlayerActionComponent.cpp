@@ -45,6 +45,7 @@ void UNPlayerActionComponent::Setup(ANPlayerState* InPlayerState, ANPlayerContro
 		UE_LOG(LogActionSystem, Error, TEXT("[NPlayerActionComponent] Failed to get valid ASC ref"));
 		return;
 	}
+	
 	if(bPlay)
 	{
 		UE_LOG(LogActionSystem, Warning, TEXT("Setup correctly"));
@@ -55,22 +56,25 @@ void UNPlayerActionComponent::Setup(ANPlayerState* InPlayerState, ANPlayerContro
 	TMap<TEnumAsByte<ENAbilityAction>, FString> Names {};
 	for (auto AbilityPair : NPlayerState->GetChampionDataAsset()->GetUpdatedAbilityMap())
 	{
-		if(IsValid(AbilityPair.Value))
+		TSubclassOf<UGameplayAbility> &GameplayAbility = AbilityPair.Value; 
+		if(!IsValid(GameplayAbility))
 		{
-			Names.Add(AbilityPair.Key, AbilityPair.Value->GetDescription());
-			BaseAbilityActions.Add(AbilityPair.Key, ASCRef->GiveAbility(
-				FGameplayAbilitySpec(AbilityPair.Value, 1, AbilityPair.Key, this)
-				)
-			);
+			continue;
 		}
+		TEnumAsByte<ENAbilityAction> &AbilityAction = AbilityPair.Key;
+		Names.Add(AbilityAction, GameplayAbility->GetDescription());
+		BaseAbilityActions.Add(AbilityAction, ASCRef->GiveAbility(
+			FGameplayAbilitySpec(GameplayAbility, 1 /* abil level */, AbilityAction, this)));
 	}
 	CurrentAbilityActions = BaseAbilityActions;
+	
 	FString String = "";
 	for (auto Element : BaseAbilityActions)
 	{
-		String += FString::Printf(TEXT("[%d, %s, %s]"), Element.Key, ToCStr(Element.Value.ToString()), ToCStr(Names[Element.Key]));
+		String += FString::Printf(TEXT("[%d, %s, %s]"), Element.Key, *Element.Value.ToString(), *Names[Element.Key]);
 	}
-	UE_LOG(LogActionSystem, Display, TEXT("[NPlayerActionComponent] CurrentAbilityActions: {%s}"), ToCStr(String));
+	UE_LOG(LogActionSystem, Display, TEXT("[NPlayerActionComponent] CurrentAbilityActions: {%s}"), *String);
+	
 	bSetup = true;
 }
 

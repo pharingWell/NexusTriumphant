@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+
 
 #pragma once
 
@@ -15,6 +15,11 @@ class ANPlayerController;
 class ANPlayerState;
 class UAbilitySystemComponent;
 
+
+/*
+ * Handles action input from the user and routes is as needed, either to the queue or directly.
+ * Directly interacts with the Ability System Component
+ */
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class NEXUSTRIUMPHANT_API UNPlayerActionComponent : public UActorComponent, public IAbilitySystemInterface
 {

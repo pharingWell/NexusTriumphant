@@ -45,7 +45,8 @@ class NEXUSTRIUMPHANT_API UNChampionDef : public UDataAsset
 public:	
 
 	
-	
+	//todo make these a struct so that I can provide an image and a name
+	x 
 	
 protected:
 	UPROPERTY(EditDefaultsOnly, Category="Ability", DisplayName="Move To Gameplay Ability")
