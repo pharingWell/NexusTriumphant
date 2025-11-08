@@ -164,7 +164,7 @@ bool UNPlayerActionComponent::RunAbilityAction(const ENAbilityAction Action)
 		ASCRef = NPlayerState->GetAbilitySystemComponent();
 		if(!IsValid(ASCRef))
 		{
-			UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerActionCmp] "));
+			UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerActionCmp] ASCRef Invalid"));
 		}
 	}
 	if(NPlayerState->HasAuthority())
