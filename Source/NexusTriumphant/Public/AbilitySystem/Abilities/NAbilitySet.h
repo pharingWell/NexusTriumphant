@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
 #include "Abilities/GameplayAbility.h"
+#include "Player/NAbilitySystemComponent.h"
 #include "NAbilitySet.generated.h"
 
 class UInputAction;
@@ -78,7 +79,7 @@ public:
 	TSet<FAbilitySetItem> AbilitySetItems;
 
 	const TSet<FAbilityInputInfo>& GetInputAbilities() const;
-	TArray<FGameplayAbilitySpecHandle> GrantAbilitiesToAbilitySystem(UAbilitySystemComponent* AbilitySystemComponent) const;
+	TArray<FGameplayAbilitySpecHandle> GrantAbilitiesToAbilitySystem(UNAbilitySystemComponent* NASC) const;
 
 #if WITH_EDITOR
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;

@@ -23,7 +23,7 @@ class UInputAction;
 
 
 UCLASS()
-class ANPlayerController : public APlayerController, public IAbilitySystemInterface
+class ANPlayerController : public APlayerController
 {
 	GENERATED_BODY()
 
@@ -44,16 +44,6 @@ public:
 	/** NMappingContext */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
 	UNInputMappingContext* NMappingContext;
-
-	/** BASE ACTIONS */
-	
-	/** Destination MoveTo Action */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
-	UInputAction* MoveToAction;
-
-	/** Enqueue Action */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
-	UInputAction* EnqueueAction;
 	
 protected:
 	/** True if the controlled character should navigate to the mouse cursor. */
@@ -65,8 +55,6 @@ protected:
 	
 	UPROPERTY()
 	UNPlayerActionComponent* PlayerActionComponent;
-	UPROPERTY()
-	ANPlayerState* NPlayerState;
 	UPROPERTY()
 	ANPlayerCharacter* NPlayerCharacter;
 	UPROPERTY()
@@ -87,10 +75,23 @@ private:
 public:
 	explicit ANPlayerController(const FObjectInitializer& ObjectInitializer);
 	virtual void OnConstruction(const FTransform & Transform) override;
+
+	//~AController interface
+	virtual void PreInitializeComponents() override;
+	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	// To add mapping context
+	virtual void AcknowledgePossession(APawn* P) override;
+
+	virtual void CleanupPlayerState() override;
+	virtual void OnRep_PlayerState() override;
+	//End of ~AController interface
+	
 	// Called to bind functionality to input
-	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const
 	{
-		if(IsValid(NPlayerState))
+		if(ANPlayerState* NPlayerState = GetPlayerState<ANPlayerState>())
 			return NPlayerState->GetAbilitySystemComponent();
 		if(IsValid(NPlayerCharacter))
 		{
@@ -105,13 +106,10 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category="Collision")
 	bool K2_GetHitResultUnderCursor(ECollisionChannel TraceChannel, bool bTraceComplex, FHitResult& HitResult);
+
 protected:
 	UFUNCTION()
 	virtual void SetupInputComponent() override;
-	
-	// To add mapping context
-	virtual void BeginPlay() override;
-	virtual void AcknowledgePossession(APawn* P) override;
 	
 	UFUNCTION(Blueprintable, Category = "Actions")
 	void EnqueueStarted();

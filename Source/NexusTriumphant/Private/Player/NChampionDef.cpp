@@ -3,13 +3,13 @@
 
 #include "Player/NChampionDef.h"
 
+UNChampionDef::UNChampionDef() : AbilityMap({}) {}
 
-UNChampionDef::UNChampionDef(const FObjectInitializer&) : AbilityMap({}) {}
-	
-TMap<TEnumAsByte<ENAbilityAction>, TSubclassOf<UGameplayAbility>>& UNChampionDef::GetUpdatedAbilityMap()
+const TMap<TEnumAsByte<ENAbilityAction>, TSubclassOf<UGameplayAbility>>& UNChampionDef::GetUpdatedAbilityMap()
 {
 	AbilityMap = {
 			{ENAbilityAction::MOVETO, MoveToClass},
+			{ENAbilityAction::ENQUEUE, nullptr},
 			{ENAbilityAction::ATTACK, AttackClass},
 			{ENAbilityAction::ABILITY1, Ability1Class},
 			{ENAbilityAction::ABILITY2, Ability2Class},

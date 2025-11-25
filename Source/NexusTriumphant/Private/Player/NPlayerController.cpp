@@ -31,6 +31,11 @@ void ANPlayerController::OnConstruction(const FTransform& Transform)
 	Super::OnConstruction(Transform);
 }
 
+void ANPlayerController::PreInitializeComponents()
+{
+	Super::PreInitializeComponents();
+}
+
 
 void ANPlayerController::BeginPlay()
 {
@@ -39,23 +44,71 @@ void ANPlayerController::BeginPlay()
 	
 }
 
+void ANPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+}
+
+void ANPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+}
+
 void ANPlayerController::AcknowledgePossession(APawn* P)
 {
 	Super::AcknowledgePossession(P);
 
-	NPlayerState = GetPlayerState<ANPlayerState>();
+	ANPlayerState* NPlayerState = GetPlayerState<ANPlayerState>();
 	NPlayerCharacter = Cast<ANPlayerCharacter>(P);
+	if (!IsValid(PlayerActionComponent))
+	{
+		UE_LOG(LogNexusTriumphant, Error, TEXT("[NPlayerController] Player Action Component not ready"));
+		return;
+	}
 	if (IsValid(NPlayerCharacter) && IsValid(NPlayerState))
 	{
-		NPlayerState->GetAbilitySystemComponent()->InitAbilityActorInfo(NPlayerState, NPlayerCharacter);
 		NPlayerCharacter->SetPlayerState(NPlayerState);
 		PlayerActionComponent->Setup(NPlayerState, this);
+		auto NASC = NPlayerState->GetNAbilitySystemComponent();
+		if (NASC)
+		{
+			NASC->InitAbilityActorInfo(NPlayerState, NPlayerCharacter);
+		} else
+		{
+			UE_LOG(LogNexusTriumphant, Error, TEXT("[NPlayerController] NASC not ready"));
+			return;
+		}
 	}else
 	{
 		UE_LOG(LogNexusTriumphant, Error, TEXT("[NPlayerController] Failed to cast player pawn (or state invalid)"));
 	}
 	//...
 }
+
+void ANPlayerController::CleanupPlayerState()
+{
+	Super::CleanupPlayerState();
+}
+
+void ANPlayerController::OnRep_PlayerState()
+{
+	Super::OnRep_PlayerState();
+	 
+	// When we're a client connected to a remote server, the player controller may replicate later than the PlayerState and AbilitySystemComponent.
+	if (GetWorld()->IsNetMode(NM_Client))
+	{
+		if (ANPlayerState* NPlayerState = GetPlayerState<ANPlayerState>())
+		{
+			if (UNAbilitySystemComponent* NASC = NPlayerState->GetNAbilitySystemComponent())
+			{
+				// Calls InitAbilityActorInfo
+				NASC->RefreshAbilityActorInfo();
+				// NASC->TryActivateAbilitiesOnSpawn();
+			}
+		}
+	}
+}
+
 
 void ANPlayerController::SetupInputComponent()
 {
@@ -84,17 +137,19 @@ void ANPlayerController::SetupInputComponent()
 			{
 				TEnumAsByte<ENAbilityAction> ActionEnum = Element.Enum;
 				const UInputAction* InputAction = Element.Action;
+				if(ActionEnum == ENQUEUE)
+				{
+					EnhancedInputComponent->BindAction(InputAction, ETriggerEvent::Started, this, &ANPlayerController::EnqueueStarted);
+					EnhancedInputComponent->BindAction(InputAction, ETriggerEvent::Completed, this, &ANPlayerController::EnqueueEnded);
+					EnhancedInputComponent->BindAction(InputAction, ETriggerEvent::Canceled, this, &ANPlayerController::EnqueueEnded);
+					continue;
+				}
 				EnhancedInputComponent->BindAction(InputAction, ETriggerEvent::Started, this, &ANPlayerController::OnInputStarted, ActionEnum);
 				EnhancedInputComponent->BindAction(InputAction, ETriggerEvent::Triggered, this, &ANPlayerController::OnInputTriggered, ActionEnum);
 				EnhancedInputComponent->BindAction(InputAction, ETriggerEvent::Completed, this, &ANPlayerController::OnInputFinished, ActionEnum);
 				EnhancedInputComponent->BindAction(InputAction, ETriggerEvent::Canceled, this, &ANPlayerController::OnInputFinished, ActionEnum);
 			}
-			if(IsValid(EnqueueAction))
-			{
-				EnhancedInputComponent->BindAction(EnqueueAction, ETriggerEvent::Started, this, &ANPlayerController::EnqueueStarted);
-				EnhancedInputComponent->BindAction(EnqueueAction, ETriggerEvent::Completed, this, &ANPlayerController::EnqueueEnded);
-				EnhancedInputComponent->BindAction(EnqueueAction, ETriggerEvent::Canceled, this, &ANPlayerController::EnqueueEnded);
-			}
+			
 		}else
 		{
 			UE_LOG(LogActionSystem, Error, TEXT("[NPlayerController] Input Definition Mapping Context is invalid."))
@@ -175,6 +230,7 @@ void ANPlayerController::OnInputTriggered(const TEnumAsByte<ENAbilityAction> Inp
 	}
 }
 
+
 void ANPlayerController::OnInputFinished(const TEnumAsByte<ENAbilityAction> InputUsed)
 {
 	UE_LOG(LogActionSystem, Display, TEXT("Stopped using AbilityAction #%d"), int(InputUsed));
@@ -188,8 +244,10 @@ void ANPlayerController::OnInputFinished(const TEnumAsByte<ENAbilityAction> Inpu
 	}
 }
 
+
+
 bool ANPlayerController::K2_GetHitResultUnderCursor(ECollisionChannel TraceChannel, bool bTraceComplex,
-                                                 FHitResult& HitResult)
+                                                    FHitResult& HitResult)
 {
 	return GetHitResultUnderCursor(ECollisionChannel::ECC_Visibility, true, HitResult);
 }

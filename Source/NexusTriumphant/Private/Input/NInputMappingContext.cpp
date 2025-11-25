@@ -86,6 +86,10 @@ EDataValidationResult UNInputMappingContext::IsDataValid(FDataValidationContext&
 				UsedEnums.Add(EnumMapping.Enum);
 			}
 		}
+		if(!EnumMapping.Action)
+		{
+			continue;
+		}
 		Result = CombineDataValidationResults(Result, EnumMapping.Action->IsDataValid(Context));
 		for (const FEnhancedActionKeyMapping& Mapping : EnumMapping.KeyMappings)
 		{

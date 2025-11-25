@@ -19,7 +19,9 @@ public class NexusTriumphant : ModuleRules
 			"AIModule", 
 			"Niagara", 
 			"EnhancedInput",
-			"GameplayTags"
+			"GameplayTags",
+			"GameplayAbilities",
+			"GameplayTasks"
 		});
 		/* PrivateDependencyModuleNames.AddRange(new string[]
 		{

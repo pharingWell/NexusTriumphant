@@ -45,37 +45,46 @@ void UNPlayerActionComponent::Setup(ANPlayerState* InPlayerState, ANPlayerContro
 		UE_LOG(LogActionSystem, Error, TEXT("[NPlayerActionComponent] Failed to get valid ASC ref"));
 		return;
 	}
-	
+	if (!IsValid(NPlayerState->GetChampionDataAsset()))
+	{
+		UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerActionComponent] Invalid Champion Def"));
+		return;
+	}
 	if(bPlay)
 	{
 		UE_LOG(LogActionSystem, Warning, TEXT("Setup correctly"));
+		return;
 	}
 
 	ASCRef->OnAbilityEnded.AddUFunction(this, "ActionEnded");
-
 	TMap<TEnumAsByte<ENAbilityAction>, FString> Names {};
-	for (auto AbilityPair : NPlayerState->GetChampionDataAsset()->GetUpdatedAbilityMap())
+	for (const auto AbilityPair : NPlayerState->GetChampionDataAsset()->GetUpdatedAbilityMap())
 	{
-		TSubclassOf<UGameplayAbility> &GameplayAbility = AbilityPair.Value; 
-		if(!IsValid(GameplayAbility))
+		const TEnumAsByte<ENAbilityAction> &AbilityAction = AbilityPair.Key;
+		const TSubclassOf<UGameplayAbility> &GameplayAbility = AbilityPair.Value;
+		if(NPlayerState->HasAuthority())
 		{
-			continue;
-		}
-		TEnumAsByte<ENAbilityAction> &AbilityAction = AbilityPair.Key;
-		Names.Add(AbilityAction, GameplayAbility->GetDescription());
-		BaseAbilityActions.Add(AbilityAction, ASCRef->GiveAbility(
+			BaseAbilityActions.Add(AbilityAction, ASCRef->GiveAbility(
 			FGameplayAbilitySpec(GameplayAbility, 1 /* abil level */, AbilityAction, this)));
+		}
+		else
+		{
+			Names.Add(AbilityAction, GameplayAbility->GetDescription());
+		}
 	}
-	CurrentAbilityActions = BaseAbilityActions;
-	
+	if(NPlayerState->HasAuthority())
+	{
+		CurrentAbilityActions = BaseAbilityActions;
+	}
+		
 	FString String = "";
 	for (auto Element : BaseAbilityActions)
 	{
 		String += FString::Printf(TEXT("[%d, %s, %s]"), Element.Key, *Element.Value.ToString(), *Names[Element.Key]);
 	}
 	UE_LOG(LogActionSystem, Display, TEXT("[NPlayerActionComponent] CurrentAbilityActions: {%s}"), *String);
-	
 	bSetup = true;
+
 }
 
 UAbilitySystemComponent* UNPlayerActionComponent::GetAbilitySystemComponent() const
@@ -153,6 +162,14 @@ void UNPlayerActionComponent::ExecuteAction(const ENAbilityAction Action)
 	{
 		UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerActionComponent] Ran Action #%d, but it failed to activate"), Action);
 	}
+	if(NPlayerController->HasAuthority())
+	{
+		auto tagContainer = ASCRef->GetOwnedGameplayTags();
+		for(auto tag : tagContainer)
+		{
+			UE_LOG(LogActionSystem, Warning, TEXT("{NASC} %s"), *tag.ToString());
+		}
+	}
 }
 
 bool UNPlayerActionComponent::RunAbilityAction(const ENAbilityAction Action)
@@ -172,11 +189,10 @@ bool UNPlayerActionComponent::RunAbilityAction(const ENAbilityAction Action)
 		FGameplayEventData EventData;
 		EventData.Instigator = NPlayerController;
 		EventData.OptionalObject = NPlayerController;
-		UE_LOG(LogActionSystem, Warning, TEXT("Triggered Ability %d"), int(Action));
+		UE_LOG(LogActionSystem, Warning, TEXT("[NPAC] Triggered Ability %d with Authority"), int(Action));
 		return ASCRef->TriggerAbilityFromGameplayEvent(GetHandle(Action), ASCRef->AbilityActorInfo.Get(),
 			FGameplayTag::RequestGameplayTag(FName("Ability.Used")), &EventData, *ASCRef);
 	}
-	UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerActionComponent] Failed to activate ability because lacking authority"));
 	return false;
 	
 }

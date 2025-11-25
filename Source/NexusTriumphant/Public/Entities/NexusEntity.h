@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "UObject/ObjectMacros.h"
 #include "UObject/Class.h"
-#include "Collision/NCollisionComponent.h"
 #include "GameFramework/Character.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Camera/CameraComponent.h"
@@ -43,9 +42,7 @@ class ANexusEntity : public ACharacter
 	GENERATED_BODY()
 
 protected:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
-	UNCollisionComponent* CollisionComponent;
-
+	bool bDebugDisplayRadius;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Entity")
 	float EntityRadius;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Entity")
@@ -66,10 +63,8 @@ public:
 	void DebugVisualizationsToggle(const FString modeString);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Transform")
-	FVector GetRootLocationOffset();
-	FVector GetRootLocationOffset(const FVector& InVector) const;
-
-	void DebugVisualizationsDisable() const;
+	FVector GetRootLocationOffset() const;
+	void DebugVisualizationsDisable();
 	void SetCapsuleRadius(float InRadius);
 	
 

@@ -70,10 +70,43 @@ void ANPlayerCharacter::Tick(float DeltaTime)
  * Runs on the server
  * Client side runs at AcknowledgePossession in NPlayerController
  */
+
+/*
+ void ARBPlayerCharacter::PossessedBy(AController* NewController)
+ {
+ 	Super::PossessedBy(NewController);
+ 	if (AbilitySystemComponent == nullptr)
+ 	{
+ 		if (ARBPlayerState* PS = GetPlayerState<ARBPlayerState>())
+ 		{
+ 			// Cache the ASC in the Server (TWeakObjectPtr preferrable)
+ 			AbilitySystemComponent = Cast<URBAbilitySystemComponent>(PS->GetAbilitySystemComponent());
+ 			
+ 			// Init the Server side part of the ASC
+ 			AbilitySystemComponent->InitAbilityActorInfo(PS, this);
+ 
+ 			// Some games grant attributes and abilities here
+ 
+ 			// Some games server initialize another components of the character that use the ASC here
+ 		}
+ 	}
+ }	
+ */
+
+// runs on the server
 void ANPlayerCharacter::PossessedBy(AController * NewController)
 {
 	Super::PossessedBy(NewController);
-	
+	if(NASC == nullptr)
+	{
+		if (ANPlayerState* PlayerState = GetPlayerState<ANPlayerState>())
+		{
+			NASC = Cast<UNAbilitySystemComponent>(PlayerState->GetAbilitySystemComponent());
+
+			NASC->InitAbilityActorInfo(PlayerState, this);
+		}
+	}
+
 	// ASC MixedMode replication requires that the ASC Owner's Owner be the Controller.
 	SetOwner(NewController);
 }

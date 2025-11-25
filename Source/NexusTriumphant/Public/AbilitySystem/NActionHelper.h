@@ -10,6 +10,7 @@ UENUM(Blueprintable)
 enum ENAbilityAction //Nexus Ability Action: What action the play is taking to activate these things
 {
 	INVALID = 0 UMETA(DisplayName="Invalid"),
+	ENQUEUE		UMETA(DisplayName="Enqueue"),
 	MOVETO      UMETA(DisplayName="MoveTo"),
 	ATTACK      UMETA(DisplayName="Attack"),
 	ABILITY1    UMETA(DisplayName="Ability1"),

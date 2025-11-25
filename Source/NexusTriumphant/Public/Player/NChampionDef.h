@@ -37,20 +37,24 @@ class UGameplayAbility;
  * These classes act to hold the definitions for which gameplay abilities are associated with which Champion
  * The classes will also contain stat definitions in the future
  */
-UCLASS()
+UCLASS(Blueprintable)
 class NEXUSTRIUMPHANT_API UNChampionDef : public UDataAsset
 {
 	GENERATED_BODY()
 
 public:	
-
+	UPROPERTY(EditDefaultsOnly, Category="Description", DisplayName="")
+	FName Name;
 	
-	//todo make these a struct so that I can provide an image and a name
-	x 
+	UPROPERTY(EditDefaultsOnly, Category="Description", DisplayName="")
+	UTexture* Icon;
 	
-protected:
+	//todo replace TSubclassOf<UGameplayAbility> with a struct so that I can provide an image and a name for the ability
 	UPROPERTY(EditDefaultsOnly, Category="Ability", DisplayName="Move To Gameplay Ability")
 	TSubclassOf<UGameplayAbility> MoveToClass;
+
+	UPROPERTY(EditDefaultsOnly, Category="Ability", DisplayName="Enqueue Gameplay Ability")
+	TSubclassOf<UGameplayAbility> EnqueueClass;
 	
 	UPROPERTY(EditDefaultsOnly, Category="Ability", DisplayName="Attack Gameplay Ability")
 	TSubclassOf<UGameplayAbility> AttackClass;
@@ -84,8 +88,8 @@ private:
 	/** FUNCTIONS */
 	
 public:
-	UNChampionDef(const FObjectInitializer& ObjectInitializer);
-	TMap<TEnumAsByte<ENAbilityAction>, TSubclassOf<UGameplayAbility>>& GetUpdatedAbilityMap();
+	UNChampionDef();
+	const TMap<TEnumAsByte<ENAbilityAction>, TSubclassOf<UGameplayAbility>>& GetUpdatedAbilityMap();
 	/* void SetBinding(UEnhancedInputComponent* EnhancedInputComponent, ENAbilityAction EnumKey,
 	                const UInputAction* InputAction);
 */

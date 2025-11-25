@@ -53,11 +53,14 @@ protected:
 private:
 	/** Top down camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	class UCameraComponent* TopDownCameraComponent;
+	UCameraComponent* TopDownCameraComponent;
 
 	/** Camera boom positioning the camera above the character */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	class USpringArmComponent* CameraBoom;	
+	USpringArmComponent* CameraBoom;	
+
+	UPROPERTY()
+	UNAbilitySystemComponent* NASC;
 	
 	/** FUNCTIONS */
 	
@@ -71,9 +74,9 @@ public:
 	virtual void PossessedBy(AController* NewController) override;
 
 	/** Returns TopDownCameraComponent sub-object **/
-	FORCEINLINE class UCameraComponent* GetTopDownCameraComponent() const { return TopDownCameraComponent; }
+	FORCEINLINE UCameraComponent* GetTopDownCameraComponent() const { return TopDownCameraComponent; }
 	/** Returns CameraBoom sub-object **/
-	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
+	FORCEINLINE USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override
 	{

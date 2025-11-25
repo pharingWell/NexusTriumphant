@@ -3,28 +3,28 @@
 
 #include "AbilitySystem/Abilities/NAbilitySet.h"
 
-#include "AbilitySystemComponent.h"
+#include "Player/NAbilitySystemComponent.h"
 
 const TSet<FAbilityInputInfo>& UNAbilitySet::GetInputAbilities() const
 {
 	return InputAbilities;
 }
 
-TArray<FGameplayAbilitySpecHandle> UNAbilitySet::GrantAbilitiesToAbilitySystem(UAbilitySystemComponent* AbilitySystemComponent) const
+TArray<FGameplayAbilitySpecHandle> UNAbilitySet::GrantAbilitiesToAbilitySystem(UNAbilitySystemComponent* NASC) const
 {
-	check(AbilitySystemComponent);
+	check(NASC);
 
 	TArray<FGameplayAbilitySpecHandle> handles;
 	handles.Reserve(AbilitySetItems.Num());
 
 	for (const FAbilitySetItem AbilitySetItem : AbilitySetItems)
 	{
-		handles.Emplace(AbilitySystemComponent->GiveAbility
+		handles.Emplace(NASC->GiveAbility
 			(FGameplayAbilitySpec(
 				AbilitySetItem.GameplayAbility,
 				0,
 				AbilitySetItem.Input,
-				AbilitySystemComponent->GetOwnerActor()
+				NASC->GetOwnerActor()
 				)
 			)
 		);

@@ -10,7 +10,6 @@ DEFINE_LOG_CATEGORY(LogBaseEntity);
  
 ANexusEntity::ANexusEntity(const FObjectInitializer& ObjectInitializer): Super(ObjectInitializer)
 {
-	CollisionComponent = CreateDefaultSubobject<UNCollisionComponent>(TEXT("EntityCollisionComponent"));
 	EntityRadius = 50.f;
 	EntityHalfHeight = 100.f;
 	GetMesh()->SetRelativeLocation(FVector(0,0,-EntityHalfHeight));
@@ -24,12 +23,7 @@ void ANexusEntity::PreRegisterAllComponents()
 	GetCapsuleComponent()->UPrimitiveComponent::SetCollisionProfileName("Entity");
 	//GetCapsuleComponent()->SetRelativeLocation(FVector(0,0,EntityHalfHeight));
 	GetCapsuleComponent()->SetGenerateOverlapEvents(true);
-
-	// Create Entity Collision Component
 	
-	check(IsValid(CollisionComponent))
-	CollisionComponent->SetupCapsule(EntityRadius, EntityHalfHeight);
-	CollisionComponent->SetupAttachment(GetCapsuleComponent());
 
 
 
@@ -65,7 +59,6 @@ void ANexusEntity::PostEditChangeProperty(FPropertyChangedEvent& PropertyChanged
 	if(PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_STRING_CHECKED(ANexusEntity, EntityHalfHeight))
 	{
 		GetCapsuleComponent()->InitCapsuleSize(EntityRadius, EntityHalfHeight);
-		CollisionComponent->SetupCapsule(EntityRadius, EntityHalfHeight);
 		GetCharacterMovement()->SetPlaneConstraintOrigin(FVector(0.f, 0.f, EntityHalfHeight));
 		GetMesh()->SetRelativeLocation(FVector3d(0, 0, -EntityHalfHeight));
 	}
@@ -75,6 +68,14 @@ void ANexusEntity::PostEditChangeProperty(FPropertyChangedEvent& PropertyChanged
 void ANexusEntity::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
+	if(this->bDebugDisplayRadius)
+	{
+		DrawCircle(GetWorld(), GetCapsuleComponent()->GetComponentLocation() - FVector(0,0,GetRootLocationOffset().Z),
+			FVector(1.f, 0.f, 0.f),
+			FVector(0.f, 1.f, 0.f),
+			FColor::Purple, EntityRadius, 40,
+			false, DeltaSeconds);
+	}
 }
 
 void ANexusEntity::DebugVisualizationsToggle(const FString modeString)
@@ -101,8 +102,8 @@ void ANexusEntity::DebugVisualizationsToggle(const FString modeString)
 		for (modeType bit = 1; x >= bit; bit *= 2) if (x & bit) switch (StaticCast<EBaseEntityVisualizeMode>(bit))
 		{
 		case EBaseEntityVisualizeMode::Collision2D:
-			if(!CollisionComponent->bDebugDisplayRadius)
-				CollisionComponent->bDebugDisplayRadius = true;
+			if(!bDebugDisplayRadius)
+				bDebugDisplayRadius = true;
 			break;
 		default:
 			break;
@@ -111,19 +112,14 @@ void ANexusEntity::DebugVisualizationsToggle(const FString modeString)
 }
 
 //for spawning entities on the ground
-FVector ANexusEntity::GetRootLocationOffset()
+FVector ANexusEntity::GetRootLocationOffset() const
 {
 	return FVector::UpVector * GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
 }
 
-FVector ANexusEntity::GetRootLocationOffset(const FVector& InVector) const
+void ANexusEntity::DebugVisualizationsDisable()
 {
-	return InVector + FVector::UpVector * GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
-}
-
-void ANexusEntity::DebugVisualizationsDisable() const
-{
-	CollisionComponent->bDebugDisplayRadius = false;
+	bDebugDisplayRadius = false;
 }
 
 void ANexusEntity::SetCapsuleRadius(float InRadius)

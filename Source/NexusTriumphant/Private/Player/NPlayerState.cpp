@@ -10,27 +10,23 @@
 ANPlayerState::ANPlayerState(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
 	// Ability system items
-	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
-	AbilitySystemComponent->SetIsReplicated(true);
-	ChampionDataAsset = CreateDefaultSubobject<UNChampionDef>("Champion");
+	NAbilitySystemComponent = CreateDefaultSubobject<UNAbilitySystemComponent>(TEXT("NAbilitySystemComponent"));
+	ChampionDataAsset = CreateDefaultSubobject<UNChampionDef>(TEXT("Champion Definition"));
 	//InitialAbilitySet = CreateDefaultSubobject<UNAbilitySet>(TEXT("InitialAbilitySet"));
 	//StandardAttributes = CreateDefaultSubobject<UNBaseAttributeSet>(TEXT("StandardAttributeSet"));
-	
-	if (AbilitySystemComponent)
-	{
-		//AbilitySystemComponent->InitAbilityActorInfo(this, PLAYER);
-	}
 }
 
 void ANPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty> & OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	//DOREPLIFETIME(ANPlayerState, StandardAttributes);
+	DOREPLIFETIME_CONDITION(ANPlayerState, ChampionDataAsset, COND_InitialOnly);
 }
 
 void ANPlayerState::BeginPlay()
 {
 	Super::BeginPlay();
-
+	bReplicates = true;
+	NAbilitySystemComponent = NewObject<UNAbilitySystemComponent>(this, UNAbilitySystemComponent::StaticClass());
+	NAbilitySystemComponent->RegisterComponent();
 	//SetupInitialAbilitiesAndEffects();
 }
