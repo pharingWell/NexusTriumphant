@@ -20,7 +20,7 @@ USTRUCT(BlueprintType)
 struct FNEnhancedEnumMapping
 {
 	GENERATED_BODY()
-	FNEnhancedEnumMapping(UInputAction* InAction  = nullptr, TEnumAsByte<ENAbilityAction> InEnum = ENAbilityAction::INVALID,
+	FNEnhancedEnumMapping(UInputAction* InAction  = nullptr, ENAbilityAction InEnum = ENAbilityAction::INVALID,
 		TArray<FEnhancedActionKeyMapping> InMappings = {})
 		: Action(InAction), Enum(InEnum)
 	{
@@ -30,7 +30,7 @@ struct FNEnhancedEnumMapping
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
 	TObjectPtr<const UInputAction> Action;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
-	TEnumAsByte<ENAbilityAction> Enum;
+	ENAbilityAction Enum;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
 	TArray<FEnhancedActionKeyMapping> KeyMappings;
 };

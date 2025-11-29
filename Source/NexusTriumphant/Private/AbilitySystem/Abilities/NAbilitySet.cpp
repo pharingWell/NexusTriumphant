@@ -10,7 +10,7 @@ const TSet<FAbilityInputInfo>& UNAbilitySet::GetInputAbilities() const
 	return InputAbilities;
 }
 
-TArray<FGameplayAbilitySpecHandle> UNAbilitySet::GrantAbilitiesToAbilitySystem(UNAbilitySystemComponent* NASC) const
+TArray<FGameplayAbilitySpecHandle> UNAbilitySet::GrantAbilitiesToAbilitySystem(TObjectPtr<UNAbilitySystemComponent> NASC) const
 {
 	check(NASC);
 

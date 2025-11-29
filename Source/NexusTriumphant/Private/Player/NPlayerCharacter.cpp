@@ -2,7 +2,6 @@
 
 
 #include "Player/NPlayerCharacter.h"
-
 #include "Entities/NexusEntity.h"
 #include "Net/UnrealNetwork.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -43,7 +42,6 @@ ANPlayerCharacter::ANPlayerCharacter(const FObjectInitializer& ObjectInitializer
 void ANPlayerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState)
 {
 	Super::OnPlayerStateChanged(NewPlayerState, OldPlayerState);
-	PlayerState = Cast<ANPlayerState>(NewPlayerState);
 }
 
 // Called when the game starts or when spawned
@@ -99,11 +97,11 @@ void ANPlayerCharacter::PossessedBy(AController * NewController)
 	Super::PossessedBy(NewController);
 	if(NASC == nullptr)
 	{
-		if (ANPlayerState* PlayerState = GetPlayerState<ANPlayerState>())
+		PlayerController = Cast<ANPlayerController>(NewController);
+		if (PlayerController)
 		{
-			NASC = Cast<UNAbilitySystemComponent>(PlayerState->GetAbilitySystemComponent());
-
-			NASC->InitAbilityActorInfo(PlayerState, this);
+			NASC = PlayerController->GetNAbilitySystemComponent();
+			NASC->InitAbilityActorInfo(PlayerController, this);
 		}
 	}
 
@@ -111,4 +109,40 @@ void ANPlayerCharacter::PossessedBy(AController * NewController)
 	SetOwner(NewController);
 }
 
+void ANPlayerCharacter::OnRep_PlayerState()
+{
+	Super::OnRep_PlayerState();
+	if (NASC == nullptr)
+	{
+		PlayerController = GetController<ANPlayerController>();
+		if (PlayerController)
+		{
+			// Cache the ASC in the Client (TWeakObjectPtr preferrable)
+			NASC = Cast<UNAbilitySystemComponent>(PlayerController->GetAbilitySystemComponent());
+			
+			// Init the Client side part of the ASC
+			NASC->InitAbilityActorInfo(PlayerController, this);
+		
+			// Some games grant attributes here
 
+			// Some games client initialize another components of the character that use the ASC here
+		}
+	}
+	else
+	{
+		// Solves the data-races of controller/playerstate
+		NASC->RefreshAbilityActorInfo();
+	}
+}
+
+
+void ANPlayerCharacter::OnRep_Controller()
+{
+	Super::OnRep_Controller();
+	// Needed in case the PC wasn't valid when we Init-ed the ASC.
+	PlayerController = GetController<ANPlayerController>();
+	if (PlayerController)
+	{
+		PlayerController->GetAbilitySystemComponent()->RefreshAbilityActorInfo();
+	}
+}

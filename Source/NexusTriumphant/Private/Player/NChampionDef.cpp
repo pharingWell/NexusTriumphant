@@ -5,7 +5,7 @@
 
 UNChampionDef::UNChampionDef() : AbilityMap({}) {}
 
-const TMap<TEnumAsByte<ENAbilityAction>, TSubclassOf<UGameplayAbility>>& UNChampionDef::GetUpdatedAbilityMap()
+const TMap<ENAbilityAction, TSubclassOf<UGameplayAbility>>& UNChampionDef::GetUpdatedAbilityMap()
 {
 	AbilityMap = {
 			{ENAbilityAction::MOVETO, MoveToClass},

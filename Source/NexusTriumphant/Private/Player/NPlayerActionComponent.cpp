@@ -4,6 +4,8 @@
 #include "GameplayAbilitySpecHandle.h"
 #include "Player/NPlayerController.h"
 
+struct FGameplayAbilityTargetDataHandle;
+
 // Sets default values for this component's properties
 UNPlayerActionComponent::UNPlayerActionComponent(const FObjectInitializer& ObjectInitializer) :
 	bExecutingQueue(false), NPlayerController(nullptr), NPlayerState(nullptr),
@@ -25,8 +27,12 @@ void UNPlayerActionComponent::BeginPlay()
 }
 
 // This function connects the action component to the ability system component via the NPlayerState
-void UNPlayerActionComponent::Setup(ANPlayerState* InPlayerState, ANPlayerController* InPlayerController)
+void UNPlayerActionComponent::Setup(const TObjectPtr<ANPlayerState>& InPlayerState, const TObjectPtr<ANPlayerController>& InPlayerController)
 {
+	if(bSetup)
+	{
+		return;
+	}
 	if(!IsValid(InPlayerController))
 	{
 		UE_LOG(LogActionSystem, Error, TEXT("[NPlayerActionComponent] Failed to get valid PlayerController ref"));
@@ -39,7 +45,7 @@ void UNPlayerActionComponent::Setup(ANPlayerState* InPlayerState, ANPlayerContro
 		return;
 	}
 	NPlayerState = InPlayerState;
-	ASCRef = InPlayerState->GetAbilitySystemComponent();
+	ASCRef = InPlayerController->GetAbilitySystemComponent();
 	if(!IsValid(ASCRef))
 	{
 		UE_LOG(LogActionSystem, Error, TEXT("[NPlayerActionComponent] Failed to get valid ASC ref"));
@@ -57,32 +63,32 @@ void UNPlayerActionComponent::Setup(ANPlayerState* InPlayerState, ANPlayerContro
 	}
 
 	ASCRef->OnAbilityEnded.AddUFunction(this, "ActionEnded");
-	TMap<TEnumAsByte<ENAbilityAction>, FString> Names {};
-	for (const auto AbilityPair : NPlayerState->GetChampionDataAsset()->GetUpdatedAbilityMap())
+	TMap<ENAbilityAction, FString> Names {};
+	if(NPlayerController->HasAuthority())
 	{
-		const TEnumAsByte<ENAbilityAction> &AbilityAction = AbilityPair.Key;
-		const TSubclassOf<UGameplayAbility> &GameplayAbility = AbilityPair.Value;
-		if(NPlayerState->HasAuthority())
+		for (const auto AbilityPair : NPlayerState->GetChampionDataAsset()->GetUpdatedAbilityMap())
 		{
+			const ENAbilityAction &AbilityAction = AbilityPair.Key;
+			if(AbilityAction == ENAbilityAction::ENQUEUE)
+			{
+				continue;
+			}
+			const TSubclassOf<UGameplayAbility> &GameplayAbility = AbilityPair.Value;
+			
 			BaseAbilityActions.Add(AbilityAction, ASCRef->GiveAbility(
-			FGameplayAbilitySpec(GameplayAbility, 1 /* abil level */, AbilityAction, this)));
-		}
-		else
-		{
+			FGameplayAbilitySpec(GameplayAbility, 1 /* abil level */, static_cast<uint8>(AbilityAction), this)));
 			Names.Add(AbilityAction, GameplayAbility->GetDescription());
 		}
-	}
-	if(NPlayerState->HasAuthority())
-	{
+
 		CurrentAbilityActions = BaseAbilityActions;
+	
+		FString String = "";
+		for (auto Element : BaseAbilityActions)
+		{
+			String += FString::Printf(TEXT("[%d, %s, %s]"), Element.Key, *Element.Value.ToString(), *Names[Element.Key]);
+		}
+		UE_LOG(LogActionSystem, Display, TEXT("[NPlayerActionComponent] CurrentAbilityActions: {%s}"), *String);
 	}
-		
-	FString String = "";
-	for (auto Element : BaseAbilityActions)
-	{
-		String += FString::Printf(TEXT("[%d, %s, %s]"), Element.Key, *Element.Value.ToString(), *Names[Element.Key]);
-	}
-	UE_LOG(LogActionSystem, Display, TEXT("[NPlayerActionComponent] CurrentAbilityActions: {%s}"), *String);
 	bSetup = true;
 
 }
@@ -93,12 +99,12 @@ UAbilitySystemComponent* UNPlayerActionComponent::GetAbilitySystemComponent() co
 	{
 		return ASCRef;
 	}
-	if(!IsValid(NPlayerState))
+	if(!IsValid(NPlayerController))
 	{
-		UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerActionComponent] GetASC before setup/while NPlayerState ref invalid"));
+		UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerActionComponent] GetASC before setup/while NPlayerController ref invalid"));
 		return nullptr;
 	}
-	return NPlayerState->GetAbilitySystemComponent();
+	return NPlayerController->GetAbilitySystemComponent();
 }
 
 /** Restores the Base Ability Action to the Current Ability Action slot */
@@ -119,7 +125,7 @@ void UNPlayerActionComponent::RevertAbilityAction(const ENAbilityAction Action)
 
 
 
-FGameplayAbilitySpecHandle& UNPlayerActionComponent::GetHandle(const ENAbilityAction Action, const bool GetBase)
+FGameplayAbilitySpecHandle& UNPlayerActionComponent::GetHandle(const ENAbilityAction Action, const bool GetBase /* false */)
 {
 	if(!bSetup)
 	{
@@ -151,13 +157,54 @@ FGameplayAbilitySpecHandle& UNPlayerActionComponent::GetHandle(const ENAbilityAc
 	return BlankHandle;
 }
 
+void UNPlayerActionComponent::ApplyInput(const ENAbilityAction InputUsed, const  ENAbilityCastMode CastMode, bool bIsEnqueueing) {
+	FGameplayEventData EventData;
+	bool bValidTarget = false;
+	FHitResult Hit;
+	switch (InputUsed)
+	{
+		case ENAbilityAction::MOVETO:
+						// Move towards mouse pointer or touch
+			if(NPlayerController)
+			{
+				bValidTarget = NPlayerController->GetHitResultUnderCursor(ECollisionChannel::ECC_Visibility, true, Hit);
+			} else
+			{
+				UE_LOG(LogActionSystem, Warning, TEXT("[%s] ApplyInput detected an invalid NPlayerController (%s)"), *this->GetReadableName(), *GetOuter()->GetFullName())
+		
+			}
+			EventData.TargetData.Append(MakeTargetDataHandleFromHitResult(Hit));
+			
+			// // If we hit a surface, cache the location
+			// if (bHitSuccessful)
+			// {
+			// 	CachedMoveToDestination = Hit.Location;
+			// }
+			break;
+		default:
+			break;
+	}
+	if(bValidTarget)
+		if(bIsEnqueueing)
+		{
+			UE_LOG(LogActionSystem, Warning, TEXT("Queue is on"));
+			EnqueueAction(InputUsed, EventData);
+		}else
+		{
+			ExecuteAction(InputUsed, EventData);
+		}
+}
 
-void UNPlayerActionComponent::ExecuteAction(const ENAbilityAction Action)
+
+bool UNPlayerActionComponent::ExecuteAction(const ENAbilityAction Action, const FGameplayEventData& EventData, bool bShouldClearQueue /* optional: true */)
 {
 	if(!bSetup || !IsValid(NPlayerState))
-		return;
-	ClearQueue();
-	bool bDidAbilityRun = RunAbilityAction(Action);
+		return false;
+	if(bShouldClearQueue)
+	{
+		ClearQueue();
+	}
+	bool bDidAbilityRun = RunAbilityAction(Action, EventData);
 	if(!bDidAbilityRun)
 	{
 		UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerActionComponent] Ran Action #%d, but it failed to activate"), Action);
@@ -170,30 +217,27 @@ void UNPlayerActionComponent::ExecuteAction(const ENAbilityAction Action)
 			UE_LOG(LogActionSystem, Warning, TEXT("{NASC} %s"), *tag.ToString());
 		}
 	}
+	return bDidAbilityRun;
 }
 
-bool UNPlayerActionComponent::RunAbilityAction(const ENAbilityAction Action)
+bool UNPlayerActionComponent::RunAbilityAction(const ENAbilityAction Action, const FGameplayEventData& EventData)
 {
 	if(!bSetup || !IsValid(NPlayerState))
+	{
 		return false;
+	}
 	if(!IsValid(ASCRef))
 	{
-		ASCRef = NPlayerState->GetAbilitySystemComponent();
+		ASCRef = NPlayerController->GetAbilitySystemComponent();
 		if(!IsValid(ASCRef))
 		{
 			UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerActionCmp] ASCRef Invalid"));
+			return false;
 		}
 	}
-	if(NPlayerState->HasAuthority())
-	{
-		FGameplayEventData EventData;
-		EventData.Instigator = NPlayerController;
-		EventData.OptionalObject = NPlayerController;
-		UE_LOG(LogActionSystem, Warning, TEXT("[NPAC] Triggered Ability %d with Authority"), int(Action));
-		return ASCRef->TriggerAbilityFromGameplayEvent(GetHandle(Action), ASCRef->AbilityActorInfo.Get(),
-			FGameplayTag::RequestGameplayTag(FName("Ability.Used")), &EventData, *ASCRef);
-	}
-	return false;
+	UE_LOG(LogActionSystem, Warning, TEXT("[NPAC] Triggered Ability %d with Authority"), int(Action));
+	return ASCRef->TriggerAbilityFromGameplayEvent(GetHandle(Action), ASCRef->AbilityActorInfo.Get(),
+		FGameplayTag::RequestGameplayTag(FName("Ability.Used")), &EventData, *ASCRef);
 	
 }
 
@@ -209,11 +253,11 @@ void UNPlayerActionComponent::CancelCurrentAction()
 	// TODO: Add better check for cancellation here
 }
 
-void UNPlayerActionComponent::EnqueueAction(const ENAbilityAction Action)
+void UNPlayerActionComponent::EnqueueAction(const ENAbilityAction Action, const FGameplayEventData& EventData)
 {
 	if(!bSetup || !IsValid(NPlayerState))
 		return;
-	Queue.Enqueue(Action);
+	Queue.Enqueue(FNActionQueueEntry(Action, EventData));
 	if(!bExecutingQueue)
 	{
 		ExecuteQueue();
@@ -259,21 +303,21 @@ void UNPlayerActionComponent::ExecuteQueuedAction()
 		return;
 	}
 
-	ENAbilityAction DequeuedAction = INVALID;
+	FNActionQueueEntry DequeuedAction = FNActionQueueEntry(ENAbilityAction::INVALID);
 	Queue.Dequeue(DequeuedAction);
-	if(DequeuedAction == INVALID)
+	if(DequeuedAction.AbilityAction == ENAbilityAction::INVALID)
 	{
 		UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerController] Encountered invalid action in queue"))
 		ExecuteQueuedAction(); // causes recursion, if this breaks the stack you have worse problems
 		return;
 	}
-	FGameplayAbilitySpecHandle TempHandle = GetHandle(DequeuedAction); // I'm decently sure this causes undefined behavior
-	bool AbilityActivated = RunAbilityAction(DequeuedAction);
+	FGameplayAbilitySpecHandle TempHandle = GetHandle(DequeuedAction.AbilityAction); // I'm decently sure this causes undefined behavior
+	bool AbilityActivated = ExecuteAction(DequeuedAction.AbilityAction, DequeuedAction.EventData, false);
 	if(!AbilityActivated)
 	{
 		// TODO: determine permutations when this is the case
-		UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerController] Ability Action #%d of Enum failed to run"),
-			int(DequeuedAction));
+		UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerActionComponent] Ability Action #%d of Enum failed to run"),
+			DequeuedAction.AbilityAction);
 		ClearQueue();
 		return;
 	}
@@ -305,3 +349,29 @@ void UNPlayerActionComponent::ActionEnded(const FAbilityEndedData& AbilityEndedD
 	}
 }
 
+
+FGameplayAbilityTargetDataHandle UNPlayerActionComponent::MakeTargetDataHandleFromHitResult(const FHitResult& HitResult)
+{
+	FGameplayAbilityTargetDataHandle ReturnDataHandle;
+
+	/** Note: These are cleaned up by the FGameplayAbilityTargetDataHandle (via an internal TSharedPtr) */
+	FGameplayAbilityTargetData_SingleTargetHit* ReturnData = new FGameplayAbilityTargetData_SingleTargetHit();
+	ReturnData->HitResult = HitResult;
+	ReturnDataHandle.Add(ReturnData);
+	return ReturnDataHandle;
+}
+
+FGameplayAbilityTargetDataHandle UNPlayerActionComponent::MakeTargetDataHandleFromHitResults(const TArray<FHitResult>& HitResults)
+{
+	FGameplayAbilityTargetDataHandle ReturnDataHandle;
+
+	for (int32 i = 0; i < HitResults.Num(); i++)
+	{
+		/** Note: These are cleaned up by the FGameplayAbilityTargetDataHandle (via an internal TSharedPtr) */
+		FGameplayAbilityTargetData_SingleTargetHit* ReturnData = new FGameplayAbilityTargetData_SingleTargetHit();
+		ReturnData->HitResult = HitResults[i];
+		ReturnDataHandle.Add(ReturnData);
+	}
+	
+	return ReturnDataHandle;
+}

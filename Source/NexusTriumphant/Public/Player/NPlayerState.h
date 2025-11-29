@@ -17,7 +17,7 @@
  * 
  */
 UCLASS()
-class NEXUSTRIUMPHANT_API ANPlayerState : public APlayerState, public IAbilitySystemInterface
+class NEXUSTRIUMPHANT_API ANPlayerState : public APlayerState
 {
 	GENERATED_BODY()
 	
@@ -25,9 +25,6 @@ class NEXUSTRIUMPHANT_API ANPlayerState : public APlayerState, public IAbilitySy
 
 private:
 	/** Ability System Component, Attributes, Effects and Abilities for setup */
-
-	UPROPERTY(Replicated, VisibleAnywhere, Category="Abilities")
-	UNAbilitySystemComponent* NAbilitySystemComponent;
 
 	UPROPERTY(Replicated, EditDefaultsOnly, Category="Abilities")
 	UNChampionDef* ChampionDataAsset;
@@ -56,8 +53,6 @@ public:
 	
 	// IAbilitySystemInterface
 	UNChampionDef* GetChampionDataAsset() const { return ChampionDataAsset; }
-	virtual UNAbilitySystemComponent* GetAbilitySystemComponent() const override { return NAbilitySystemComponent; }
-	UNAbilitySystemComponent* GetNAbilitySystemComponent() const { return NAbilitySystemComponent; }
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty> & OutLifetimeProps) const override;
 
 	// Sets the spec handle with the key Action in CurrentAbilityActions

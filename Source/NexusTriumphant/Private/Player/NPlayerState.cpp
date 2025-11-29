@@ -10,7 +10,6 @@
 ANPlayerState::ANPlayerState(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
 	// Ability system items
-	NAbilitySystemComponent = CreateDefaultSubobject<UNAbilitySystemComponent>(TEXT("NAbilitySystemComponent"));
 	ChampionDataAsset = CreateDefaultSubobject<UNChampionDef>(TEXT("Champion Definition"));
 	//InitialAbilitySet = CreateDefaultSubobject<UNAbilitySet>(TEXT("InitialAbilitySet"));
 	//StandardAttributes = CreateDefaultSubobject<UNBaseAttributeSet>(TEXT("StandardAttributeSet"));
@@ -26,7 +25,5 @@ void ANPlayerState::BeginPlay()
 {
 	Super::BeginPlay();
 	bReplicates = true;
-	NAbilitySystemComponent = NewObject<UNAbilitySystemComponent>(this, UNAbilitySystemComponent::StaticClass());
-	NAbilitySystemComponent->RegisterComponent();
 	//SetupInitialAbilitiesAndEffects();
 }

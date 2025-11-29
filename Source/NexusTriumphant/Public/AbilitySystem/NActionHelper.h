@@ -7,7 +7,7 @@ class UTexture2D;
 DECLARE_LOG_CATEGORY_EXTERN(LogActionSystem, Verbose, All);
 
 UENUM(Blueprintable)
-enum ENAbilityAction //Nexus Ability Action: What action the play is taking to activate these things
+enum class ENAbilityAction : uint8 //Nexus Ability Action: What action the play is taking to activate these things
 {
 	INVALID = 0 UMETA(DisplayName="Invalid"),
 	ENQUEUE		UMETA(DisplayName="Enqueue"),
@@ -20,6 +20,16 @@ enum ENAbilityAction //Nexus Ability Action: What action the play is taking to a
 	TRAIT       UMETA(DisplayName="AbilityTrait"),
 	ADDT1       UMETA(DisplayName="AbilityAddt1"),
 	ADDT2		UMETA(DisplayName="AbilityAddt2"),
+};
+
+UENUM(Blueprintable)
+enum class ENAbilityCastMode : uint8 // Nexus Ability Cast Type: If cast should be on input start, target or release
+{
+	INVALID = 0 UMETA(DisplayName="Invalid"),
+	INSTANT		UMETA(DisplayName="Instant"),
+	ON_RELEASE  UMETA(DisplayName="On Release"),
+	PRECISE	UMETA(DisplayName="Precise"),
+	
 };
 
 USTRUCT(Blueprintable, BlueprintType)

@@ -79,7 +79,7 @@ public:
 	TSet<FAbilitySetItem> AbilitySetItems;
 
 	const TSet<FAbilityInputInfo>& GetInputAbilities() const;
-	TArray<FGameplayAbilitySpecHandle> GrantAbilitiesToAbilitySystem(UNAbilitySystemComponent* NASC) const;
+	TArray<FGameplayAbilitySpecHandle> GrantAbilitiesToAbilitySystem(TObjectPtr<UNAbilitySystemComponent> NASC) const;
 
 #if WITH_EDITOR
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;

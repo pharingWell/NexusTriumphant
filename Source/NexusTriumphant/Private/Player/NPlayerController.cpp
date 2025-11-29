@@ -12,8 +12,9 @@
 #include "InputActionValue.h"
 #include "EnhancedInputSubsystems.h"
 #include "Engine/LocalPlayer.h"
-#include "Player/NPlayerCharacter.h"
+#include "GameFramework/PawnMovementComponent.h"
 #include "NexusTriumphant/NexusTriumphant.h"
+#include "Player/NPlayerCharacter.h"
 
 
 ANPlayerController::ANPlayerController(const FObjectInitializer& ObjectInitializer): Super(ObjectInitializer)
@@ -24,6 +25,7 @@ ANPlayerController::ANPlayerController(const FObjectInitializer& ObjectInitializ
 	CachedMoveToDestination = FVector::ZeroVector;
 	FollowTime = 0.f;
 	PlayerActionComponent = CreateDefaultSubobject<UNPlayerActionComponent>(TEXT("Player Action Component"));
+	NAbilitySystemComponent = CreateDefaultSubobject<UNAbilitySystemComponent>(TEXT("NAbilitySystemComponent"));
 }
 
 void ANPlayerController::OnConstruction(const FTransform& Transform)
@@ -40,8 +42,11 @@ void ANPlayerController::PreInitializeComponents()
 void ANPlayerController::BeginPlay()
 {
 	// Call the base class  
-	Super::BeginPlay();	
-	
+	Super::BeginPlay();
+	PlayerActionComponent = NewObject<UNPlayerActionComponent>(this, UNPlayerActionComponent::StaticClass());
+	PlayerActionComponent->RegisterComponent();
+	NAbilitySystemComponent = NewObject<UNAbilitySystemComponent>(this, UNAbilitySystemComponent::StaticClass());
+	NAbilitySystemComponent->RegisterComponent();
 }
 
 void ANPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -58,30 +63,32 @@ void ANPlayerController::AcknowledgePossession(APawn* P)
 {
 	Super::AcknowledgePossession(P);
 
-	ANPlayerState* NPlayerState = GetPlayerState<ANPlayerState>();
+	NPlayerState = GetPlayerState<ANPlayerState>();
 	NPlayerCharacter = Cast<ANPlayerCharacter>(P);
 	if (!IsValid(PlayerActionComponent))
 	{
 		UE_LOG(LogNexusTriumphant, Error, TEXT("[NPlayerController] Player Action Component not ready"));
 		return;
 	}
-	if (IsValid(NPlayerCharacter) && IsValid(NPlayerState))
+	if (IsValid(NPlayerState))
 	{
-		NPlayerCharacter->SetPlayerState(NPlayerState);
+		if PlayerActionComponent-
 		PlayerActionComponent->Setup(NPlayerState, this);
-		auto NASC = NPlayerState->GetNAbilitySystemComponent();
-		if (NASC)
-		{
-			NASC->InitAbilityActorInfo(NPlayerState, NPlayerCharacter);
-		} else
-		{
-			UE_LOG(LogNexusTriumphant, Error, TEXT("[NPlayerController] NASC not ready"));
-			return;
-		}
-	}else
-	{
-		UE_LOG(LogNexusTriumphant, Error, TEXT("[NPlayerController] Failed to cast player pawn (or state invalid)"));
 	}
+	// {
+	// 	NPlayerCharacter->SetPlayerState(NPlayerState);
+	// 	if (NASC)
+	// 	{
+	// 		NASC->InitAbilityActorInfo(this, NPlayerCharacter);
+	// 	} else
+	// 	{
+	// 		UE_LOG(LogNexusTriumphant, Error, TEXT("[NPlayerController] NASC not ready"));
+	// 		return;
+	// 	}
+	// }else
+	// {
+	// 	UE_LOG(LogNexusTriumphant, Error, TEXT("[NPlayerController] Failed to cast player pawn (or state invalid)"));
+	// }
 	//...
 }
 
@@ -97,17 +104,18 @@ void ANPlayerController::OnRep_PlayerState()
 	// When we're a client connected to a remote server, the player controller may replicate later than the PlayerState and AbilitySystemComponent.
 	if (GetWorld()->IsNetMode(NM_Client))
 	{
-		if (ANPlayerState* NPlayerState = GetPlayerState<ANPlayerState>())
-		{
-			if (UNAbilitySystemComponent* NASC = NPlayerState->GetNAbilitySystemComponent())
+		if (!NAbilitySystemComponent)
+			NAbilitySystemComponent = GetNAbilitySystemComponent();
+		if (NAbilitySystemComponent)
 			{
 				// Calls InitAbilityActorInfo
-				NASC->RefreshAbilityActorInfo();
+				NAbilitySystemComponent->RefreshAbilityActorInfo();
 				// NASC->TryActivateAbilitiesOnSpawn();
 			}
 		}
 	}
-}
+
+
 
 
 void ANPlayerController::SetupInputComponent()
@@ -135,9 +143,9 @@ void ANPlayerController::SetupInputComponent()
 			
 			for (auto& Element : NMappingContext->GetNMappings())
 			{
-				TEnumAsByte<ENAbilityAction> ActionEnum = Element.Enum;
+				ENAbilityAction ActionEnum = Element.Enum;
 				const UInputAction* InputAction = Element.Action;
-				if(ActionEnum == ENQUEUE)
+				if(ActionEnum == ENAbilityAction::ENQUEUE)
 				{
 					EnhancedInputComponent->BindAction(InputAction, ETriggerEvent::Started, this, &ANPlayerController::EnqueueStarted);
 					EnhancedInputComponent->BindAction(InputAction, ETriggerEvent::Completed, this, &ANPlayerController::EnqueueEnded);
@@ -170,78 +178,28 @@ void ANPlayerController::EnqueueEnded()
 	bIsEnqueuing = false;
 }
 
-void ANPlayerController::OnInputStarted(const TEnumAsByte<ENAbilityAction> InputUsed)
+void ANPlayerController::OnInputStarted(const ENAbilityAction InputUsed)
 {
 	UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerController] Started AbilityAction #%d"), int(InputUsed));
-	if (InputUsed == MOVETO)
+	if (InputUsed == ENAbilityAction::MOVETO)
 	{
 		StopMovement();
-	}
-	if(bIsEnqueuing)
-	{
-		UE_LOG(LogActionSystem, Warning, TEXT("Queue is on"));
-		PlayerActionComponent->EnqueueAction(InputUsed);
-	}else
-	{
-		PlayerActionComponent->ExecuteAction(InputUsed);
 	}
 	
 }
 
-void ANPlayerController::OnInputTriggered(const TEnumAsByte<ENAbilityAction> InputUsed)
+void ANPlayerController::OnInputTriggered(const ENAbilityAction InputUsed)
 {
 	UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerController] Triggered AbilityAction #%d"), int(InputUsed));
-	FHitResult Hit;
-	APawn* ControlledPawn;
-	switch (InputUsed)
-	{
-		case MOVETO:
-			// We flag that the input is being pressed
-				FollowTime += GetWorld()->GetDeltaSeconds();
-		
-			// We look for the location in the world where the player has pressed the input
-			
-			bool bHitSuccessful;
-			if (bIsTouch)
-			{
-				bHitSuccessful = GetHitResultUnderFinger(ETouchIndex::Touch1, ECollisionChannel::ECC_Visibility, true, Hit);
-			}
-			else
-			{
-				bHitSuccessful = GetHitResultUnderCursor(ECollisionChannel::ECC_Visibility, true, Hit);
-			}
-
-			// If we hit a surface, cache the location
-			if (bHitSuccessful)
-			{
-				CachedMoveToDestination = Hit.Location;
-			}
-			
-			// Move towards mouse pointer or touch
-			ControlledPawn = GetPawn();
-			if (ControlledPawn != nullptr)
-			{
-				FVector WorldDirection = (CachedMoveToDestination - ControlledPawn->GetActorLocation()).GetSafeNormal();
-				ControlledPawn->AddMovementInput(WorldDirection, 1.0, false);
-			}
-			break;
-		default:
-			break;
-	}
+	
+	FGameplayEventData EventData;
+	PlayerActionComponent->ApplyInput(InputUsed, ENAbilityCastMode::INSTANT, bIsEnqueuing);
 }
 
-
-void ANPlayerController::OnInputFinished(const TEnumAsByte<ENAbilityAction> InputUsed)
+void ANPlayerController::OnInputFinished(const ENAbilityAction InputUsed)
 {
 	UE_LOG(LogActionSystem, Display, TEXT("Stopped using AbilityAction #%d"), int(InputUsed));
-	switch (InputUsed)
-	{
-		case MOVETO:
-			
-			break;
-		default:
-			break;
-	}
+
 }
 
 

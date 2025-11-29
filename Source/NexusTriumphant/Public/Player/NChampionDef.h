@@ -81,7 +81,7 @@ public:
 	TSubclassOf<UGameplayAbility> AdditionalAbility2Class;
 
 	UPROPERTY()
-	TMap<TEnumAsByte<ENAbilityAction>, TSubclassOf<UGameplayAbility>> AbilityMap;
+	TMap<ENAbilityAction, TSubclassOf<UGameplayAbility>> AbilityMap;
 private:
 	//TMap<ENAbilityAction, FNActionHandlerFunctions> HandlerFunctionMap;
 
@@ -89,7 +89,7 @@ private:
 	
 public:
 	UNChampionDef();
-	const TMap<TEnumAsByte<ENAbilityAction>, TSubclassOf<UGameplayAbility>>& GetUpdatedAbilityMap();
+	const TMap<ENAbilityAction, TSubclassOf<UGameplayAbility>>& GetUpdatedAbilityMap();
 	/* void SetBinding(UEnhancedInputComponent* EnhancedInputComponent, ENAbilityAction EnumKey,
 	                const UInputAction* InputAction);
 */

@@ -8,12 +8,12 @@
 #include "NPlayerActionComponent.h"
 #include "AbilitySystem/NActionHelper.h"
 #include "Player/NPlayerState.h"
-#include "Player/NPlayerCharacter.h"
 #include "Templates/SubclassOf.h"
 #include "GameFramework/PlayerController.h"
 #include "Input/NInputMappingContext.h"
 #include "NPlayerController.generated.h"
 
+class ANPlayerCharacter;
 class UEnhancedInputLocalPlayerSubsystem;
 /** Forward declaration to improve compiling times */
 class UNiagaraSystem;
@@ -23,7 +23,7 @@ class UInputAction;
 
 
 UCLASS()
-class ANPlayerController : public APlayerController
+class ANPlayerController : public APlayerController, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 
@@ -48,18 +48,19 @@ public:
 protected:
 	/** True if the controlled character should navigate to the mouse cursor. */
 	uint32 bMoveToMouseCursor : 1;
-	TEnumAsByte<ENAbilityAction> CurrentAction;
+	ENAbilityAction CurrentAction;
 	FGameplayAbilityActorInfo AbilityActorInfo;
 
 	bool bIsEnqueuing;
 	
 	UPROPERTY()
-	UNPlayerActionComponent* PlayerActionComponent;
+	TObjectPtr<UNPlayerActionComponent> PlayerActionComponent;
 	UPROPERTY()
-	ANPlayerCharacter* NPlayerCharacter;
+	TObjectPtr<ANPlayerCharacter> NPlayerCharacter;
 	UPROPERTY()
-	UAbilitySystemComponent* ASCRef;
-	bool bASCRefValid;
+	TObjectPtr<ANPlayerState> NPlayerState;
+	UPROPERTY()
+	TObjectPtr<UNAbilitySystemComponent> NAbilitySystemComponent;
 	UPROPERTY()
 	UEnhancedInputComponent* EnhancedInputComponent;
 	UPROPERTY()
@@ -81,7 +82,6 @@ public:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-	// To add mapping context
 	virtual void AcknowledgePossession(APawn* P) override;
 
 	virtual void CleanupPlayerState() override;
@@ -89,21 +89,15 @@ public:
 	//End of ~AController interface
 	
 	// Called to bind functionality to input
-	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override
 	{
-		if(ANPlayerState* NPlayerState = GetPlayerState<ANPlayerState>())
-			return NPlayerState->GetAbilitySystemComponent();
-		if(IsValid(NPlayerCharacter))
-		{
-			return NPlayerCharacter->GetAbilitySystemComponent();
-		}
-		// if(GetPawn()->Implements<IAbilitySystemInterface>())
-		// {
-		// 	return Cast<IAbilitySystemInterface>(GetPawn())->GetAbilitySystemComponent();
-		// }
-		return nullptr;
+		return NAbilitySystemComponent;
 	}
 
+	virtual TObjectPtr<UNAbilitySystemComponent> GetNAbilitySystemComponent() const
+	{
+		return NAbilitySystemComponent;
+	}
 	UFUNCTION(BlueprintCallable, Category="Collision")
 	bool K2_GetHitResultUnderCursor(ECollisionChannel TraceChannel, bool bTraceComplex, FHitResult& HitResult);
 
@@ -116,11 +110,11 @@ protected:
 	UFUNCTION(Blueprintable, Category = "Actions")
 	void EnqueueEnded();
 	UFUNCTION(Blueprintable, Category = "Actions")
-	void OnInputStarted(const TEnumAsByte<ENAbilityAction> InputUsed);
+	void OnInputStarted(ENAbilityAction InputUsed);
 	UFUNCTION(Blueprintable, Category = "Actions")
-	void OnInputTriggered(const TEnumAsByte<ENAbilityAction> InputUsed);
+	void OnInputTriggered(const ENAbilityAction InputUsed);
 	UFUNCTION(Blueprintable, Category = "Actions")
-	void OnInputFinished(const TEnumAsByte<ENAbilityAction> InputUsed);
+	void OnInputFinished(const ENAbilityAction InputUsed);
 };
 
 

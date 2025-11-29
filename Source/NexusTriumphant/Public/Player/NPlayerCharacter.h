@@ -18,6 +18,7 @@
 #include "Engine/World.h"
 #include "AbilitySystemInterface.h"
 #include "AbilitySystemComponent.h"
+#include "Player/NPlayerController.h"
 #include "NPlayerState.h"
 #include "Net/UnrealNetwork.h"
 #include "AbilitySystem/Abilities/NAbilitySet.h"
@@ -48,7 +49,8 @@ protected:
 	/**
 	 * Begins as null
 	 */
-	ANPlayerState* PlayerState;
+	UPROPERTY()
+	TObjectPtr<ANPlayerController> PlayerController;
 	
 private:
 	/** Top down camera */
@@ -60,7 +62,7 @@ private:
 	USpringArmComponent* CameraBoom;	
 
 	UPROPERTY()
-	UNAbilitySystemComponent* NASC;
+	TObjectPtr<UNAbilitySystemComponent> NASC;
 	
 	/** FUNCTIONS */
 	
@@ -72,6 +74,8 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	virtual void PossessedBy(AController* NewController) override;
+	virtual void OnRep_PlayerState() override;
+	virtual void OnRep_Controller() override;
 
 	/** Returns TopDownCameraComponent sub-object **/
 	FORCEINLINE UCameraComponent* GetTopDownCameraComponent() const { return TopDownCameraComponent; }
@@ -80,9 +84,9 @@ public:
 
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override
 	{
-		if(IsValid(PlayerState))
+		if(IsValid(PlayerController))
 		{
-			return PlayerState->GetAbilitySystemComponent();
+			return PlayerController->GetAbilitySystemComponent();
 		}
 		
 		return nullptr;
