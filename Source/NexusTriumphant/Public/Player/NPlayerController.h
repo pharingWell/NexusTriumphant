@@ -101,6 +101,11 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Collision")
 	bool K2_GetHitResultUnderCursor(ECollisionChannel TraceChannel, bool bTraceComplex, FHitResult& HitResult);
 
+	// Internal call for running the ability action
+	UFUNCTION(BlueprintCallable, Server, Reliable, Category="Gameplay Ability System")
+	void Server_RunAbilityAction(ENAbilityAction Action, const FGameplayEventData& EventData);
+	
+	
 protected:
 	UFUNCTION()
 	virtual void SetupInputComponent() override;
@@ -115,6 +120,8 @@ protected:
 	void OnInputTriggered(const ENAbilityAction InputUsed);
 	UFUNCTION(Blueprintable, Category = "Actions")
 	void OnInputFinished(const ENAbilityAction InputUsed);
+
+	
 };
 
 

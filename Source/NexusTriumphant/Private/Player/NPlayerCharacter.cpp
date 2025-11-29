@@ -102,6 +102,8 @@ void ANPlayerCharacter::PossessedBy(AController * NewController)
 		{
 			NASC = PlayerController->GetNAbilitySystemComponent();
 			NASC->InitAbilityActorInfo(PlayerController, this);
+			UE_LOG(LogNAbilitySystem, Warning, TEXT("[NPlayerCharacter] InitActorInfo in PossessedBy"))
+		
 		}
 	}
 
@@ -112,6 +114,19 @@ void ANPlayerCharacter::PossessedBy(AController * NewController)
 void ANPlayerCharacter::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
+	PlayerController = GetController<ANPlayerController>();
+	if (PlayerController)
+	{
+		PlayerController->GetAbilitySystemComponent()->RefreshAbilityActorInfo();
+	}
+}
+
+
+void ANPlayerCharacter::OnRep_Controller()
+{
+	Super::OnRep_Controller();
+	// Needed in case the PC wasn't valid when we Init-ed the ASC.
+
 	if (NASC == nullptr)
 	{
 		PlayerController = GetController<ANPlayerController>();
@@ -122,7 +137,7 @@ void ANPlayerCharacter::OnRep_PlayerState()
 			
 			// Init the Client side part of the ASC
 			NASC->InitAbilityActorInfo(PlayerController, this);
-		
+			UE_LOG(LogNAbilitySystem, Warning, TEXT("[NPlayerCharacter] InitActorInfo in OnRep_PlayerController"))
 			// Some games grant attributes here
 
 			// Some games client initialize another components of the character that use the ASC here
@@ -132,17 +147,5 @@ void ANPlayerCharacter::OnRep_PlayerState()
 	{
 		// Solves the data-races of controller/playerstate
 		NASC->RefreshAbilityActorInfo();
-	}
-}
-
-
-void ANPlayerCharacter::OnRep_Controller()
-{
-	Super::OnRep_Controller();
-	// Needed in case the PC wasn't valid when we Init-ed the ASC.
-	PlayerController = GetController<ANPlayerController>();
-	if (PlayerController)
-	{
-		PlayerController->GetAbilitySystemComponent()->RefreshAbilityActorInfo();
 	}
 }

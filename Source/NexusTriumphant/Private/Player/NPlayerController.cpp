@@ -72,7 +72,6 @@ void ANPlayerController::AcknowledgePossession(APawn* P)
 	}
 	if (IsValid(NPlayerState))
 	{
-		if PlayerActionComponent-
 		PlayerActionComponent->Setup(NPlayerState, this);
 	}
 	// {
@@ -202,6 +201,33 @@ void ANPlayerController::OnInputFinished(const ENAbilityAction InputUsed)
 
 }
 
+void ANPlayerController::Server_RunAbilityAction_Implementation(const ENAbilityAction Action, const FGameplayEventData& EventData)
+{
+	if(!IsValid(NPlayerState))
+	{
+		UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerController] Server_RunAbilityAction: NPlayerState Invalid"));
+		return;
+	}
+	if(!IsValid(NAbilitySystemComponent))
+	{
+		UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerController] Server_RunAbilityAction: ASCRef Invalid"));
+		return;
+	}
+	if(!IsValid(PlayerActionComponent))
+	{
+		UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerController] Server_RunAbilityAction: PlayerActionComponent Invalid"));
+		return;
+	}
+	bool Success = NAbilitySystemComponent->TriggerAbilityFromGameplayEvent(PlayerActionComponent->GetHandle(Action), NAbilitySystemComponent->AbilityActorInfo.Get(),
+		FGameplayTag::RequestGameplayTag(FName("Ability.Used")), &EventData, *NAbilitySystemComponent);
+	UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerController] Triggered Ability %d with Authority: Ran %s"),
+		int(Action), Success ? TEXT("Successfully") : TEXT("Unsuccessfully"));
+	auto tagContainer = NAbilitySystemComponent->GetOwnedGameplayTags();
+	for(auto tag : tagContainer)
+	{
+		UE_LOG(LogActionSystem, Warning, TEXT("{NASC} %s"), *tag.ToString());
+	}
+}
 
 
 bool ANPlayerController::K2_GetHitResultUnderCursor(ECollisionChannel TraceChannel, bool bTraceComplex,

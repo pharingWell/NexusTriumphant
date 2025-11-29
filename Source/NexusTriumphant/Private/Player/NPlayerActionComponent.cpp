@@ -191,54 +191,19 @@ void UNPlayerActionComponent::ApplyInput(const ENAbilityAction InputUsed, const 
 			EnqueueAction(InputUsed, EventData);
 		}else
 		{
+			// if(bShouldClearQueue)
+			ClearQueue();
 			ExecuteAction(InputUsed, EventData);
 		}
 }
 
 
-bool UNPlayerActionComponent::ExecuteAction(const ENAbilityAction Action, const FGameplayEventData& EventData, bool bShouldClearQueue /* optional: true */)
+bool UNPlayerActionComponent::ExecuteAction(const ENAbilityAction Action, const FGameplayEventData& EventData)
 {
-	if(!bSetup || !IsValid(NPlayerState))
+	if(!bSetup || !IsValid(NPlayerController))
 		return false;
-	if(bShouldClearQueue)
-	{
-		ClearQueue();
-	}
-	bool bDidAbilityRun = RunAbilityAction(Action, EventData);
-	if(!bDidAbilityRun)
-	{
-		UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerActionComponent] Ran Action #%d, but it failed to activate"), Action);
-	}
-	if(NPlayerController->HasAuthority())
-	{
-		auto tagContainer = ASCRef->GetOwnedGameplayTags();
-		for(auto tag : tagContainer)
-		{
-			UE_LOG(LogActionSystem, Warning, TEXT("{NASC} %s"), *tag.ToString());
-		}
-	}
-	return bDidAbilityRun;
-}
-
-bool UNPlayerActionComponent::RunAbilityAction(const ENAbilityAction Action, const FGameplayEventData& EventData)
-{
-	if(!bSetup || !IsValid(NPlayerState))
-	{
-		return false;
-	}
-	if(!IsValid(ASCRef))
-	{
-		ASCRef = NPlayerController->GetAbilitySystemComponent();
-		if(!IsValid(ASCRef))
-		{
-			UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerActionCmp] ASCRef Invalid"));
-			return false;
-		}
-	}
-	UE_LOG(LogActionSystem, Warning, TEXT("[NPAC] Triggered Ability %d with Authority"), int(Action));
-	return ASCRef->TriggerAbilityFromGameplayEvent(GetHandle(Action), ASCRef->AbilityActorInfo.Get(),
-		FGameplayTag::RequestGameplayTag(FName("Ability.Used")), &EventData, *ASCRef);
-	
+	NPlayerController->Server_RunAbilityAction(Action, EventData);
+	return true;
 }
 
 void UNPlayerActionComponent::CancelCurrentAction()
@@ -312,7 +277,7 @@ void UNPlayerActionComponent::ExecuteQueuedAction()
 		return;
 	}
 	FGameplayAbilitySpecHandle TempHandle = GetHandle(DequeuedAction.AbilityAction); // I'm decently sure this causes undefined behavior
-	bool AbilityActivated = ExecuteAction(DequeuedAction.AbilityAction, DequeuedAction.EventData, false);
+	bool AbilityActivated = ExecuteAction(DequeuedAction.AbilityAction, DequeuedAction.EventData);
 	if(!AbilityActivated)
 	{
 		// TODO: determine permutations when this is the case

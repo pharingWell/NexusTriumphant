@@ -68,7 +68,7 @@ public:
 
 	// External function to run an ability action, does not enqueue 
 	UFUNCTION(BlueprintCallable, Category="Gameplay Ability System")
-	bool ExecuteAction(ENAbilityAction Action, const FGameplayEventData& EventData, bool ClearQueue = true);
+	bool ExecuteAction(ENAbilityAction Action, const FGameplayEventData& EventData);
 
 	UFUNCTION(BlueprintCallable, Category="Gameplay Ability System")
 	void CancelCurrentAction();
@@ -92,9 +92,6 @@ protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
-	// Internal call for running the ability action
-	UFUNCTION(BlueprintCallable, Category="Gameplay Ability System")
-	bool RunAbilityAction(ENAbilityAction Action, const FGameplayEventData& EventData);
 	void ExecuteQueue();
 	void ExecuteQueuedAction();
 };
