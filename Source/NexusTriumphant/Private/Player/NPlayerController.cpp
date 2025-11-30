@@ -73,6 +73,7 @@ void ANPlayerController::AcknowledgePossession(APawn* P)
 	if (IsValid(NPlayerState))
 	{
 		PlayerActionComponent->Setup(NPlayerState, this);
+		NPlayerState->Setup();
 	}
 	// {
 	// 	NPlayerCharacter->SetPlayerState(NPlayerState);
@@ -192,7 +193,23 @@ void ANPlayerController::OnInputTriggered(const ENAbilityAction InputUsed)
 	UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerController] Triggered AbilityAction #%d"), int(InputUsed));
 	
 	FGameplayEventData EventData;
-	PlayerActionComponent->ApplyInput(InputUsed, ENAbilityCastMode::INSTANT, bIsEnqueuing);
+	FHitResult HitResult;
+	GetHitResultUnderCursor(ECollisionChannel::ECC_Visibility, true, HitResult);
+	FGameplayAbilityTargetDataHandle DataHandle;
+	FGameplayAbilityTargetData_SingleTargetHit* SingleTargetHit = new FGameplayAbilityTargetData_SingleTargetHit();
+	SingleTargetHit->HitResult = HitResult;
+	DataHandle.Add(SingleTargetHit);
+	EventData.TargetData.Append(DataHandle);
+	EventData.Instigator = this;
+	EventData.OptionalObject = this;
+	if(!NPlayerState) {
+		UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerController] NPlayerState invalid #%d"), int(InputUsed));
+		return;
+	}
+	Server_RunAbilityAction_Implementation(NPlayerState->GetHandle(InputUsed), EventData);
+	
+	
+	// PlayerActionComponent->ApplyInput(InputUsed, ENAbilityCastMode::INSTANT, bIsEnqueuing);
 }
 
 void ANPlayerController::OnInputFinished(const ENAbilityAction InputUsed)
@@ -201,7 +218,8 @@ void ANPlayerController::OnInputFinished(const ENAbilityAction InputUsed)
 
 }
 
-void ANPlayerController::Server_RunAbilityAction_Implementation(const ENAbilityAction Action, const FGameplayEventData& EventData)
+void ANPlayerController::Server_RunAbilityAction_Implementation(FGameplayAbilitySpecHandle Handle,
+	const FGameplayEventData& EventData)
 {
 	if(!IsValid(NPlayerState))
 	{
@@ -218,10 +236,10 @@ void ANPlayerController::Server_RunAbilityAction_Implementation(const ENAbilityA
 		UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerController] Server_RunAbilityAction: PlayerActionComponent Invalid"));
 		return;
 	}
-	bool Success = NAbilitySystemComponent->TriggerAbilityFromGameplayEvent(PlayerActionComponent->GetHandle(Action), NAbilitySystemComponent->AbilityActorInfo.Get(),
-		FGameplayTag::RequestGameplayTag(FName("Ability.Used")), &EventData, *NAbilitySystemComponent);
-	UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerController] Triggered Ability %d with Authority: Ran %s"),
-		int(Action), Success ? TEXT("Successfully") : TEXT("Unsuccessfully"));
+	bool Success = NAbilitySystemComponent->TriggerAbilityFromGameplayEvent(Handle, NAbilitySystemComponent->AbilityActorInfo.Get(),
+		FGameplayTag::RequestGameplayTag("Ability.Used", true), &EventData, *NAbilitySystemComponent.Get());
+	UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerController] Triggered Ability %s with Authority: Ran %s"),
+		*Handle.ToString(), Success ? TEXT("Successfully") : TEXT("Unsuccessfully"));
 	auto tagContainer = NAbilitySystemComponent->GetOwnedGameplayTags();
 	for(auto tag : tagContainer)
 	{
@@ -235,4 +253,5 @@ bool ANPlayerController::K2_GetHitResultUnderCursor(ECollisionChannel TraceChann
 {
 	return GetHitResultUnderCursor(ECollisionChannel::ECC_Visibility, true, HitResult);
 }
+
 

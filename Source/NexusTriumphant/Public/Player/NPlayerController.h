@@ -103,7 +103,7 @@ public:
 
 	// Internal call for running the ability action
 	UFUNCTION(BlueprintCallable, Server, Reliable, Category="Gameplay Ability System")
-	void Server_RunAbilityAction(ENAbilityAction Action, const FGameplayEventData& EventData);
+	void Server_RunAbilityAction(FGameplayAbilitySpecHandle Handle, const FGameplayEventData& EventData);
 	
 	
 protected:

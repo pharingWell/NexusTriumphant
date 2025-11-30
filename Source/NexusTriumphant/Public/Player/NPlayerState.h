@@ -13,6 +13,7 @@
 #include "GameFramework/PlayerState.h"
 #include "NPlayerState.generated.h"
 
+class ANPlayerController;
 /**
  * 
  */
@@ -22,35 +23,28 @@ class NEXUSTRIUMPHANT_API ANPlayerState : public APlayerState
 	GENERATED_BODY()
 	
 	/** PROPERTIES */
-
+protected:
+	bool bSetup = false;
 private:
 	/** Ability System Component, Attributes, Effects and Abilities for setup */
-
+	TObjectPtr<ANPlayerController> NPlayerController;
 	UPROPERTY(Replicated, EditDefaultsOnly, Category="Abilities")
 	UNChampionDef* ChampionDataAsset;
-	
-	
-	/*UPROPERTY(Replicated, VisibleAnywhere, Category="Abilities")
-	UNBaseAttributeSet* StandardAttributes{nullptr};
-
-	
-	UPROPERTY(EditDefaultsOnly, Category="Abilities")
-	TSubclassOf<UGameplayEffect> InitialGameplayEffect{nullptr};
-	
-	UPROPERTY(EditDefaultsOnly, Category="Abilities")
-	UNAbilitySet* InitialAbilitySet{nullptr};
-	
-	UPROPERTY(EditDefaultsOnly, Category="Abilities")
-	TArray<FGameplayAbilitySpecHandle> InitiallyGrantedAbilitySpecHandles;
-	*/
-
+	TMap<ENAbilityAction, FGameplayAbilitySpecHandle> BaseAbilityActions;
+	// index being the enum
+	UPROPERTY(Replicated, EditDefaultsOnly, Category="Abilities")
+	TArray<FGameplayAbilitySpecHandle> CurrentAbilityActions;
 	
 	/** FUNCTIONS */
 
 public:
 	ANPlayerState(const FObjectInitializer& ObjectInitializer);
 	virtual void BeginPlay() override;
-	
+	UFUNCTION()
+	void Setup();
+	void RevertAbilityAction(ENAbilityAction Action);
+	UFUNCTION(BlueprintCallable, Category="Gameplay Ability System")
+	FGameplayAbilitySpecHandle GetHandle(ENAbilityAction Action, bool GetBase = false);
 	// IAbilitySystemInterface
 	UNChampionDef* GetChampionDataAsset() const { return ChampionDataAsset; }
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty> & OutLifetimeProps) const override;

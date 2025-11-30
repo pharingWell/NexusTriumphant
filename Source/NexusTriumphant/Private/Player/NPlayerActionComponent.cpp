@@ -15,9 +15,6 @@ UNPlayerActionComponent::UNPlayerActionComponent(const FObjectInitializer& Objec
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
 	//PrimaryComponentTick.bCanEverTick = true;
-	BlankHandle = FGameplayAbilitySpecHandle();
-	CurrentActionSpecHandle = BlankHandle;
-	// ...
 }
 
 void UNPlayerActionComponent::BeginPlay()
@@ -63,32 +60,6 @@ void UNPlayerActionComponent::Setup(const TObjectPtr<ANPlayerState>& InPlayerSta
 	}
 
 	ASCRef->OnAbilityEnded.AddUFunction(this, "ActionEnded");
-	TMap<ENAbilityAction, FString> Names {};
-	if(NPlayerController->HasAuthority())
-	{
-		for (const auto AbilityPair : NPlayerState->GetChampionDataAsset()->GetUpdatedAbilityMap())
-		{
-			const ENAbilityAction &AbilityAction = AbilityPair.Key;
-			if(AbilityAction == ENAbilityAction::ENQUEUE)
-			{
-				continue;
-			}
-			const TSubclassOf<UGameplayAbility> &GameplayAbility = AbilityPair.Value;
-			
-			BaseAbilityActions.Add(AbilityAction, ASCRef->GiveAbility(
-			FGameplayAbilitySpec(GameplayAbility, 1 /* abil level */, static_cast<uint8>(AbilityAction), this)));
-			Names.Add(AbilityAction, GameplayAbility->GetDescription());
-		}
-
-		CurrentAbilityActions = BaseAbilityActions;
-	
-		FString String = "";
-		for (auto Element : BaseAbilityActions)
-		{
-			String += FString::Printf(TEXT("[%d, %s, %s]"), Element.Key, *Element.Value.ToString(), *Names[Element.Key]);
-		}
-		UE_LOG(LogActionSystem, Display, TEXT("[NPlayerActionComponent] CurrentAbilityActions: {%s}"), *String);
-	}
 	bSetup = true;
 
 }
@@ -105,56 +76,6 @@ UAbilitySystemComponent* UNPlayerActionComponent::GetAbilitySystemComponent() co
 		return nullptr;
 	}
 	return NPlayerController->GetAbilitySystemComponent();
-}
-
-/** Restores the Base Ability Action to the Current Ability Action slot */
-void UNPlayerActionComponent::RevertAbilityAction(const ENAbilityAction Action)
-{
-	if(!bSetup) return;
-	if(!CurrentAbilityActions.Contains(Action))
-	{
-		return;
-	}
-	if(!BaseAbilityActions.Contains(Action))
-	{
-		CurrentAbilityActions.Remove(Action);
-		return;
-	}
-	CurrentAbilityActions[Action] = BaseAbilityActions[Action];
-}
-
-
-
-FGameplayAbilitySpecHandle& UNPlayerActionComponent::GetHandle(const ENAbilityAction Action, const bool GetBase /* false */)
-{
-	if(!bSetup)
-	{
-		UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerActionComponent] GetHandle called before setup. Returning blank handle"))
-		return BlankHandle;
-	}
-	if(GetBase)
-	{
-		if(BaseAbilityActions.Contains(Action))
-		{
-			checkf(BaseAbilityActions[Action].IsValid(),
-				TEXT("[NPlayerState] BaseAbilityActions assumption of validity failed, %s is invalid"),
-				*BaseAbilityActions[Action].ToString()
-			);
-			return BaseAbilityActions[Action];
-		}
-		return BlankHandle;
-	}
-
-	if(CurrentAbilityActions.Contains(Action))
-	{
-		checkf(CurrentAbilityActions[Action].IsValid(),
-				TEXT("[NPlayerState] CurrentAbilityActions assumption of validity failed, %s is invalid"),
-				*CurrentAbilityActions[Action].ToString()
-			);
-		return CurrentAbilityActions[Action];
-	}
-	
-	return BlankHandle;
 }
 
 void UNPlayerActionComponent::ApplyInput(const ENAbilityAction InputUsed, const  ENAbilityCastMode CastMode, bool bIsEnqueueing) {
@@ -184,25 +105,28 @@ void UNPlayerActionComponent::ApplyInput(const ENAbilityAction InputUsed, const 
 		default:
 			break;
 	}
+	FGameplayAbilitySpecHandle Handle = NPlayerState->GetHandle(InputUsed);
 	if(bValidTarget)
+	{
+		FNAbilityActionEntry AbilityActionEntry = FNAbilityActionEntry(InputUsed, Handle, EventData);
 		if(bIsEnqueueing)
 		{
 			UE_LOG(LogActionSystem, Warning, TEXT("Queue is on"));
-			EnqueueAction(InputUsed, EventData);
+			EnqueueAction(AbilityActionEntry);
 		}else
 		{
 			// if(bShouldClearQueue)
 			ClearQueue();
-			ExecuteAction(InputUsed, EventData);
+			ExecuteAction(AbilityActionEntry);
 		}
+	}
 }
 
-
-bool UNPlayerActionComponent::ExecuteAction(const ENAbilityAction Action, const FGameplayEventData& EventData)
+bool UNPlayerActionComponent::ExecuteAction(const FNAbilityActionEntry& AbilityActionEntry)
 {
 	if(!bSetup || !IsValid(NPlayerController))
 		return false;
-	NPlayerController->Server_RunAbilityAction(Action, EventData);
+	NPlayerController->Server_RunAbilityAction(AbilityActionEntry.Handle, AbilityActionEntry.EventData);
 	return true;
 }
 
@@ -218,11 +142,11 @@ void UNPlayerActionComponent::CancelCurrentAction()
 	// TODO: Add better check for cancellation here
 }
 
-void UNPlayerActionComponent::EnqueueAction(const ENAbilityAction Action, const FGameplayEventData& EventData)
+void UNPlayerActionComponent::EnqueueAction(const FNAbilityActionEntry& AbilityActionEntry)
 {
 	if(!bSetup || !IsValid(NPlayerState))
 		return;
-	Queue.Enqueue(FNActionQueueEntry(Action, EventData));
+	Queue.Enqueue(AbilityActionEntry);
 	if(!bExecutingQueue)
 	{
 		ExecuteQueue();
@@ -235,7 +159,7 @@ void UNPlayerActionComponent::ClearQueue()
 		return;
 	Queue.Empty();
 	bExecutingQueue = false;
-	CurrentActionSpecHandle = BlankHandle;
+	CurrentActionSpecHandle = FGameplayAbilitySpecHandle();
 }
 
 
@@ -268,7 +192,7 @@ void UNPlayerActionComponent::ExecuteQueuedAction()
 		return;
 	}
 
-	FNActionQueueEntry DequeuedAction = FNActionQueueEntry(ENAbilityAction::INVALID);
+	FNAbilityActionEntry DequeuedAction = FNAbilityActionEntry(ENAbilityAction::INVALID);
 	Queue.Dequeue(DequeuedAction);
 	if(DequeuedAction.AbilityAction == ENAbilityAction::INVALID)
 	{
@@ -276,8 +200,7 @@ void UNPlayerActionComponent::ExecuteQueuedAction()
 		ExecuteQueuedAction(); // causes recursion, if this breaks the stack you have worse problems
 		return;
 	}
-	FGameplayAbilitySpecHandle TempHandle = GetHandle(DequeuedAction.AbilityAction); // I'm decently sure this causes undefined behavior
-	bool AbilityActivated = ExecuteAction(DequeuedAction.AbilityAction, DequeuedAction.EventData);
+	bool AbilityActivated = ExecuteAction(DequeuedAction);
 	if(!AbilityActivated)
 	{
 		// TODO: determine permutations when this is the case
@@ -286,7 +209,7 @@ void UNPlayerActionComponent::ExecuteQueuedAction()
 		ClearQueue();
 		return;
 	}
-	CurrentActionSpecHandle = TempHandle;
+	CurrentActionSpecHandle = DequeuedAction.Handle;
 }
 
 void UNPlayerActionComponent::ActionEnded(const FAbilityEndedData& AbilityEndedData)
