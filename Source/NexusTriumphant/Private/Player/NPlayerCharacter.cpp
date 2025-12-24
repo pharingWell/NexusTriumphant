@@ -100,6 +100,7 @@ void ANPlayerCharacter::PossessedBy(AController * NewController)
 		PlayerController = Cast<ANPlayerController>(NewController);
 		if (PlayerController)
 		{
+			SetReplicateMovement(true);
 			NASC = PlayerController->GetNAbilitySystemComponent();
 			NASC->InitAbilityActorInfo(PlayerController, this);
 			UE_LOG(LogNAbilitySystem, Warning, TEXT("[NPlayerCharacter] InitActorInfo in PossessedBy"))

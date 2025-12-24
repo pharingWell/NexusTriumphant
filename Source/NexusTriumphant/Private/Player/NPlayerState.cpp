@@ -19,6 +19,8 @@ void ANPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty> & OutLi
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME_CONDITION(ANPlayerState, ChampionDataAsset, COND_InitialOnly);
+	DOREPLIFETIME(ANPlayerState, BaseAbilityActions);
+	DOREPLIFETIME(ANPlayerState, CurrentAbilityActions);
 }
 
 void ANPlayerState::BeginPlay()
@@ -36,12 +38,14 @@ void ANPlayerState::Setup()
 	{
 		UE_LOG(LogNAbilitySystem, Error, TEXT("[NPlayerState] NPlayerController invalid"));
 		return;
-	}6
-	TMap<ENAbilityAction, FString> Names {};
+	}
+	TArray<FString> Names {};
 	auto AbilityMap = ChampionDataAsset->GetUpdatedAbilityMap();
+	BaseAbilityActions.SetNum(AbilityMap.Num());
+	CurrentAbilityActions.SetNum(AbilityMap.Num());
+	Names.SetNum(AbilityMap.Num());
 	if(NPlayerController->HasAuthority())
 	{
-		CurrentAbilityActions.SetNum(AbilityMap.Num());
 		UE_LOG(LogNAbilitySystem, Warning, TEXT("%i:::::"), AbilityMap.Num())
 		for (const auto AbilityPair : AbilityMap)
 		{
@@ -51,18 +55,19 @@ void ANPlayerState::Setup()
 				continue;
 			}
 			const TSubclassOf<UGameplayAbility> &GameplayAbility = AbilityPair.Value;
-
+			const uint8 AbilityActionInt = static_cast<uint8>(AbilityAction);
 			FGameplayAbilitySpecHandle Handle = NPlayerController->GetAbilitySystemComponent()->GiveAbility(
-			FGameplayAbilitySpec(GameplayAbility, 1 /* abil level */, static_cast<uint8>(AbilityAction), this));
-			BaseAbilityActions.Add(AbilityAction, Handle);
-			CurrentAbilityActions[static_cast<uint8>(AbilityAction)] = Handle;
-			Names.Add(AbilityAction, GameplayAbility->GetDescription());
+			FGameplayAbilitySpec(GameplayAbility, 1 /* abil level */, AbilityActionInt, this));
+			BaseAbilityActions[AbilityActionInt] = Handle;
+			CurrentAbilityActions[AbilityActionInt] = Handle;
+			Names[AbilityActionInt] = GameplayAbility->GetDescription();
 		}
 
 		FString String = "";
-		for (auto Element : BaseAbilityActions)
+		for (int i = 0; i < BaseAbilityActions.Num(); i++)
 		{
-			String += FString::Printf(TEXT("[%d, %s, %s]"), Element.Key, *Element.Value.ToString(), *Names[Element.Key]);
+			if(!BaseAbilityActions[i].IsValid()) { continue; }
+			String += FString::Printf(TEXT("[%d, %s, %s]"), i, *BaseAbilityActions[i].ToString(), *Names[i]);
 		}
 		UE_LOG(LogActionSystem, Display, TEXT("[NPlayerActionComponent] CurrentAbilityActions: {%s}"), *String);
 	}
@@ -73,44 +78,53 @@ void ANPlayerState::Setup()
 void ANPlayerState::RevertAbilityAction(const ENAbilityAction Action)
 {
 	if(!bSetup) return;
-	if(!CurrentAbilityActions[static_cast<uint8>(Action)].IsValid())
+	if(NPlayerController->HasAuthority())
 	{
-		return;
+		uint8 ActionAbilityInt = static_cast<uint8>(Action);
+		if(!CurrentAbilityActions[ActionAbilityInt].IsValid())
+		{
+			return;
+		}
+		if(!BaseAbilityActions[ActionAbilityInt].IsValid())
+		{
+			CurrentAbilityActions[ActionAbilityInt] = FGameplayAbilitySpecHandle();
+			return;
+		}
+		CurrentAbilityActions[ActionAbilityInt] = BaseAbilityActions[ActionAbilityInt];
 	}
-	if(!BaseAbilityActions.Contains(Action))
-	{
-		CurrentAbilityActions[static_cast<uint8>(Action)] = FGameplayAbilitySpecHandle();
-		return;
-	}
-	CurrentAbilityActions[static_cast<uint8>(Action)] = BaseAbilityActions[Action];
 }
 
-FGameplayAbilitySpecHandle ANPlayerState::GetHandle(const ENAbilityAction Action, const bool GetBase /* false */)
+// GET HANDLE IS KINDA FUCKED. WHY AM I DOING IT THIS WAY?
+// 	the client needs 
+
+FGameplayAbilitySpecHandle ANPlayerState::GetHandle(ENAbilityAction Action, const bool GetBase /* false */)
 {
 	if(!bSetup)
 	{
 		UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerActionComponent] GetHandle called before setup. Returning blank handle"))
 		return FGameplayAbilitySpecHandle();
 	}
-	if(GetBase)
+	if(NPlayerController->HasAuthority())
 	{
-		if(BaseAbilityActions.Contains(Action))
+		const uint8 ActionAbilityInt = static_cast<uint8>(Action);
+		if(GetBase)
 		{
-			checkf(BaseAbilityActions[Action].IsValid(),
-				TEXT("[NPlayerState] BaseAbilityActions assumption of validity failed, %s is invalid"),
-				*BaseAbilityActions[Action].ToString()
-			);
-			return BaseAbilityActions[Action];
+			if(BaseAbilityActions[ActionAbilityInt].IsValid())
+			{
+				return BaseAbilityActions[ActionAbilityInt];
+			}
+			UE_LOG(LogAbilitySystemComponent, Warning, TEXT("[NPlayerState] Blank handle for GetBase"))
+			return FGameplayAbilitySpecHandle();
 		}
-		UE_LOG(LogAbilitySystemComponent, Warning, TEXT("[NPlayerState] Blank handle for GetBase"))
+
+		if(CurrentAbilityActions[ActionAbilityInt].IsValid())
+		{	
+			return CurrentAbilityActions[ActionAbilityInt];
+		} 
+		UE_LOG(LogNAbilitySystem, Error, TEXT("[NPlayerState] CurrentAbilityActions assumption of validity failed, %s is invalid"),
+					*CurrentAbilityActions[ActionAbilityInt].ToString())
 		return FGameplayAbilitySpecHandle();
 	}
-
-	if(CurrentAbilityActions[static_cast<uint8>(Action)].IsValid())
-	{
-		return CurrentAbilityActions[static_cast<uint8>(Action)];
-	} 
-	UE_LOG(LogNAbilitySystem, Error, TEXT("[NPlayerState] CurrentAbilityActions assumption of validity failed, %s is invalid"),
-				*CurrentAbilityActions[static_cast<uint8>(Action)].ToString())
+	UE_LOG(LogNAbilitySystem, Error, TEXT("[NPlayerState] CurrentAbilityActions returning null to client"))
 	return FGameplayAbilitySpecHandle();
 }

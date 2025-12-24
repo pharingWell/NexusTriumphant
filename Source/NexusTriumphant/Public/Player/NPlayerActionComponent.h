@@ -23,8 +23,6 @@ struct FNAbilityActionEntry
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Abilities")
 	ENAbilityAction AbilityAction;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Abilities")
-	FGameplayAbilitySpecHandle Handle;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Abilities")
 	FGameplayEventData EventData;
 };
 
@@ -33,7 +31,7 @@ struct FNAbilityActionEntry
  * Directly interacts with the Ability System Component
  */
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class NEXUSTRIUMPHANT_API UNPlayerActionComponent : public UActorComponent, public IAbilitySystemInterface
+class NEXUSTRIUMPHANT_API UNPlayerActionComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
@@ -57,13 +55,11 @@ public:
 	// Sets default values for this component's properties
 	UNPlayerActionComponent(const FObjectInitializer& ObjectInitializer);
 	void Setup(const TObjectPtr<ANPlayerState>& InPlayerState, const TObjectPtr<ANPlayerController>& InPlayerController);
-
-	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 	
 	void ApplyInput(ENAbilityAction InputUsed, ENAbilityCastMode CastMode,
 	                bool bIsEnqueueing);
 
-	// External function to run an ability action, does not enqueue 
+	// Calls player controller function to run an ability action, does not enqueue 
 	UFUNCTION(BlueprintCallable, Category="Gameplay Ability System")
 	bool ExecuteAction(const FNAbilityActionEntry& AbilityActionEntry);
 

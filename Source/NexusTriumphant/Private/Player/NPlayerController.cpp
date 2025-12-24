@@ -19,6 +19,7 @@
 
 ANPlayerController::ANPlayerController(const FObjectInitializer& ObjectInitializer): Super(ObjectInitializer)
 {
+	bReplicates = true;
 	bIsEnqueuing = false;
 	bShowMouseCursor = true;
 	DefaultMouseCursor = EMouseCursor::Default;
@@ -57,6 +58,7 @@ void ANPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 void ANPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(ANPlayerController, NPlayerState)
 }
 
 void ANPlayerController::AcknowledgePossession(APawn* P)
@@ -114,8 +116,6 @@ void ANPlayerController::OnRep_PlayerState()
 			}
 		}
 	}
-
-
 
 
 void ANPlayerController::SetupInputComponent()
@@ -180,7 +180,7 @@ void ANPlayerController::EnqueueEnded()
 
 void ANPlayerController::OnInputStarted(const ENAbilityAction InputUsed)
 {
-	UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerController] Started AbilityAction #%d"), int(InputUsed));
+	UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerController] OnInputStarted AbilityAction #%d"), int(InputUsed));
 	if (InputUsed == ENAbilityAction::MOVETO)
 	{
 		StopMovement();
@@ -190,7 +190,7 @@ void ANPlayerController::OnInputStarted(const ENAbilityAction InputUsed)
 
 void ANPlayerController::OnInputTriggered(const ENAbilityAction InputUsed)
 {
-	UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerController] Triggered AbilityAction #%d"), int(InputUsed));
+	UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerController] OnInputTriggered AbilityAction #%d"), int(InputUsed));
 	
 	FGameplayEventData EventData;
 	FHitResult HitResult;
@@ -202,11 +202,11 @@ void ANPlayerController::OnInputTriggered(const ENAbilityAction InputUsed)
 	EventData.TargetData.Append(DataHandle);
 	EventData.Instigator = this;
 	EventData.OptionalObject = this;
-	if(!NPlayerState) {
-		UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerController] NPlayerState invalid #%d"), int(InputUsed));
+	if(!IsValid(NPlayerState)) {
+		UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerController] NPlayerState invalid on trigger of #%d"), int(InputUsed));
 		return;
 	}
-	Server_RunAbilityAction_Implementation(NPlayerState->GetHandle(InputUsed), EventData);
+	ExecuteAction(FNAbilityActionEntry(InputUsed, EventData));
 	
 	
 	// PlayerActionComponent->ApplyInput(InputUsed, ENAbilityCastMode::INSTANT, bIsEnqueuing);
@@ -214,13 +214,44 @@ void ANPlayerController::OnInputTriggered(const ENAbilityAction InputUsed)
 
 void ANPlayerController::OnInputFinished(const ENAbilityAction InputUsed)
 {
-	UE_LOG(LogActionSystem, Display, TEXT("Stopped using AbilityAction #%d"), int(InputUsed));
+	UE_LOG(LogActionSystem, Display, TEXT("OnInputFinished: Stopped using AbilityAction #%d"), int(InputUsed));
 
 }
 
-void ANPlayerController::Server_RunAbilityAction_Implementation(FGameplayAbilitySpecHandle Handle,
+void ANPlayerController::PrintNetStatus()
+{
+	TArray<FString> options = {"ROLE_None","ROLE_SimulatedProxy", "ROLE_AutonomousProxy" , "ROLE_Authority", "ROLE_MAX"};
+	UE_LOG(LogNAbilitySystem, Warning, TEXT("auth %hs, local %hs, netrole %s"),
+		HasAuthority() ? "true" : "false", IsLocalController() ? "true" : "false",
+		*options[StaticCast<int>(GetLocalRole())])
+}
+
+void ANPlayerController::ExecuteAction(const FNAbilityActionEntry& AbilityActionEntry)
+{
+	PrintNetStatus();
+	Server_RunAbilityAction(AbilityActionEntry.AbilityAction, AbilityActionEntry.EventData);
+}
+
+void ANPlayerController::Server_RunAbilityAction_Implementation(ENAbilityAction AbilityAction,
 	const FGameplayEventData& EventData)
 {
+	PrintNetStatus();
+	if(!HasAuthority())
+	{
+		if(IsLocalController())
+		{
+			UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerController] Server functions run on client??"));
+			return;
+		}
+		UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerController] Server functions no authority"));
+		return;
+	}
+	UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerController] Server functions running on server"));
+	if(IsValid(GetPlayerState<ANPlayerState>()) && !IsValid(NPlayerState))
+	{
+		UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerController] Server_RunAbilityAction: NPlayerState Corrected"));
+		NPlayerState = GetPlayerState<ANPlayerState>();
+	}
 	if(!IsValid(NPlayerState))
 	{
 		UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerController] Server_RunAbilityAction: NPlayerState Invalid"));
@@ -236,6 +267,8 @@ void ANPlayerController::Server_RunAbilityAction_Implementation(FGameplayAbility
 		UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerController] Server_RunAbilityAction: PlayerActionComponent Invalid"));
 		return;
 	}
+	;
+	FGameplayAbilitySpecHandle Handle = NPlayerState->GetHandle(AbilityAction);
 	bool Success = NAbilitySystemComponent->TriggerAbilityFromGameplayEvent(Handle, NAbilitySystemComponent->AbilityActorInfo.Get(),
 		FGameplayTag::RequestGameplayTag("Ability.Used", true), &EventData, *NAbilitySystemComponent.Get());
 	UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerController] Triggered Ability %s with Authority: Ran %s"),

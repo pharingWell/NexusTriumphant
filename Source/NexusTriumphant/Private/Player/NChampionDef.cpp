@@ -8,8 +8,8 @@ UNChampionDef::UNChampionDef() : AbilityMap({}) {}
 const TMap<ENAbilityAction, TSubclassOf<UGameplayAbility>>& UNChampionDef::GetUpdatedAbilityMap()
 {
 	AbilityMap = {
-			{ENAbilityAction::MOVETO, MoveToClass},
 			{ENAbilityAction::ENQUEUE, nullptr},
+			{ENAbilityAction::MOVETO, MoveToClass},
 			{ENAbilityAction::ATTACK, AttackClass},
 			{ENAbilityAction::ABILITY1, Ability1Class},
 			{ENAbilityAction::ABILITY2, Ability2Class},

@@ -53,11 +53,11 @@ protected:
 
 	bool bIsEnqueuing;
 	
-	UPROPERTY()
+	UPROPERTY(Replicated)
 	TObjectPtr<UNPlayerActionComponent> PlayerActionComponent;
 	UPROPERTY()
 	TObjectPtr<ANPlayerCharacter> NPlayerCharacter;
-	UPROPERTY()
+	UPROPERTY(Replicated)
 	TObjectPtr<ANPlayerState> NPlayerState;
 	UPROPERTY()
 	TObjectPtr<UNAbilitySystemComponent> NAbilitySystemComponent;
@@ -98,18 +98,21 @@ public:
 	{
 		return NAbilitySystemComponent;
 	}
+
 	UFUNCTION(BlueprintCallable, Category="Collision")
 	bool K2_GetHitResultUnderCursor(ECollisionChannel TraceChannel, bool bTraceComplex, FHitResult& HitResult);
 
 	// Internal call for running the ability action
-	UFUNCTION(BlueprintCallable, Server, Reliable, Category="Gameplay Ability System")
-	void Server_RunAbilityAction(FGameplayAbilitySpecHandle Handle, const FGameplayEventData& EventData);
+	UFUNCTION(Server, Reliable, Category="Gameplay Ability System")
+	void Server_RunAbilityAction(ENAbilityAction AbilityAction, const FGameplayEventData& EventData);
 	
+	// Calls player controller function to run an ability action, does not enqueue 
+	UFUNCTION(BlueprintCallable, Category="Gameplay Ability System")
+	void ExecuteAction(const FNAbilityActionEntry& AbilityActionEntry);
 	
 protected:
 	UFUNCTION()
 	virtual void SetupInputComponent() override;
-	
 	UFUNCTION(Blueprintable, Category = "Actions")
 	void EnqueueStarted();
 	UFUNCTION(Blueprintable, Category = "Actions")
@@ -120,8 +123,7 @@ protected:
 	void OnInputTriggered(const ENAbilityAction InputUsed);
 	UFUNCTION(Blueprintable, Category = "Actions")
 	void OnInputFinished(const ENAbilityAction InputUsed);
-
-	
+	void PrintNetStatus();
 };
 
 

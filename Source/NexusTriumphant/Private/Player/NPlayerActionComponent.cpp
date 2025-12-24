@@ -64,20 +64,6 @@ void UNPlayerActionComponent::Setup(const TObjectPtr<ANPlayerState>& InPlayerSta
 
 }
 
-UAbilitySystemComponent* UNPlayerActionComponent::GetAbilitySystemComponent() const
-{
-	if(IsValid(ASCRef))
-	{
-		return ASCRef;
-	}
-	if(!IsValid(NPlayerController))
-	{
-		UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerActionComponent] GetASC before setup/while NPlayerController ref invalid"));
-		return nullptr;
-	}
-	return NPlayerController->GetAbilitySystemComponent();
-}
-
 void UNPlayerActionComponent::ApplyInput(const ENAbilityAction InputUsed, const  ENAbilityCastMode CastMode, bool bIsEnqueueing) {
 	FGameplayEventData EventData;
 	bool bValidTarget = false;
@@ -105,10 +91,10 @@ void UNPlayerActionComponent::ApplyInput(const ENAbilityAction InputUsed, const 
 		default:
 			break;
 	}
-	FGameplayAbilitySpecHandle Handle = NPlayerState->GetHandle(InputUsed);
+
 	if(bValidTarget)
 	{
-		FNAbilityActionEntry AbilityActionEntry = FNAbilityActionEntry(InputUsed, Handle, EventData);
+		FNAbilityActionEntry AbilityActionEntry = FNAbilityActionEntry(InputUsed, EventData);
 		if(bIsEnqueueing)
 		{
 			UE_LOG(LogActionSystem, Warning, TEXT("Queue is on"));
@@ -126,7 +112,7 @@ bool UNPlayerActionComponent::ExecuteAction(const FNAbilityActionEntry& AbilityA
 {
 	if(!bSetup || !IsValid(NPlayerController))
 		return false;
-	NPlayerController->Server_RunAbilityAction(AbilityActionEntry.Handle, AbilityActionEntry.EventData);
+	NPlayerController->ExecuteAction(AbilityActionEntry);
 	return true;
 }
 
@@ -209,32 +195,31 @@ void UNPlayerActionComponent::ExecuteQueuedAction()
 		ClearQueue();
 		return;
 	}
-	CurrentActionSpecHandle = DequeuedAction.Handle;
 }
 
 void UNPlayerActionComponent::ActionEnded(const FAbilityEndedData& AbilityEndedData)
 {
-	
-	if(!bSetup || !IsValid(NPlayerState))
-		// should be unreachable, as action ended is bound during setup, but could be reached if the ref becomes invalid
-		return;
-	if(CurrentActionSpecHandle.IsValid() &&
-		AbilityEndedData.AbilitySpecHandle == CurrentActionSpecHandle)
-	{
-		if(bExecutingQueue){
-			if(AbilityEndedData.bWasCancelled)
-			{
-				ClearQueue();
-				return;
-			}
-			if(Queue.IsEmpty())
-			{
-				bExecutingQueue = false;
-				return;
-			}
-			ExecuteQueuedAction();
-		}
-	}
+	// TODO: figure out new way to do this that doesn't involve Handles
+	// if(!bSetup || !IsValid(NPlayerState))
+	// 	// should be unreachable, as action ended is bound during setup, but could be reached if the ref becomes invalid
+	// 	return;
+	// if(CurrentActionSpecHandle.IsValid() &&
+	// 	AbilityEndedData.AbilitySpecHandle == CurrentActionSpecHandle)
+	// {
+	// 	if(bExecutingQueue){
+	// 		if(AbilityEndedData.bWasCancelled)
+	// 		{
+	// 			ClearQueue();
+	// 			return;
+	// 		}
+	// 		if(Queue.IsEmpty())
+	// 		{
+	// 			bExecutingQueue = false;
+	// 			return;
+	// 		}
+	// 		ExecuteQueuedAction();
+	// 	}
+	// }
 }
 
 

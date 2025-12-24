@@ -30,9 +30,10 @@ private:
 	TObjectPtr<ANPlayerController> NPlayerController;
 	UPROPERTY(Replicated, EditDefaultsOnly, Category="Abilities")
 	UNChampionDef* ChampionDataAsset;
-	TMap<ENAbilityAction, FGameplayAbilitySpecHandle> BaseAbilityActions;
+	UPROPERTY(Replicated, EditAnywhere, Category="Abilities")
+	TArray<FGameplayAbilitySpecHandle> BaseAbilityActions;
 	// index being the enum
-	UPROPERTY(Replicated, EditDefaultsOnly, Category="Abilities")
+	UPROPERTY(Replicated, EditAnywhere, Category="Abilities")
 	TArray<FGameplayAbilitySpecHandle> CurrentAbilityActions;
 	
 	/** FUNCTIONS */

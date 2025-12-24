@@ -7,7 +7,7 @@
 #include "Abilities/GameplayAbilityTargetTypes.h"
 class ANPlayerController;
 
-DECLARE_LOG_CATEGORY_EXTERN(LogNAbilitySystem, Warning, All);
+DECLARE_LOG_CATEGORY_EXTERN(LogNAbilitySystem, Display, All);
 #define FULLNAME_CSTR(Object) ToCStr(Object->GetFullName())
 #define UE_LOG_ABILITY(Verbosity, String, ...) UE_LOG(LogNAbilitySystem, Type::Verbosity, String, ##__VA_ARGS__);
 
