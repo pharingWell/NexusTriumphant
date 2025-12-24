@@ -104,12 +104,13 @@ public:
 
 	// Internal call for running the ability action
 	UFUNCTION(Server, Reliable, Category="Gameplay Ability System")
-	void Server_RunAbilityAction(ENAbilityAction AbilityAction, const FGameplayEventData& EventData);
+	void Server_RunAbilityAction(FNAbilityActionEntry AbilityActionEntry);
 	
 	// Calls player controller function to run an ability action, does not enqueue 
 	UFUNCTION(BlueprintCallable, Category="Gameplay Ability System")
 	void ExecuteAction(const FNAbilityActionEntry& AbilityActionEntry);
-	
+	void Server_RunAbilityAction_Implementation(FNAbilityActionEntry AbilityActionEntry);
+
 protected:
 	UFUNCTION()
 	virtual void SetupInputComponent() override;

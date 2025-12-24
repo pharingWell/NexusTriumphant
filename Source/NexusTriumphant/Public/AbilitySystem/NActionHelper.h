@@ -8,7 +8,7 @@ DECLARE_LOG_CATEGORY_EXTERN(LogActionSystem, Verbose, All);
 
 UENUM(Blueprintable)
 enum class ENAbilityAction : uint8 //Nexus Ability Action: What action the play is taking to activate these things
-{
+{               
 	INVALID = 0 UMETA(DisplayName="Invalid"),
 	ENQUEUE		UMETA(DisplayName="Enqueue"),
 	MOVETO      UMETA(DisplayName="MoveTo"),
@@ -28,7 +28,7 @@ enum class ENAbilityCastMode : uint8 // Nexus Ability Cast Type: If cast should 
 	INVALID = 0 UMETA(DisplayName="Invalid"),
 	INSTANT		UMETA(DisplayName="Instant"),
 	ON_RELEASE  UMETA(DisplayName="On Release"),
-	PRECISE	UMETA(DisplayName="Precise"),
+	PRECISE	    UMETA(DisplayName="Precise"),
 	
 };
 

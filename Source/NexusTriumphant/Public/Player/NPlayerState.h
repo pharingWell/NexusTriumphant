@@ -30,10 +30,10 @@ private:
 	TObjectPtr<ANPlayerController> NPlayerController;
 	UPROPERTY(Replicated, EditDefaultsOnly, Category="Abilities")
 	UNChampionDef* ChampionDataAsset;
-	UPROPERTY(Replicated, EditAnywhere, Category="Abilities")
+	UPROPERTY(Replicated, VisibleAnywhere, Category="Abilities")
 	TArray<FGameplayAbilitySpecHandle> BaseAbilityActions;
 	// index being the enum
-	UPROPERTY(Replicated, EditAnywhere, Category="Abilities")
+	UPROPERTY(Replicated, VisibleAnywhere, Category="Abilities")
 	TArray<FGameplayAbilitySpecHandle> CurrentAbilityActions;
 	
 	/** FUNCTIONS */
@@ -41,8 +41,11 @@ private:
 public:
 	ANPlayerState(const FObjectInitializer& ObjectInitializer);
 	virtual void BeginPlay() override;
+	UFUNCTION(Server, Reliable)
+	void Server_Setup();
 	UFUNCTION()
-	void Setup();
+	bool IsSetup() const { return bSetup; }
+	UFUNCTION()
 	void RevertAbilityAction(ENAbilityAction Action);
 	UFUNCTION(BlueprintCallable, Category="Gameplay Ability System")
 	FGameplayAbilitySpecHandle GetHandle(ENAbilityAction Action, bool GetBase = false);
