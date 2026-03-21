@@ -25,7 +25,7 @@ ANPlayerController::ANPlayerController(const FObjectInitializer& ObjectInitializ
 	DefaultMouseCursor = EMouseCursor::Default;
 	CachedMoveToDestination = FVector::ZeroVector;
 	FollowTime = 0.f;
-	PlayerActionComponent = CreateDefaultSubobject<UNPlayerActionComponent>(TEXT("Player Action Component"));
+	// PlayerActionComponent = CreateDefaultSubobject<UNPlayerActionComponent>(TEXT("Player Action Component"));
 	NAbilitySystemComponent = CreateDefaultSubobject<UNAbilitySystemComponent>(TEXT("NAbilitySystemComponent"));
 }
 
@@ -44,8 +44,9 @@ void ANPlayerController::BeginPlay()
 {
 	// Call the base class  
 	Super::BeginPlay();
-	PlayerActionComponent = NewObject<UNPlayerActionComponent>(this, UNPlayerActionComponent::StaticClass());
-	PlayerActionComponent->RegisterComponent();
+	SetReplicates(true);
+	// PlayerActionComponent = NewObject<UNPlayerActionComponent>(this, UNPlayerActionComponent::StaticClass());
+	// PlayerActionComponent->RegisterComponent();
 	NAbilitySystemComponent = NewObject<UNAbilitySystemComponent>(this, UNAbilitySystemComponent::StaticClass());
 	NAbilitySystemComponent->RegisterComponent();
 }
@@ -58,6 +59,7 @@ void ANPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 void ANPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(ANPlayerController, NAbilitySystemComponent)
 	DOREPLIFETIME(ANPlayerController, NPlayerState)
 }
 
@@ -67,15 +69,17 @@ void ANPlayerController::AcknowledgePossession(APawn* P)
 
 	NPlayerState = GetPlayerState<ANPlayerState>();
 	NPlayerCharacter = Cast<ANPlayerCharacter>(P);
-	if (!IsValid(PlayerActionComponent))
-	{
-		UE_LOG(LogNexusTriumphant, Error, TEXT("[NPlayerController] Player Action Component not ready"));
-		return;
-	}
+	// if (!IsValid(PlayerActionComponent))
+	// {
+	// 	UE_LOG(LogNexusTriumphant, Error, TEXT("[NPlayerController] Player Action Component not ready"));
+	// 	return;
+	// }
 	if (IsValid(NPlayerState))
 	{
-		PlayerActionComponent->Setup(NPlayerState, this);
+		NPlayerState->Setup();
 		NPlayerState->Server_Setup();
+		NPlayerCharacter->SetPlayerState(NPlayerState);
+		// PlayerActionComponent->Setup(NPlayerState, this);
 	}
 	// {
 	// 	NPlayerCharacter->SetPlayerState(NPlayerState);
@@ -91,7 +95,6 @@ void ANPlayerController::AcknowledgePossession(APawn* P)
 	// {
 	// 	UE_LOG(LogNexusTriumphant, Error, TEXT("[NPlayerController] Failed to cast player pawn (or state invalid)"));
 	// }
-	//...
 }
 
 void ANPlayerController::CleanupPlayerState()
@@ -108,7 +111,7 @@ void ANPlayerController::OnRep_PlayerState()
 		UE_LOG(LogNAbilitySystem, Error, TEXT("[NPlayerController] Invalid Player State in OnRep"))
 		return;
 	}
-	NPlayerState->Server_Setup();
+	NPlayerState->Setup();
 	// When we're a client connected to a remote server, the player controller may replicate later than the PlayerState and AbilitySystemComponent.
 	if (GetWorld()->IsNetMode(NM_Client))
 	{
@@ -127,7 +130,7 @@ void ANPlayerController::OnRep_PlayerState()
 void ANPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
-	
+	if (!this->IsLocalController()) { return; }
 	EILPSubsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer());
 	EnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent);
 	if(!IsValid(EnhancedInputComponent))
@@ -151,13 +154,6 @@ void ANPlayerController::SetupInputComponent()
 			{
 				ENAbilityAction ActionEnum = Element.Enum;
 				const UInputAction* InputAction = Element.Action;
-				if(ActionEnum == ENAbilityAction::ENQUEUE)
-				{
-					EnhancedInputComponent->BindAction(InputAction, ETriggerEvent::Started, this, &ANPlayerController::EnqueueStarted);
-					EnhancedInputComponent->BindAction(InputAction, ETriggerEvent::Completed, this, &ANPlayerController::EnqueueEnded);
-					EnhancedInputComponent->BindAction(InputAction, ETriggerEvent::Canceled, this, &ANPlayerController::EnqueueEnded);
-					continue;
-				}
 				EnhancedInputComponent->BindAction(InputAction, ETriggerEvent::Started, this, &ANPlayerController::OnInputStarted, ActionEnum);
 				EnhancedInputComponent->BindAction(InputAction, ETriggerEvent::Triggered, this, &ANPlayerController::OnInputTriggered, ActionEnum);
 				EnhancedInputComponent->BindAction(InputAction, ETriggerEvent::Completed, this, &ANPlayerController::OnInputFinished, ActionEnum);
@@ -174,23 +170,17 @@ void ANPlayerController::SetupInputComponent()
 	}
 }
 
-void ANPlayerController::EnqueueStarted()
-{
-	bIsEnqueuing = true;
-}
-
-void ANPlayerController::EnqueueEnded()
-{
-	bIsEnqueuing = false;
-}
-
 void ANPlayerController::OnInputStarted(const ENAbilityAction InputUsed)
 {
-	UE_LOG(LogActionSystem, Display, TEXT("[NPlayerController] OnInputStarted AbilityAction #%d"), int(InputUsed));
-	if (InputUsed == ENAbilityAction::MOVETO)
+	if(InputUsed == ENAbilityAction::ENQUEUE)
 	{
-		StopMovement();
+		bIsEnqueuing = true;
 	}
+	// UE_LOG(LogActionSystem, Display, TEXT("[NPlayerController] OnInputStarted AbilityAction #%d"), int(InputUsed));
+	// if (InputUsed == ENAbilityAction::MOVETO)
+	// {
+	// 	StopMovement();
+	// }
 	
 }
 
@@ -213,20 +203,24 @@ void ANPlayerController::OnInputTriggered(const ENAbilityAction InputUsed)
 		return;
 	}
 	// calling this on the action component doesn't work
-	// TODO: investigate Player Action Component call path
-	ExecuteAction(FNAbilityActionEntry(InputUsed, EventData));
-	
+	// investigate Player Action Component call path
+	// Client_RunAbilityAction(FNAbilityActionEntry(InputUsed, EventData));
+	Server_RunAbilityAction(FNAbilityActionEntry(InputUsed, EventData));
 	
 	// PlayerActionComponent->ApplyInput(InputUsed, ENAbilityCastMode::INSTANT, bIsEnqueuing);
 }
 
 void ANPlayerController::OnInputFinished(const ENAbilityAction InputUsed)
 {
-	UE_LOG(LogActionSystem, Display, TEXT("OnInputFinished: Stopped using AbilityAction #%d"), int(InputUsed));
+	if(InputUsed == ENAbilityAction::ENQUEUE)
+	{
+		bIsEnqueuing = false;
+	}
+	// UE_LOG(LogActionSystem, Display, TEXT("OnInputFinished: Stopped using AbilityAction #%d"), int(InputUsed));
 
 }
 
-void ANPlayerController::PrintNetStatus()
+void ANPlayerController::PrintNetStatus() const
 {
 	TArray<FString> options = {"ROLE_None","ROLE_SimulatedProxy", "ROLE_AutonomousProxy" , "ROLE_Authority", "ROLE_MAX"};
 	UE_LOG(LogNAbilitySystem, Display, TEXT("auth %hs, local %hs, netrole %s"),
@@ -236,13 +230,12 @@ void ANPlayerController::PrintNetStatus()
 
 void ANPlayerController::ExecuteAction(const FNAbilityActionEntry& AbilityActionEntry)
 {
+	verify(false)
 	PrintNetStatus();
-	Server_RunAbilityAction(AbilityActionEntry);
 }
 
 void ANPlayerController::Server_RunAbilityAction_Implementation(const FNAbilityActionEntry AbilityActionEntry)
 {
-	PrintNetStatus();
 	if(!HasAuthority())
 	{
 		if(IsLocalController())
@@ -269,19 +262,69 @@ void ANPlayerController::Server_RunAbilityAction_Implementation(const FNAbilityA
 		UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerController] Server_RunAbilityAction: ASCRef Invalid"));
 		return;
 	}
-	if(!IsValid(PlayerActionComponent))
-	{
-		UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerController] Server_RunAbilityAction: PlayerActionComponent Invalid"));
-		return;
-	}
+	// if(!IsValid(PlayerActionComponent))
+	// {
+	// 	UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerController] Server_RunAbilityAction: PlayerActionComponent Invalid"));
+	// 	return;
+	// }
 	FGameplayTag Tag = FGameplayTag::RequestGameplayTag("Ability.Used", true);
 	FGameplayAbilityActorInfo* ActorInfo = NAbilitySystemComponent->AbilityActorInfo.Get();
 	UAbilitySystemComponent& ASC = *NAbilitySystemComponent.Get();
 	UE_LOG(LogNAbilitySystem, Warning, TEXT("Tag: %s"), *Tag.ToString())
 	FGameplayAbilitySpecHandle Handle = NPlayerState->GetHandle(AbilityActionEntry.AbilityAction);
+	FGameplayAbilitySpec* Spec =  NAbilitySystemComponent->FindAbilitySpecFromHandle(Handle);
+	ensureAlwaysMsgf(Handle.IsValid(), TEXT("Handle must be valid"));
+	ensureAlwaysMsgf(Spec != nullptr, TEXT("Spec cannot be null"));
+	PrintNetStatus();
 	bool Success = NAbilitySystemComponent->TriggerAbilityFromGameplayEvent(Handle, ActorInfo,
 		Tag, &AbilityActionEntry.EventData, ASC);
 	UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerController] Triggered Ability %s with Authority: Ran %s"),
+		*Handle.ToString(), Success ? TEXT("Successfully") : TEXT("Unsuccessfully"));
+	auto tagContainer = NAbilitySystemComponent->GetOwnedGameplayTags();
+	for(auto tag : tagContainer)	
+	{
+		UE_LOG(LogActionSystem, Warning, TEXT("{NASC} %s"), *tag.ToString());
+	}
+}
+
+
+void ANPlayerController::Client_RunAbilityAction_Implementation(const FNAbilityActionEntry& AbilityActionEntry)
+{
+	PrintNetStatus();
+	if(!IsLocalController())
+	{
+		UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerController] predicted functions run on server??"));
+		return;
+	}
+	if(IsValid(GetPlayerState<ANPlayerState>()) && !IsValid(NPlayerState))
+	{
+		UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerController] Server_RunAbilityAction: NPlayerState Corrected"));
+		NPlayerState = GetPlayerState<ANPlayerState>();
+	}
+	if(!IsValid(NPlayerState))
+	{
+		UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerController] Server_RunAbilityAction: NPlayerState Invalid"));
+		return;
+	}
+	if(!IsValid(NAbilitySystemComponent))
+	{
+		UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerController] Server_RunAbilityAction: ASCRef Invalid"));
+		return;
+	}
+	// if(!IsValid(PlayerActionComponent))
+	// {
+	// 	UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerController] Server_RunAbilityAction: PlayerActionComponent Invalid"));
+	// 	return;
+	// }
+	FGameplayTag Tag = FGameplayTag::RequestGameplayTag("Ability.Used", true);
+	FGameplayAbilityActorInfo* ActorInfo = NAbilitySystemComponent->AbilityActorInfo.Get();
+	UAbilitySystemComponent& ASC = *NAbilitySystemComponent.Get();
+	UE_LOG(LogNAbilitySystem, Warning, TEXT("Tag: %s, %d"), *Tag.ToString(), Tag.IsValid())
+	FGameplayAbilitySpecHandle Handle = NPlayerState->GetHandle(AbilityActionEntry.AbilityAction);
+	// this is failing for some reason
+	bool Success = NAbilitySystemComponent->TriggerAbilityFromGameplayEvent(Handle, ActorInfo,
+		Tag, &AbilityActionEntry.EventData, ASC);
+	UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerController] Triggered Ability %s Locally: Ran %s"),
 		*Handle.ToString(), Success ? TEXT("Successfully") : TEXT("Unsuccessfully"));
 	auto tagContainer = NAbilitySystemComponent->GetOwnedGameplayTags();
 	for(auto tag : tagContainer)
@@ -289,6 +332,9 @@ void ANPlayerController::Server_RunAbilityAction_Implementation(const FNAbilityA
 		UE_LOG(LogActionSystem, Warning, TEXT("{NASC} %s"), *tag.ToString());
 	}
 }
+
+
+
 
 
 bool ANPlayerController::K2_GetHitResultUnderCursor(ECollisionChannel TraceChannel, bool bTraceComplex,

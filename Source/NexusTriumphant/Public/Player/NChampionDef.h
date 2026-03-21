@@ -79,9 +79,6 @@ public:
 	
 	UPROPERTY(EditDefaultsOnly, Category="Ability", DisplayName="Second Additional Gameplay Ability")
 	TSubclassOf<UGameplayAbility> AdditionalAbility2Class;
-
-	UPROPERTY()
-	TMap<ENAbilityAction, TSubclassOf<UGameplayAbility>> AbilityMap;
 private:
 	//TMap<ENAbilityAction, FNActionHandlerFunctions> HandlerFunctionMap;
 
@@ -89,7 +86,7 @@ private:
 	
 public:
 	UNChampionDef();
-	const TMap<ENAbilityAction, TSubclassOf<UGameplayAbility>>& GetUpdatedAbilityMap();
+	TMap<ENAbilityAction, TSubclassOf<UGameplayAbility>> GetAbilityMap();
 	/* void SetBinding(UEnhancedInputComponent* EnhancedInputComponent, ENAbilityAction EnumKey,
 	                const UInputAction* InputAction);
 */

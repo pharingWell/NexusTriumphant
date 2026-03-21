@@ -21,7 +21,7 @@ struct FNAbilityActionEntry
 {
 	GENERATED_BODY()
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Abilities")
-	ENAbilityAction AbilityAction;
+	ENAbilityAction AbilityAction = ENAbilityAction::INVALID;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Abilities")
 	FGameplayEventData EventData;
 };

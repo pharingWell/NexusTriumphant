@@ -27,6 +27,7 @@ protected:
 	bool bSetup = false;
 private:
 	/** Ability System Component, Attributes, Effects and Abilities for setup */
+	UPROPERTY(Replicated)
 	TObjectPtr<ANPlayerController> NPlayerController;
 	UPROPERTY(Replicated, EditDefaultsOnly, Category="Abilities")
 	UNChampionDef* ChampionDataAsset;
@@ -35,16 +36,15 @@ private:
 	// index being the enum
 	UPROPERTY(Replicated, VisibleAnywhere, Category="Abilities")
 	TArray<FGameplayAbilitySpecHandle> CurrentAbilityActions;
-	
+	UPROPERTY(Replicated, VisibleAnywhere, Category="Abilities")
+	TArray<FString> AbilityNames;
 	/** FUNCTIONS */
 
 public:
 	ANPlayerState(const FObjectInitializer& ObjectInitializer);
 	virtual void BeginPlay() override;
-	UFUNCTION(Server, Reliable)
-	void Server_Setup();
-	UFUNCTION()
-	bool IsSetup() const { return bSetup; }
+
+
 	UFUNCTION()
 	void RevertAbilityAction(ENAbilityAction Action);
 	UFUNCTION(BlueprintCallable, Category="Gameplay Ability System")
@@ -53,11 +53,13 @@ public:
 	UNChampionDef* GetChampionDataAsset() const { return ChampionDataAsset; }
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty> & OutLifetimeProps) const override;
 
-	// Sets the spec handle with the key Action in CurrentAbilityActions
-	// to the spec handle with the key Action in BaseAbilityActions
-
-protected:
+	UFUNCTION(BlueprintCallable, Category="Gameplay Ability")
+	void PrintNames(FString prefix) const;
+	UFUNCTION()
+	void Setup();
+	UFUNCTION()
+	bool IsSetup() const { return bSetup; }
 	
-
-
+	UFUNCTION(Server, Reliable)
+	void Server_Setup();
 };

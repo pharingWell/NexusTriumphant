@@ -72,7 +72,7 @@ EDataValidationResult UNInputMappingContext::IsDataValid(FDataValidationContext&
 	{
 		if(EnumMapping.Enum == ENAbilityAction::INVALID)
 		{
-			Context.AddError(LOCTEXT("InvalidEnum", "Ability Action Enum cannont be set to Invalid"));
+			Context.AddError(LOCTEXT("InvalidEnum", "Ability Action Enum cannot be set to Invalid"));
 			Result = EDataValidationResult::Invalid;
 		}else
 		{

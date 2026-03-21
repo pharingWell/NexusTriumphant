@@ -50,17 +50,18 @@ protected:
 	uint32 bMoveToMouseCursor : 1;
 	ENAbilityAction CurrentAction;
 	FGameplayAbilityActorInfo AbilityActorInfo;
-
-	bool bIsEnqueuing;
 	
 	UPROPERTY(Replicated)
-	TObjectPtr<UNPlayerActionComponent> PlayerActionComponent;
+	TObjectPtr<ANPlayerState> NPlayerState;
+	UPROPERTY(Replicated)
+	TObjectPtr<UNAbilitySystemComponent> NAbilitySystemComponent;
+	
 	UPROPERTY()
 	TObjectPtr<ANPlayerCharacter> NPlayerCharacter;
-	UPROPERTY(Replicated)
-	TObjectPtr<ANPlayerState> NPlayerState;
-	UPROPERTY()
-	TObjectPtr<UNAbilitySystemComponent> NAbilitySystemComponent;
+	
+	bool bIsEnqueuing;
+	// UPROPERTY()
+	// TObjectPtr<UNPlayerActionComponent> PlayerActionComponent;
 	UPROPERTY()
 	UEnhancedInputComponent* EnhancedInputComponent;
 	UPROPERTY()
@@ -105,26 +106,24 @@ public:
 	// Internal call for running the ability action
 	UFUNCTION(Server, Reliable, Category="Gameplay Ability System")
 	void Server_RunAbilityAction(FNAbilityActionEntry AbilityActionEntry);
+	UFUNCTION(Client, Reliable, BlueprintCallable)
+	void Client_RunAbilityAction(const FNAbilityActionEntry& AbilityActionEntry);
 	
 	// Calls player controller function to run an ability action, does not enqueue 
 	UFUNCTION(BlueprintCallable, Category="Gameplay Ability System")
 	void ExecuteAction(const FNAbilityActionEntry& AbilityActionEntry);
-	void Server_RunAbilityAction_Implementation(FNAbilityActionEntry AbilityActionEntry);
+
 
 protected:
 	UFUNCTION()
 	virtual void SetupInputComponent() override;
-	UFUNCTION(Blueprintable, Category = "Actions")
-	void EnqueueStarted();
-	UFUNCTION(Blueprintable, Category = "Actions")
-	void EnqueueEnded();
 	UFUNCTION(Blueprintable, Category = "Actions")
 	void OnInputStarted(ENAbilityAction InputUsed);
 	UFUNCTION(Blueprintable, Category = "Actions")
 	void OnInputTriggered(const ENAbilityAction InputUsed);
 	UFUNCTION(Blueprintable, Category = "Actions")
 	void OnInputFinished(const ENAbilityAction InputUsed);
-	void PrintNetStatus();
+	void PrintNetStatus() const;
 };
 
 

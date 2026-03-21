@@ -19,64 +19,114 @@ void ANPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty> & OutLi
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME_CONDITION(ANPlayerState, ChampionDataAsset, COND_InitialOnly);
+	DOREPLIFETIME(ANPlayerState, NPlayerController);
 	DOREPLIFETIME(ANPlayerState, BaseAbilityActions);
 	DOREPLIFETIME(ANPlayerState, CurrentAbilityActions);
+	DOREPLIFETIME(ANPlayerState, AbilityNames)
+	PrintNames("RepLifetime");
 }
 
 void ANPlayerState::BeginPlay()
 {
 	Super::BeginPlay();
 	bReplicates = true;
+	if (HasAuthority())
+	{
+		if (!IsValid(ChampionDataAsset))
+		{
+			UE_LOG(LogNAbilitySystem, Warning, TEXT("[NPlayerState]: Server Champion not accessible")); 
+			return;
+		}
+		auto AbilityMap = ChampionDataAsset->GetAbilityMap();
+		int size = 0;
+		for (const auto AbilityPair : AbilityMap)
+		{
+			if (IsValid(AbilityPair.Value))
+			{
+				size++;
+			} 
+		}
+		UE_LOG(LogNAbilitySystem, Warning, TEXT("[NPlayerState]: Server Champion map size %d (valid %d)"), AbilityMap.Num(), size); 
+	}
 	//SetupInitialAbilitiesAndEffects();
 }
 
+void ANPlayerState::Setup()
+{
+	NPlayerController = Cast<ANPlayerController>(this->GetPlayerController());
+	if(!NPlayerController)
+	{
+		UE_LOG(LogNAbilitySystem, Error, TEXT("[NPlayerState] Local: NPlayerController invalid"));
+		return;
+	}
+	bSetup = true;
+}
 
+void ANPlayerState::PrintNames(FString prefix) const
+{
+	FString String = "";
+	for (int i = 0; i < CurrentAbilityActions.Num(); i++)
+	{
+		if(!CurrentAbilityActions[i].IsValid()) { continue; }
+		String += FString::Printf(TEXT("[%d, %s, %s]"), i, *CurrentAbilityActions[i].ToString(), *AbilityNames[i]);
+	}
+	FString funcName = "PrintNames";
+	if (prefix != "") {
+		funcName += "(" + prefix + ")";
+	}
+	
+	UE_LOG(LogActionSystem, Display, TEXT("%hs: [NPlayerState] %s — CurrentAbilityActions: {%s}"), HasAuthority() ? "Server" : "Local", *funcName, *String);
+}
 
 void ANPlayerState::Server_Setup_Implementation()
 {
+	if (!HasAuthority()) { return; }
 	NPlayerController = Cast<ANPlayerController>(this->GetPlayerController());
 	if(!NPlayerController)
 	{
 		UE_LOG(LogNAbilitySystem, Error, TEXT("[NPlayerState] NPlayerController invalid"));
 		return;
 	}
-	TArray<FString> Names {};
-	auto AbilityMap = ChampionDataAsset->GetUpdatedAbilityMap();
+	auto AbilityMap = ChampionDataAsset->GetAbilityMap();
 	int LastInvalid = static_cast<uint8>(ENAbilityAction::ENQUEUE);
 	int Length = AbilityMap.Num() + LastInvalid;
+	
+	TArray<TSubclassOf<UGameplayAbility>> GameplayAbilities;
+	GameplayAbilities.SetNum(Length);
+	for (const auto AbilityPair : AbilityMap)
+	{
+		const ENAbilityAction &AbilityAction = AbilityPair.Key;
+		const TSubclassOf<UGameplayAbility> &GameplayAbility = AbilityPair.Value;
+		const uint8 AbilityActionInt = static_cast<uint8>(AbilityAction);
+		if(AbilityActionInt <= LastInvalid)
+		{
+			continue;
+		}
+		GameplayAbilities[AbilityActionInt] = GameplayAbility;
+	}
+	
 	BaseAbilityActions.SetNum(Length);
 	CurrentAbilityActions.SetNum(Length);
-	Names.SetNum(Length);
-	if(HasAuthority())
-	{
-		for (const auto AbilityPair : AbilityMap)
-		{
-			const ENAbilityAction &AbilityAction = AbilityPair.Key;
-			const TSubclassOf<UGameplayAbility> &GameplayAbility = AbilityPair.Value;
-			const uint8 AbilityActionInt = static_cast<uint8>(AbilityAction);
-			if(AbilityActionInt <= LastInvalid)
-			{
-				continue;
-			}
-			FGameplayAbilitySpecHandle Handle = NPlayerController->GetAbilitySystemComponent()->GiveAbility(
-			FGameplayAbilitySpec(GameplayAbility, 1 /* abil level */, AbilityActionInt, this));
-			BaseAbilityActions[AbilityActionInt] = Handle;
-			CurrentAbilityActions[AbilityActionInt] = Handle;
-			Names[AbilityActionInt] = GameplayAbility->GetDescription();
-		}
+	AbilityNames.SetNum(Length);
 
-		FString String = "";
-		for (int i = 0; i < BaseAbilityActions.Num(); i++)
-		{
-			if(!BaseAbilityActions[i].IsValid()) { continue; }
-			String += FString::Printf(TEXT("[%d, %s, %s]"), i, *BaseAbilityActions[i].ToString(), *Names[i]);
-		}
-		UE_LOG(LogActionSystem, Display, TEXT("[NPlayerActionComponent] CurrentAbilityActions: {%s}"), *String);
-	} else
+
+	for (const auto AbilityPair : AbilityMap)
 	{
-		UE_LOG(LogNAbilitySystem, Warning, TEXT("[NPlayerState] No authority?"))
+		const ENAbilityAction &AbilityAction = AbilityPair.Key;
+		const TSubclassOf<UGameplayAbility> &GameplayAbility = AbilityPair.Value;
+		const uint8 AbilityActionInt = static_cast<uint8>(AbilityAction);
+		if(AbilityActionInt <= LastInvalid)
+		{
+			continue;
+		}
+		FGameplayAbilitySpecHandle Handle = NPlayerController->GetAbilitySystemComponent()->GiveAbility(
+		FGameplayAbilitySpec(GameplayAbility, 1 /* abil level */, AbilityActionInt, this));
+		BaseAbilityActions[AbilityActionInt] = Handle;
+		CurrentAbilityActions[AbilityActionInt] = Handle;
+		AbilityNames[AbilityActionInt] = GameplayAbility->GetDescription();
 	}
 	bSetup = true;
+	PrintNames("ServerSetup");
 }
 
 /** Restores the Base Ability Action to the Current Ability Action slot */
@@ -106,14 +156,18 @@ FGameplayAbilitySpecHandle ANPlayerState::GetHandle(ENAbilityAction Action, cons
 {
 	if(!bSetup)
 	{
-		UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerActionComponent] GetHandle called before setup. Returning blank handle"))
+		UE_LOG(LogActionSystem, Warning, TEXT("[NPlayerState] GetHandle called before setup. Returning blank handle"))
 		return FGameplayAbilitySpecHandle();
 	}
-	if(NPlayerController->HasAuthority())
-	{}
+	PrintNames("GetHandle");
 	const uint8 ActionAbilityInt = static_cast<uint8>(Action);
 	if(GetBase)
 	{
+		if (ActionAbilityInt >= BaseAbilityActions.Num())
+		{
+			UE_LOG(LogAbilitySystemComponent, Warning, TEXT("[NPlayerState] Blank handle for GetBase: Invalid index %d < length %d"), ActionAbilityInt, BaseAbilityActions.Num())
+			return FGameplayAbilitySpecHandle();
+		}
 		if(BaseAbilityActions[ActionAbilityInt].IsValid())
 		{
 			return BaseAbilityActions[ActionAbilityInt];
@@ -125,6 +179,11 @@ FGameplayAbilitySpecHandle ANPlayerState::GetHandle(ENAbilityAction Action, cons
 	for (auto Element : CurrentAbilityActions)
 	{
 		str += Element.ToString() + ",";
+	}
+	if (ActionAbilityInt >= CurrentAbilityActions.Num())
+	{
+		UE_LOG(LogAbilitySystemComponent, Warning, TEXT("[NPlayerState] Blank handle for Current: Invalid index %d < length %d"), ActionAbilityInt, CurrentAbilityActions.Num())
+		return FGameplayAbilitySpecHandle();
 	}
 	UE_LOG(LogNAbilitySystem, Display, TEXT("%s"), *str);
 	if(CurrentAbilityActions[ActionAbilityInt].IsValid())

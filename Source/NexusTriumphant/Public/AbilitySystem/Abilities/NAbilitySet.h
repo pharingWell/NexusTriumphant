@@ -21,7 +21,7 @@ struct FAbilityInputInfo
  
 	/** It will be generated automatically. */
 	UPROPERTY(VisibleAnywhere, Category = "GameplayInputAbilityInfo")
-	int32 InputID;
+	int32 InputID = -1;
 
 	bool IsValid() const
 	{
@@ -54,7 +54,7 @@ public:
 	TSubclassOf<UGameplayAbility> GameplayAbility;
 
 	UPROPERTY(EditDefaultsOnly, Category="Abilities")
-	int Input;
+	int Input = -1;
 	
 	friend uint32 GetTypeHash(const FAbilitySetItem& AbilitySetItem)
 	{

@@ -100,10 +100,11 @@ void ANPlayerCharacter::PossessedBy(AController * NewController)
 		PlayerController = Cast<ANPlayerController>(NewController);
 		if (PlayerController)
 		{
+			SetReplicates(true);
 			SetReplicateMovement(true);
 			NASC = PlayerController->GetNAbilitySystemComponent();
 			NASC->InitAbilityActorInfo(PlayerController, this);
-			UE_LOG(LogNAbilitySystem, Warning, TEXT("[NPlayerCharacter] InitActorInfo in PossessedBy"))
+			UE_LOG(LogNAbilitySystem, Warning, TEXT("[NPlayerCharacter] InitActorInfo in PossessedBy: %s"), *NASC->GetOwner()->GetName())
 		
 		}
 	}
@@ -138,7 +139,7 @@ void ANPlayerCharacter::OnRep_Controller()
 			
 			// Init the Client side part of the ASC
 			NASC->InitAbilityActorInfo(PlayerController, this);
-			UE_LOG(LogNAbilitySystem, Warning, TEXT("[NPlayerCharacter] InitActorInfo in OnRep_PlayerController"))
+			UE_LOG(LogNAbilitySystem, Warning, TEXT("[NPlayerCharacter] InitActorInfo in OnRep_PlayerController: %s"), *NASC->GetOwner()->GetName())
 			// Some games grant attributes here
 
 			// Some games client initialize another components of the character that use the ASC here

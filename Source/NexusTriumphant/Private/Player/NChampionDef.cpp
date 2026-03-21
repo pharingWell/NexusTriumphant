@@ -3,26 +3,43 @@
 
 #include "Player/NChampionDef.h"
 
-UNChampionDef::UNChampionDef() : AbilityMap({}) {}
+#include "Net/UnrealNetwork.h"
 
-const TMap<ENAbilityAction, TSubclassOf<UGameplayAbility>>& UNChampionDef::GetUpdatedAbilityMap()
+UNChampionDef::UNChampionDef() {}
+
+TMap<ENAbilityAction, TSubclassOf<UGameplayAbility>> UNChampionDef::GetAbilityMap()
 {
-	AbilityMap = {
-			{ENAbilityAction::INVALID, nullptr},
-			{ENAbilityAction::ENQUEUE, nullptr},
-			{ENAbilityAction::MOVETO, MoveToClass},
-			{ENAbilityAction::ATTACK, AttackClass},
-			{ENAbilityAction::ABILITY1, Ability1Class},
-			{ENAbilityAction::ABILITY2, Ability2Class},
-			{ENAbilityAction::ABILITY3, Ability3Class},
-			{ENAbilityAction::ULTIMATE, UltimateClass},
-			{ENAbilityAction::TRAIT, TraitClass},
-			{ENAbilityAction::ADDT1, AdditionalAbility1Class},
-			{ENAbilityAction::ADDT2, AdditionalAbility2Class},
-		};
-	return AbilityMap;
+	// TMap<ENAbilityAction, TSubclassOf<UGameplayAbility>> AbilityMap = 
+	return {
+		{ENAbilityAction::INVALID, nullptr},
+		{ENAbilityAction::ENQUEUE, nullptr},
+		{ENAbilityAction::MOVETO, MoveToClass},
+		{ENAbilityAction::ATTACK, AttackClass},
+		{ENAbilityAction::ABILITY1, Ability1Class},
+		{ENAbilityAction::ABILITY2, Ability2Class},
+		{ENAbilityAction::ABILITY3, Ability3Class},
+		{ENAbilityAction::ULTIMATE, UltimateClass},
+		{ENAbilityAction::TRAIT, TraitClass},
+		{ENAbilityAction::ADDT1, AdditionalAbility1Class},
+		{ENAbilityAction::ADDT2, AdditionalAbility2Class},
+	};
 }
 
+
+
+// void UNChampionDef::GetLifetimeReplicatedProps(TArray<FLifetimeProperty> & OutLifetimeProps) const
+// {
+// 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+// 	DOREPLIFETIME(UNChampionDef, MoveToClass);
+// 	DOREPLIFETIME(UNChampionDef, AttackClass);
+// 	DOREPLIFETIME(UNChampionDef, Ability1Class);
+// 	DOREPLIFETIME(UNChampionDef, Ability2Class);
+// 	DOREPLIFETIME(UNChampionDef, Ability3Class);
+// 	DOREPLIFETIME(UNChampionDef, UltimateClass);
+// 	DOREPLIFETIME(UNChampionDef, TraitClass);
+// 	DOREPLIFETIME(UNChampionDef, AdditionalAbility1Class);
+// 	DOREPLIFETIME(UNChampionDef, AdditionalAbility2Class);
+// }
 
 /*void UNChampionDef::SetBinding(UEnhancedInputComponent EnhancedInputComponent*, ENAbilityAction EnumKey, const UInputAction* InputAction)
 {
