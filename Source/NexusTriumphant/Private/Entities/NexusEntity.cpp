@@ -117,6 +117,11 @@ FVector ANexusEntity::GetRootLocationOffset() const
 	return FVector::UpVector * GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
 }
 
+FVector ANexusEntity::GetLocation() const
+{
+	return GetActorLocation() + GetRootLocationOffset();
+}
+
 void ANexusEntity::DebugVisualizationsDisable()
 {
 	bDebugDisplayRadius = false;

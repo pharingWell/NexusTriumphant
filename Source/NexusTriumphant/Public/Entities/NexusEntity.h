@@ -64,6 +64,8 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Transform")
 	FVector GetRootLocationOffset() const;
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Transform")
+	FVector GetLocation() const;
 	void DebugVisualizationsDisable();
 	void SetCapsuleRadius(float InRadius);
 	
